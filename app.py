@@ -10,7 +10,7 @@ st.set_page_config(
     page_title=f"{APP_TITLE} - {APP_SUBTITLE}",
     page_icon=APP_ICON,
     layout="wide",
-    initial_sidebar_state="collapsed"  # يظهر السهم للقائمة المنسدلة
+    initial_sidebar_state="collapsed"  # السهم يظهر لفتح القائمة المنسدلة
 )
 
 # ======== CSS متطور جداً ========
@@ -70,20 +70,19 @@ st.markdown(f"""
         transition: all 0.3s ease;
     }}
 
+    /* تعديل البسملة: بسم الله الرحمن الرحيم */
     .basmala {{
         text-align: center;
         font-family: 'Amiri', serif;
-        font-size: 3.2em;
+        font-size: 2.5em;
         font-weight: 700;
-        background: linear-gradient(135deg, #d4af37, #f5e6a3, #d4af37, #f9d976);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin: 10px 0;
-        animation: goldShine 3s infinite;
-    }}
-    @keyframes goldShine {{
-        0%, 100% {{ filter: brightness(1); }}
-        50% {{ filter: brightness(1.5); text-shadow: 0 0 30px rgba(212,175,55,0.6); }}
+        color: #d4af37;
+        text-shadow: 0 0 20px rgba(212,175,55,0.4);
+        margin: 15px 0;
+        letter-spacing: 2px;
+        white-space: nowrap;  /* تمنع انكسار النص */
+        overflow: hidden;
+        text-overflow: ellipsis;
     }}
 
     .main-title {{
@@ -191,10 +190,10 @@ st.markdown(f"""
         display: none !important;
     }}
     
-    /* إخفاء عناصر Streamlit الافتراضية */
+    /* إخفاء القائمة العلوية (MainMenu) والفوتر فقط، وترك الهيدر ليظهر السهم */
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
-    header {{visibility: hidden;}}
+    /* لا نخفي header لأنه يحتوي على زر فتح الشريط الجانبي */
 
     section[data-testid="stSidebar"] {{
         background: rgba(10, 15, 30, 0.85) !important;
@@ -221,8 +220,8 @@ def save_data(data):
 # ======== الواجهة الرئيسية ========
 st.markdown('<div class="glass-container">', unsafe_allow_html=True)
 
-# البسملة والعنوان
-st.markdown('<div class="basmala">﷽</div>', unsafe_allow_html=True)
+# البسملة: بسم الله الرحمن الرحيم
+st.markdown('<div class="basmala">بسم الله الرحمن الرحيم</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="main-title">{APP_ICON} {APP_TITLE}</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="sub-title">✦ {APP_SUBTITLE} ✦</div>', unsafe_allow_html=True)
 

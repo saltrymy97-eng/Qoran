@@ -1,4 +1,6 @@
 import streamlit as st
+import json
+import os
 from services import ask_ai, smart_classify, get_all_info
 from config import *
 from datetime import datetime
@@ -20,7 +22,6 @@ st.markdown(f"""
         font-family: 'El Messiri', sans-serif;
     }}
 
-    /* خلفية متحركة */
     .stApp {{
         background: linear-gradient(135deg, #030b1a 0%, #0a1a2f 25%, #0d1f3c 50%, #0a1a2f 75%, #030b1a 100%) !important;
         background-size: 400% 400% !important;
@@ -32,7 +33,6 @@ st.markdown(f"""
         100% {{ background-position: 0% 50%; }}
     }}
 
-    /* تأثير النجوم */
     .stars {{
         position: fixed;
         top: 0;
@@ -55,7 +55,6 @@ st.markdown(f"""
         100% {{ opacity: 0.5; }}
     }}
 
-    /* الحاوية الزجاجية الرئيسية */
     .glass-container {{
         background: rgba(20, 30, 50, 0.3);
         backdrop-filter: blur(30px);
@@ -71,7 +70,6 @@ st.markdown(f"""
         transition: all 0.3s ease;
     }}
 
-    /* البسملة */
     .basmala {{
         text-align: center;
         font-family: 'Amiri', serif;
@@ -88,7 +86,6 @@ st.markdown(f"""
         50% {{ filter: brightness(1.5); text-shadow: 0 0 30px rgba(212,175,55,0.6); }}
     }}
 
-    /* العنوان */
     .main-title {{
         text-align: center;
         font-size: 2.8em;
@@ -105,7 +102,6 @@ st.markdown(f"""
         margin-bottom: 25px;
     }}
 
-    /* البطاقات */
     .service-card {{
         background: rgba(30, 40, 60, 0.2);
         backdrop-filter: blur(15px);
@@ -136,7 +132,6 @@ st.markdown(f"""
         font-weight: 600;
     }}
 
-    /* صندوق السؤال */
     .question-box {{
         background: rgba(0,0,0,0.2);
         backdrop-filter: blur(20px);
@@ -146,7 +141,6 @@ st.markdown(f"""
         border: 1px solid rgba(255,255,255,0.1);
     }}
 
-    /* صندوق الرد */
     .reply-box {{
         background: rgba(20, 40, 30, 0.4);
         backdrop-filter: blur(20px);
@@ -164,7 +158,6 @@ st.markdown(f"""
         to {{ opacity: 1; transform: translateY(0); }}
     }}
 
-    /* تخصيص الإدخال */
     .stTextInput > div > div > input {{
         background: rgba(255,255,255,0.07) !important;
         border: 1px solid rgba(212,175,55,0.3) !important;
@@ -179,7 +172,6 @@ st.markdown(f"""
         box-shadow: 0 0 25px rgba(212,175,55,0.4) !important;
     }}
 
-    /* زر الإرسال */
     .stButton > button {{
         background: linear-gradient(135deg, {THEME['primary']}, #b8941f) !important;
         color: #000 !important;
@@ -194,12 +186,10 @@ st.markdown(f"""
         box-shadow: 0 10px 30px rgba(212,175,55,0.4) !important;
     }}
 
-    /* إخفاء عناصر Streamlit الافتراضية */
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
     header {{visibility: hidden;}}
 
-    /* شريط جانبي للإدارة */
     section[data-testid="stSidebar"] {{
         background: rgba(10, 15, 30, 0.85) !important;
         backdrop-filter: blur(30px) !important;
@@ -208,6 +198,19 @@ st.markdown(f"""
 </style>
 <div class="stars"></div>
 """, unsafe_allow_html=True)
+
+# ======== دوال البيانات ========
+DATA_FILE = "data.json"
+
+def load_data():
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {"info": "", "schedules": "", "fees": "", "contacts": "", "majors": ""}
+
+def save_data(data):
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
 # ======== الواجهة الرئيسية ========
 st.markdown('<div class="glass-container">', unsafe_allow_html=True)
@@ -220,12 +223,13 @@ st.markdown(f'<div class="sub-title">✦ {APP_SUBTITLE} ✦</div>', unsafe_allow
 # بطاقات الخدمات السريعة
 st.markdown("---")
 st.markdown("### 📌 الخدمات السريعة")
-cols = st.columns(4)
+cols = st.columns(5)
 services = [
     ("📚", "جداول المحاضرات", "schedules"),
     ("📅", "الامتحانات", "schedules"),
     ("💰", "الرسوم الدراسية", "fees"),
-    ("📞", "جهات الاتصال", "contacts")
+    ("📞", "جهات الاتصال", "contacts"),
+    ("🎓", "التخصصات", "majors")
 ]
 
 for col, (icon, name, category) in zip(cols, services):
@@ -256,7 +260,6 @@ with st.form("chat_form"):
     submitted = st.form_submit_button("🔍 إرسال السؤال")
     
     if submitted and user_input:
-        # تصنيف السؤال تلقائيًا
         cat = smart_classify(user_input)
         with st.spinner("🧠 جاري البحث عن الإجابة..."):
             reply = ask_ai(user_input, cat)
@@ -268,16 +271,33 @@ st.markdown('</div>', unsafe_allow_html=True)
 st.markdown(f"""
 <div style="text-align:center; color:{THEME['text_muted']}; margin-top:40px; font-size:0.9em;">
     © {datetime.now().year} {APP_TITLE} - جميع الحقوق محفوظة<br>
-    تم التطوير بواسطة فريق تقنية المعلومات
 </div>
 """, unsafe_allow_html=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ======== رابط لوحة الإدارة ========
+# ======== لوحة الإدارة ========
 with st.sidebar:
     st.markdown("---")
-    st.markdown("## 🛠️ أدوات متقدمة")
-    if st.button("🔐 لوحة الإدارة", use_container_width=True):
-        st.switch_page("pages/admin.py")
-    st.caption("للدخول إلى لوحة التحكم، انتقل إلى /admin")
+    st.markdown("## 🔐 الإدارة")
+    password = st.text_input("كلمة المرور", type="password")
+    
+    if password == "admin123":
+        st.success("✅ تم الدخول")
+        st.markdown("### 📝 تحرير البيانات")
+        
+        data = load_data()
+        
+        info = st.text_area("📋 معلومات عامة:", value=data.get("info", ""), height=120)
+        schedules = st.text_area("📚 الجداول:", value=data.get("schedules", ""), height=120)
+        fees = st.text_area("💰 الرسوم:", value=data.get("fees", ""), height=100)
+        contacts = st.text_area("📞 التواصل:", value=data.get("contacts", ""), height=100)
+        majors = st.text_area("🎓 التخصصات:", value=data.get("majors", ""), height=100, 
+                              placeholder="مثال: القرآن الكريم وعلومه - الشريعة الإسلامية - اللغة العربية")
+        
+        if st.button("💾 حفظ", use_container_width=True):
+            save_data({"info": info, "schedules": schedules, "fees": fees, "contacts": contacts, "majors": majors})
+            st.success("✅ تم الحفظ!")
+            st.rerun()
+    elif password:
+        st.error("❌ خطأ")

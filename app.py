@@ -22,7 +22,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. تصميم CSS الملكي الفاخر (شامل إصلاحات الجوال)
+# 2. تصميم CSS الملكي الفاخر (شامل إصلاحات الجوال ولوحة الإدارة)
 # ==========================================
 st.markdown("""
 <style>
@@ -37,6 +37,15 @@ html, body, [data-testid="stAppViewContainer"], .main {
     background: radial-gradient(circle at 50% 0%, #1a1500 0%, #05070a 40%, #020305 100%);
     background-attachment: fixed;
     color: #e6e0d4;
+}
+
+/* تنسيق الشريط الجانبي ليطابق الواجهة الرئيسية */
+section[data-testid="stSidebar"] {
+    background: linear-gradient(145deg, rgba(15, 22, 36, 0.97), rgba(5, 8, 12, 0.98)) !important;
+    backdrop-filter: blur(35px) !important;
+    -webkit-backdrop-filter: blur(35px) !important;
+    border-left: 1px solid rgba(212, 175, 55, 0.25) !important;
+    box-shadow: -10px 0 40px rgba(0,0,0,0.7) !important;
 }
 
 /* النصوص والخطوط الذهبية */
@@ -304,17 +313,25 @@ with st.sidebar:
         edit_contacts = st.text_area("جهات الاتصال", st.session_state.db.get("contacts", ""), height=100)
         edit_majors = st.text_area("التخصصات", st.session_state.db.get("majors", ""), height=100)
         
-        if st.button("💾 حفظ البيانات", use_container_width=True):
-            st.session_state.db = {
-                "info": edit_info,
-                "schedules": edit_schedules,
-                "exams": edit_exams,
-                "fees": edit_fees,
-                "contacts": edit_contacts,
-                "majors": edit_majors
-            }
-            save_data(st.session_state.db)
-            st.success("🎉 تم تحديث قاعدة معرفة الذكاء الاصطناعي بنجاح!")
+        col_save, col_clear = st.columns(2)
+        with col_save:
+            if st.button("💾 حفظ البيانات", use_container_width=True):
+                st.session_state.db = {
+                    "info": edit_info,
+                    "schedules": edit_schedules,
+                    "exams": edit_exams,
+                    "fees": edit_fees,
+                    "contacts": edit_contacts,
+                    "majors": edit_majors
+                }
+                save_data(st.session_state.db)
+                st.success("🎉 تم تحديث قاعدة معرفة الذكاء الاصطناعي بنجاح!")
+        
+        with col_clear:
+            if st.button("🗑️ مسح المحادثة", use_container_width=True):
+                st.session_state.messages = [{"role": "assistant", "content": "مرحباً بك في المساعد الذكي لجامعة القرآن الكريم - فرع غيل باوزير. تفضل بطرح استفسارك أو اختر من الخدمات المتاحة أعلاه."}]
+                st.success("✅ تم مسح المحادثة")
+                st.rerun()
             
     elif admin_password != "":
         st.error("❌ كلمة المرور غير صحيحة")

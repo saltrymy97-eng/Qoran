@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ======== CSS فخم جداً - زجاجي مبهر ========
+# ======== CSS فخم ومبهر مع إخفاء الشريط العلوي ========
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=El+Messiri:wght@300;400;600;700&display=swap');
@@ -21,160 +21,199 @@ st.markdown(f"""
     * {{ font-family: 'El Messiri', sans-serif; }}
 
     .stApp {{
-        background: linear-gradient(135deg, #020812 0%, #07101e 25%, #030d1a 50%, #07101e 75%, #020812 100%);
-        background-size: 400% 400%;
-        animation: bgMove 20s ease infinite;
+        background: linear-gradient(135deg, #030b1a 0%, #0a1a2f 25%, #0d1f3c 50%, #0a1a2f 75%, #030b1a 100%) !important;
+        background-size: 400% 400% !important;
+        animation: cosmicBG 30s ease infinite !important;
     }}
-    @keyframes bgMove {{
+    @keyframes cosmicBG {{
         0% {{ background-position: 0% 50%; }}
         50% {{ background-position: 100% 50%; }}
         100% {{ background-position: 0% 50%; }}
     }}
 
-    /* جزيئات ذهبية */
-    .particles {{
+    /* تأثير النجوم */
+    .stars {{
         position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         pointer-events: none;
         z-index: 0;
+        background: radial-gradient(2px 2px at 20px 30px, #fff, transparent),
+                    radial-gradient(2px 2px at 40px 70px, #fff, transparent),
+                    radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+                    radial-gradient(1px 1px at 130px 80px, #fff, transparent),
+                    radial-gradient(2px 2px at 160px 30px, #fff, transparent);
+        background-size: 200px 200px;
+        animation: twinkle 4s infinite;
+    }}
+    @keyframes twinkle {{
+        0% {{ opacity: 0.5; }}
+        50% {{ opacity: 1; }}
+        100% {{ opacity: 0.5; }}
     }}
 
-    .main-wrapper {{
+    .glass-container {{
+        background: rgba(20, 30, 50, 0.3);
+        backdrop-filter: blur(30px);
+        -webkit-backdrop-filter: blur(30px);
+        border: 1px solid rgba(212, 175, 55, 0.15);
+        border-radius: 40px;
+        padding: 40px 35px;
+        margin: 30px auto;
+        max-width: 1100px;
         position: relative;
         z-index: 1;
-        max-width: 850px;
-        margin: 40px auto;
-        padding: 35px 30px;
-        background: rgba(18, 25, 40, 0.5);
-        backdrop-filter: blur(40px);
-        -webkit-backdrop-filter: blur(40px);
-        border: 1px solid rgba(212, 175, 55, 0.2);
-        border-radius: 35px;
-        box-shadow: 
-            0 25px 60px rgba(0, 0, 0, 0.7),
-            0 0 80px rgba(212, 175, 55, 0.08),
-            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.6), inset 0 0 30px rgba(212,175,55,0.05);
     }}
 
     .basmala {{
         text-align: center;
         font-family: 'Amiri', serif;
-        font-size: 2.6em;
+        font-size: 2.5em;
         font-weight: 700;
-        background: linear-gradient(135deg, #d4af37, #f5e6a3, #d4af37);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin: 10px 0;
-        animation: goldShine 3s ease-in-out infinite;
-    }}
-    @keyframes goldShine {{
-        0%, 100% {{ filter: brightness(1); }}
-        50% {{ filter: brightness(1.5); }}
+        color: #d4af37;
+        text-shadow: 0 0 20px rgba(212,175,55,0.4);
+        margin: 15px 0;
     }}
 
     .main-title {{
         text-align: center;
-        font-size: 2.4em;
+        font-size: 2.8em;
         font-weight: 700;
-        color: #ffffff;
-        text-shadow: 0 0 40px rgba(212, 175, 55, 0.3);
-        margin: 5px 0;
+        color: #fff;
+        text-shadow: 0 0 40px rgba(212,175,55,0.4);
+        letter-spacing: 3px;
     }}
-
     .sub-title {{
         text-align: center;
-        font-size: 1.1em;
-        color: #d4af37;
-        letter-spacing: 5px;
+        font-size: 1.4em;
+        color: {THEME['primary']};
+        letter-spacing: 6px;
         margin-bottom: 25px;
-        opacity: 0.8;
     }}
 
-    .divider {{
-        height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(212,175,55,0.4), transparent);
-        margin: 20px 0;
+    .service-card {{
+        background: rgba(30, 40, 60, 0.2);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(212,175,55,0.2);
+        border-radius: 30px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1.2);
+        cursor: pointer;
+        height: 150px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }}
+    .service-card:hover {{
+        transform: translateY(-10px) scale(1.05);
+        border-color: {THEME['primary']};
+        box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 40px rgba(212,175,55,0.25);
+    }}
+    .service-icon {{
+        font-size: 3em;
+        margin-bottom: 10px;
+    }}
+    .service-label {{
+        color: #fff;
+        font-size: 1.2em;
+        font-weight: 600;
     }}
 
-    .chat-message {{
-        padding: 16px 22px;
-        border-radius: 20px;
-        margin: 12px 0;
-        font-size: 1.05em;
-        line-height: 1.9;
-        backdrop-filter: blur(25px);
-        -webkit-backdrop-filter: blur(25px);
-        animation: fadeIn 0.3s ease;
-    }}
-    @keyframes fadeIn {{
-        from {{ opacity: 0; transform: translateY(10px); }}
-        to {{ opacity: 1; transform: translateY(0); }}
-    }}
-
-    .user-message {{
-        background: rgba(212, 175, 55, 0.1);
-        border: 1px solid rgba(212, 175, 55, 0.25);
-        color: #f5e6a3;
-        text-align: right;
-    }}
-
-    .bot-message {{
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: #e0e0e0;
-    }}
-
-    .stChatInput {{
+    /* منطقة الدردشة الفخمة */
+    .chat-area {{
         margin-top: 20px;
     }}
 
+    .chat-message {{
+        padding: 18px 22px;
+        border-radius: 20px;
+        margin: 10px 0;
+        font-size: 1.1em;
+        line-height: 1.9;
+        backdrop-filter: blur(15px);
+        transition: all 0.3s ease;
+    }}
+    .user-message {{
+        background: rgba(212, 175, 55, 0.15);
+        border-right: 4px solid #d4af37;
+        color: #f0e6c0;
+        text-align: right;
+        margin-left: auto;
+        max-width: 80%;
+    }}
+    .bot-message {{
+        background: rgba(20, 40, 30, 0.5);
+        border-left: 4px solid {THEME['primary']};
+        color: #e0e0e0;
+        margin-right: auto;
+        max-width: 80%;
+    }}
+
+    .stChatInput {{
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        max-width: 900px;
+        z-index: 100;
+        background: transparent !important;
+    }}
     .stChatInput textarea {{
-        background: rgba(255, 255, 255, 0.05) !important;
+        background: rgba(20, 30, 50, 0.7) !important;
         backdrop-filter: blur(20px) !important;
-        border: 1px solid rgba(212, 175, 55, 0.3) !important;
-        border-radius: 25px !important;
-        color: #ffffff !important;
+        border: 1px solid rgba(212,175,55,0.3) !important;
+        border-radius: 30px !important;
+        color: #fff !important;
         padding: 15px 20px !important;
-        font-size: 1.05em !important;
+        font-size: 1.1em !important;
         transition: all 0.3s !important;
     }}
-
     .stChatInput textarea:focus {{
         border-color: #d4af37 !important;
-        box-shadow: 0 0 30px rgba(212, 175, 55, 0.2) !important;
+        box-shadow: 0 0 25px rgba(212,175,55,0.3) !important;
     }}
-
     .stChatInput textarea::placeholder {{
-        color: rgba(255, 255, 255, 0.35) !important;
-    }}
-
-    section[data-testid="stSidebar"] {{
-        background: rgba(10, 15, 25, 0.85) !important;
-        backdrop-filter: blur(35px) !important;
-        border-left: 1px solid rgba(212, 175, 55, 0.25) !important;
+        color: rgba(255,255,255,0.4) !important;
     }}
 
     .stButton > button {{
-        background: linear-gradient(135deg, #d4af37, #b8941f) !important;
+        background: linear-gradient(135deg, {THEME['primary']}, #b8941f) !important;
         color: #000 !important;
-        font-weight: 700 !important;
-        border-radius: 12px !important;
+        font-weight: bold !important;
+        border-radius: 50px !important;
         padding: 10px 25px !important;
-        border: none !important;
+        font-size: 1em !important;
         transition: all 0.3s !important;
-        letter-spacing: 1px;
     }}
-
     .stButton > button:hover {{
-        transform: translateY(-3px) !important;
-        box-shadow: 0 12px 30px rgba(212, 175, 55, 0.4) !important;
+        transform: scale(1.05) !important;
+        box-shadow: 0 10px 30px rgba(212,175,55,0.4) !important;
     }}
 
+    .element-container:empty, .stMarkdown:empty, div:empty {{
+        display: none !important;
+    }}
+    
+    /* إخفاء الشريط العلوي بالكامل، وترك السهم الجانبي */
+    header[data-testid="stHeader"] {{
+        display: none !important;
+    }}
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
-    header {{visibility: hidden;}}
+
+    section[data-testid="stSidebar"] {{
+        background: rgba(10, 15, 30, 0.85) !important;
+        backdrop-filter: blur(30px) !important;
+        border-left: 1px solid rgba(212,175,55,0.25) !important;
+    }}
 </style>
+<div class="stars"></div>
 """, unsafe_allow_html=True)
 
 # ======== دوال البيانات ========
@@ -190,25 +229,61 @@ def save_data(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-# ======== بدء المحادثة ========
+# ======== بدء جلسة المحادثة ========
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# ======== الواجهة ========
-st.markdown('<div class="main-wrapper">', unsafe_allow_html=True)
+# ======== الواجهة الرئيسية ========
+st.markdown('<div class="glass-container">', unsafe_allow_html=True)
 
+# البسملة والعنوان
 st.markdown('<div class="basmala">بسم الله الرحمن الرحيم</div>', unsafe_allow_html=True)
-st.markdown('<div class="main-title">🕌 جامعة القرآن الكريم والعلوم الإسلامية</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">✦ فرع غيل باوزير - حضرموت ✦</div>', unsafe_allow_html=True)
-st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+st.markdown(f'<div class="main-title">{APP_ICON} {APP_TITLE}</div>', unsafe_allow_html=True)
+st.markdown(f'<div class="sub-title">✦ {APP_SUBTITLE} ✦</div>', unsafe_allow_html=True)
 
-# الدردشة
+# بطاقات الخدمات السريعة
+st.markdown("---")
+st.markdown("### 📌 الخدمات السريعة")
+cols = st.columns(5)
+services = [
+    ("📚", "جداول المحاضرات", "schedules"),
+    ("📅", "الامتحانات", "schedules"),
+    ("💰", "الرسوم الدراسية", "fees"),
+    ("📞", "جهات الاتصال", "contacts"),
+    ("🎓", "التخصصات", "majors")
+]
+
+for col, (icon, name, category) in zip(cols, services):
+    with col:
+        st.markdown(f"""
+        <div class="service-card" id="card-{name}">
+            <div class="service-icon">{icon}</div>
+            <div class="service-label">{name}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("", key=f"btn_{name}", use_container_width=True):
+            question = f"أريد معلومات عن {name}"
+            st.session_state.messages.append({"role": "user", "content": question})
+            reply = ask_ai(question, category)
+            st.session_state.messages.append({"role": "assistant", "content": reply})
+            st.rerun()
+
+st.markdown("---")
+
+# ======== منطقة الدردشة التفاعلية ========
+st.markdown("### 💬 المحادثة التفاعلية")
+st.markdown('<div class="chat-area">', unsafe_allow_html=True)
+
+# عرض تاريخ المحادثة
 for msg in st.session_state.messages:
     if msg["role"] == "user":
         st.markdown(f'<div class="chat-message user-message">🧑‍🎓 {msg["content"]}</div>', unsafe_allow_html=True)
     else:
         st.markdown(f'<div class="chat-message bot-message">🤖 {msg["content"]}</div>', unsafe_allow_html=True)
 
+st.markdown('</div>', unsafe_allow_html=True)
+
+# حقل الإدخال (يظهر في الأسفل بشكل ثابت)
 if prompt := st.chat_input("✍️ اكتب سؤالك هنا..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     cat = smart_classify(prompt)
@@ -216,26 +291,37 @@ if prompt := st.chat_input("✍️ اكتب سؤالك هنا..."):
     st.session_state.messages.append({"role": "assistant", "content": reply})
     st.rerun()
 
+# تذييل
+st.markdown(f"""
+<div style="text-align:center; color:{THEME['text_muted']}; margin-top:40px; font-size:0.9em;">
+    © {datetime.now().year} {APP_TITLE} - جميع الحقوق محفوظة<br>
+</div>
+""", unsafe_allow_html=True)
+
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ======== لوحة الإدارة ========
 with st.sidebar:
+    st.markdown("---")
     st.markdown("## 🔐 الإدارة")
     password = st.text_input("كلمة المرور", type="password")
     
     if password == "admin123":
-        st.success("تم الدخول")
+        st.success("✅ تم الدخول")
+        st.markdown("### 📝 تحرير البيانات")
+        
         data = load_data()
         
         info = st.text_area("📋 معلومات عامة:", value=data.get("info", ""), height=120)
         schedules = st.text_area("📚 الجداول:", value=data.get("schedules", ""), height=120)
         fees = st.text_area("💰 الرسوم:", value=data.get("fees", ""), height=100)
         contacts = st.text_area("📞 التواصل:", value=data.get("contacts", ""), height=100)
-        majors = st.text_area("🎓 التخصصات:", value=data.get("majors", ""), height=100)
+        majors = st.text_area("🎓 التخصصات:", value=data.get("majors", ""), height=100, 
+                              placeholder="مثال: القرآن الكريم وعلومه - الشريعة الإسلامية - اللغة العربية")
         
         if st.button("💾 حفظ", use_container_width=True):
             save_data({"info": info, "schedules": schedules, "fees": fees, "contacts": contacts, "majors": majors})
-            st.success("تم الحفظ!")
+            st.success("✅ تم الحفظ!")
             st.rerun()
     elif password:
-        st.error("كلمة مرور خاطئة")
+        st.error("❌ خطأ")

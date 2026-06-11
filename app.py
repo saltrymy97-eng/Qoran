@@ -4,7 +4,6 @@ import os
 from datetime import datetime
 from services import ask_ai, smart_classify
 
-# إعدادات الجامعة
 APP_TITLE = "جامعة القرآن الكريم والعلوم الإسلامية"
 APP_SUBTITLE = "فرع غيل باوزير - حضرموت"
 APP_ICON = "🕌"
@@ -17,12 +16,17 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# CSS الفاخر (بدون JavaScript)
+# CSS معدل مع إزالة المستطيلات الفارغة وتأثيرات فخمة
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=El+Messiri:wght@300;400;600;700&display=swap');
     
     * {{ font-family: 'El Messiri', sans-serif; }}
+
+    /* إخفاء أي عنصر فارغ */
+    div:empty, .stMarkdown:empty, .element-container:empty {{
+        display: none !important;
+    }}
 
     .stApp {{
         background: radial-gradient(ellipse at center, #0a1324 0%, #02040a 100%);
@@ -46,26 +50,47 @@ st.markdown(f"""
         box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 80px rgba(212, 175, 55, 0.06);
     }}
 
-    .gold-neon {{
+    /* تأثير اسم الجامعة الفاخر */
+    .university-name {{
         text-align: center;
         font-family: 'Amiri', serif;
-        font-size: 2.5em;
+        font-size: 4em;
         font-weight: 700;
-        background: linear-gradient(135deg, #d4af37, #f5e6a3, #d4af37, #f9d976);
+        background: linear-gradient(135deg, #d4af37 0%, #f9e076 25%, #e5b83b 50%, #fdf0a6 75%, #b48a2c 100%);
+        background-size: 200% 200%;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        filter: drop-shadow(0 0 25px rgba(212,175,55,0.5));
-        margin: 10px 0;
+        animation: goldShift 4s ease infinite, glowPulse 2.5s ease-in-out infinite;
+        margin: 20px 0 0 0;
+        line-height: 1.2;
+        letter-spacing: 3px;
+    }}
+    
+    @keyframes goldShift {{
+        0% {{ background-position: 0% 50%; }}
+        50% {{ background-position: 100% 50%; }}
+        100% {{ background-position: 0% 50%; }}
+    }}
+    @keyframes glowPulse {{
+        0%, 100% {{ filter: drop-shadow(0 0 15px rgba(212,175,55,0.4)); }}
+        50% {{ filter: drop-shadow(0 0 35px rgba(212,175,55,0.9)); }}
     }}
 
-    .main-title {{
-        text-align: center; font-size: 3em; font-weight: 700;
-        color: #fff; letter-spacing: 2px;
-        text-shadow: 0 0 50px rgba(212,175,55,0.4), 0 0 100px rgba(212,175,55,0.2);
+    .basmala {{
+        text-align: center;
+        font-family: 'Amiri', serif;
+        font-size: 2.4em;
+        font-weight: 700;
+        background: linear-gradient(135deg, #d4af37, #f5e6a3, #d4af37);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 10px 0;
+        filter: drop-shadow(0 0 15px rgba(212,175,55,0.3));
     }}
+
     .sub-title {{
-        text-align: center; font-size: 1.2em; color: #d4af37;
-        letter-spacing: 6px; font-weight: 300; margin-bottom: 35px;
+        text-align: center; font-size: 1.3em; color: #d4af37;
+        letter-spacing: 6px; font-weight: 300; margin-top: 0; margin-bottom: 30px;
     }}
 
     .gold-line {{
@@ -145,8 +170,9 @@ if "messages" not in st.session_state:
 # الواجهة الرئيسية
 st.markdown('<div class="main-glass">', unsafe_allow_html=True)
 
-st.markdown('<div class="gold-neon">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>', unsafe_allow_html=True)
-st.markdown(f'<div class="main-title">{APP_ICON} {APP_TITLE}</div>', unsafe_allow_html=True)
+st.markdown('<div class="basmala">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>', unsafe_allow_html=True)
+# اسم الجامعة بتأثير فاخر
+st.markdown(f'<div class="university-name">{APP_TITLE}</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="sub-title">✦ {APP_SUBTITLE} ✦</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="gold-line"></div>', unsafe_allow_html=True)

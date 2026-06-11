@@ -1,9 +1,6 @@
 @echo off
-title بوت جامعة القرآن - فرع غيل باوزير
+title بوت واتساب - جامعة القرآن
 cd /d "%~dp0"
-echo جاري تثبيت المتطلبات...
-pip install -r requirements.txt
-echo.
-echo جاري تشغيل البوت...
+pip install groq flask requests qrcode Pillow
 python bot.py
 pause

@@ -52,7 +52,7 @@ SYSTEM_PROMPT = """أنت المساعد الذكي لفرع جامعة القر
 تعليماتك: أجب بالعربية. كن مختصرًا ومفيدًا. استخدم الإيموجي باعتدال."""
 
 # ======== عميل Groq ========
-groq_client = Groq(api_key=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)
+groq_client = Groq(api_key="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")
 
 def ask_llama(question):
     try:

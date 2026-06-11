@@ -10,7 +10,7 @@ st.set_page_config(
     page_title=f"{APP_TITLE} - {APP_SUBTITLE}",
     page_icon=APP_ICON,
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"  # تغيير إلى expanded ليظهر الشريط الجانبي مباشرة
 )
 
 # ======== CSS متطور جداً ========
@@ -186,6 +186,11 @@ st.markdown(f"""
         box-shadow: 0 10px 30px rgba(212,175,55,0.4) !important;
     }}
 
+    /* إخفاء المستطيلات الفارغة (الحاويات التي ليس لها محتوى) */
+    .element-container:empty, .stMarkdown:empty, div:empty {{
+        display: none !important;
+    }}
+    /* إخفاء العناصر الافتراضية لـ Streamlit */
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
     header {{visibility: hidden;}}

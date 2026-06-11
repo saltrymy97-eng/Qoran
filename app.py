@@ -10,7 +10,7 @@ st.set_page_config(
     page_title=f"{APP_TITLE} - {APP_SUBTITLE}",
     page_icon=APP_ICON,
     layout="wide",
-    initial_sidebar_state="expanded"  # تغيير إلى expanded ليظهر الشريط الجانبي مباشرة
+    initial_sidebar_state="collapsed"  # يظهر السهم للقائمة المنسدلة
 )
 
 # ======== CSS متطور جداً ========
@@ -186,11 +186,12 @@ st.markdown(f"""
         box-shadow: 0 10px 30px rgba(212,175,55,0.4) !important;
     }}
 
-    /* إخفاء المستطيلات الفارغة (الحاويات التي ليس لها محتوى) */
+    /* إخفاء المستطيلات الفارغة */
     .element-container:empty, .stMarkdown:empty, div:empty {{
         display: none !important;
     }}
-    /* إخفاء العناصر الافتراضية لـ Streamlit */
+    
+    /* إخفاء عناصر Streamlit الافتراضية */
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
     header {{visibility: hidden;}}
@@ -281,7 +282,7 @@ st.markdown(f"""
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ======== لوحة الإدارة ========
+# ======== لوحة الإدارة (اضغط السهم في أعلى اليسار) ========
 with st.sidebar:
     st.markdown("---")
     st.markdown("## 🔐 الإدارة")

@@ -10,10 +10,10 @@ st.set_page_config(
     page_title=f"{APP_TITLE} - {APP_SUBTITLE}",
     page_icon=APP_ICON,
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed"  # يظهر السهم في أعلى اليسار
 )
 
-# ======== CSS فخم ومبهر مع إخفاء الشريط العلوي ========
+# ======== CSS فخم جداً مع تحسين الدردشة ووضوح السهم ========
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=El+Messiri:wght@300;400;600;700&display=swap');
@@ -31,15 +31,12 @@ st.markdown(f"""
         100% {{ background-position: 0% 50%; }}
     }}
 
-    /* تأثير النجوم */
+    /* نجوم */
     .stars {{
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 0;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        pointer-events: none; z-index: 0;
         background: radial-gradient(2px 2px at 20px 30px, #fff, transparent),
                     radial-gradient(2px 2px at 40px 70px, #fff, transparent),
                     radial-gradient(1px 1px at 90px 40px, #fff, transparent),
@@ -49,11 +46,10 @@ st.markdown(f"""
         animation: twinkle 4s infinite;
     }}
     @keyframes twinkle {{
-        0% {{ opacity: 0.5; }}
-        50% {{ opacity: 1; }}
-        100% {{ opacity: 0.5; }}
+        0% {{ opacity: 0.5; }} 50% {{ opacity: 1; }} 100% {{ opacity: 0.5; }}
     }}
 
+    /* الحاوية الزجاجية الرئيسية */
     .glass-container {{
         background: rgba(20, 30, 50, 0.3);
         backdrop-filter: blur(30px);
@@ -114,29 +110,28 @@ st.markdown(f"""
         border-color: {THEME['primary']};
         box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 40px rgba(212,175,55,0.25);
     }}
-    .service-icon {{
-        font-size: 3em;
-        margin-bottom: 10px;
-    }}
-    .service-label {{
-        color: #fff;
-        font-size: 1.2em;
-        font-weight: 600;
-    }}
+    .service-icon {{ font-size: 3em; margin-bottom: 10px; }}
+    .service-label {{ color: #fff; font-size: 1.2em; font-weight: 600; }}
 
-    /* منطقة الدردشة الفخمة */
-    .chat-area {{
-        margin-top: 20px;
+    /* ========== منطقة الدردشة الفخمة ========== */
+    .chat-box {{
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(25px);
+        border: 1px solid rgba(212, 175, 55, 0.15);
+        border-radius: 30px;
+        padding: 25px;
+        margin: 30px 0;
+        max-height: 500px;
+        overflow-y: auto;
     }}
 
     .chat-message {{
         padding: 18px 22px;
         border-radius: 20px;
-        margin: 10px 0;
+        margin: 12px 0;
         font-size: 1.1em;
         line-height: 1.9;
         backdrop-filter: blur(15px);
-        transition: all 0.3s ease;
     }}
     .user-message {{
         background: rgba(212, 175, 55, 0.15);
@@ -154,19 +149,12 @@ st.markdown(f"""
         max-width: 80%;
     }}
 
+    /* حقل الكتابة */
     .stChatInput {{
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 80%;
-        max-width: 900px;
-        z-index: 100;
-        background: transparent !important;
+        margin-top: 20px;
     }}
     .stChatInput textarea {{
-        background: rgba(20, 30, 50, 0.7) !important;
-        backdrop-filter: blur(20px) !important;
+        background: rgba(255,255,255,0.07) !important;
         border: 1px solid rgba(212,175,55,0.3) !important;
         border-radius: 30px !important;
         color: #fff !important;
@@ -182,6 +170,7 @@ st.markdown(f"""
         color: rgba(255,255,255,0.4) !important;
     }}
 
+    /* أزرار */
     .stButton > button {{
         background: linear-gradient(135deg, {THEME['primary']}, #b8941f) !important;
         color: #000 !important;
@@ -196,17 +185,19 @@ st.markdown(f"""
         box-shadow: 0 10px 30px rgba(212,175,55,0.4) !important;
     }}
 
+    /* إخفاء المستطيلات الفارغة */
     .element-container:empty, .stMarkdown:empty, div:empty {{
         display: none !important;
     }}
-    
-    /* إخفاء الشريط العلوي بالكامل، وترك السهم الجانبي */
+
+    /* ====== إخفاء الشريط العلوي (ولكن يبقي السهم الجانبي) ====== */
     header[data-testid="stHeader"] {{
         display: none !important;
     }}
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
 
+    /* تنسيق الشريط الجانبي */
     section[data-testid="stSidebar"] {{
         background: rgba(10, 15, 30, 0.85) !important;
         backdrop-filter: blur(30px) !important;
@@ -229,7 +220,7 @@ def save_data(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-# ======== بدء جلسة المحادثة ========
+# ======== جلسة المحادثة ========
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -272,9 +263,8 @@ st.markdown("---")
 
 # ======== منطقة الدردشة التفاعلية ========
 st.markdown("### 💬 المحادثة التفاعلية")
-st.markdown('<div class="chat-area">', unsafe_allow_html=True)
+st.markdown('<div class="chat-box">', unsafe_allow_html=True)
 
-# عرض تاريخ المحادثة
 for msg in st.session_state.messages:
     if msg["role"] == "user":
         st.markdown(f'<div class="chat-message user-message">🧑‍🎓 {msg["content"]}</div>', unsafe_allow_html=True)
@@ -283,7 +273,7 @@ for msg in st.session_state.messages:
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# حقل الإدخال (يظهر في الأسفل بشكل ثابت)
+# حقل الإدخال (دائم الظهور في الأسفل)
 if prompt := st.chat_input("✍️ اكتب سؤالك هنا..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     cat = smart_classify(prompt)

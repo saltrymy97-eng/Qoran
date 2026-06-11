@@ -10,7 +10,7 @@ from config import *
 # ======== عميل Groq ========
 # يجب وضع مفتاح Groq في متغير بيئة أو هنا
 import os
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "gsk_ضع_مفتاحك_هنا")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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")
 groq_client = Groq(api_key=GROQ_API_KEY)
 
 # ======== دوال البيانات ========

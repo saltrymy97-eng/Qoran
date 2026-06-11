@@ -22,7 +22,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. تصميم CSS الملكي الفاخر (إضاءة متناسقة)
+# 2. تصميم CSS الملكي الفاخر (شامل إصلاحات الجوال)
 # ==========================================
 st.markdown("""
 <style>
@@ -37,15 +37,6 @@ html, body, [data-testid="stAppViewContainer"], .main {
     background: radial-gradient(circle at 50% 0%, #1a1500 0%, #05070a 40%, #020305 100%);
     background-attachment: fixed;
     color: #e6e0d4;
-}
-
-/* تنسيق الشريط الجانبي ليطابق الواجهة الرئيسية بإضاءة متناسقة */
-section[data-testid="stSidebar"] {
-    background: radial-gradient(circle at 50% 0%, #1a1500 0%, #05070a 40%, #020305 100%) !important;
-    backdrop-filter: blur(35px) !important;
-    -webkit-backdrop-filter: blur(35px) !important;
-    border-left: 1px solid rgba(212, 175, 55, 0.25) !important;
-    box-shadow: -10px 0 40px rgba(0,0,0,0.7) !important;
 }
 
 /* النصوص والخطوط الذهبية */
@@ -220,6 +211,7 @@ if "db" not in st.session_state:
     st.session_state.db = load_data()
 
 if "messages" not in st.session_state:
+    # رسالة ترحيبية افتراضية
     st.session_state.messages = [{"role": "assistant", "content": "مرحباً بك في المساعد الذكي لجامعة القرآن الكريم - فرع غيل باوزير. تفضل بطرح استفسارك أو اختر من الخدمات المتاحة أعلاه."}]
 
 if "auto_question" not in st.session_state:
@@ -253,21 +245,27 @@ st.markdown('<hr>', unsafe_allow_html=True)
 # ==========================================
 # 6. محرك الدردشة (Chat Engine)
 # ==========================================
+# عرض الرسائل السابقة
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
+# استقبال إدخال المستخدم
 user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
 
+# معالجة الضغط على أزرار الخدمات
 if st.session_state.auto_question:
     user_input = st.session_state.auto_question
     st.session_state.auto_question = None
 
+# توليد الرد
 if user_input:
+    # حفظ وطباعة رسالة المستخدم
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.markdown(user_input)
     
+    # الرد من المساعد
     with st.chat_message("assistant"):
         with st.spinner("جارٍ معالجة استفسارك..."):
             if SERVICES_AVAILABLE:
@@ -278,11 +276,13 @@ if user_input:
                 except Exception as e:
                     ai_response = f"عذراً، حدث خطأ في النظام: {str(e)}"
             else:
+                # رد وهمي في حال غياب ملف الذكاء الاصطناعي (للتجربة)
                 time.sleep(1)
                 ai_response = "هذا رد تجريبي نظراً لعدم ربط دوال الذكاء الاصطناعي. يُرجى مراجعة إدارة الجامعة للمزيد من التفاصيل حول استفسارك."
             
             st.markdown(ai_response)
     
+    # حفظ رد المساعد
     st.session_state.messages.append({"role": "assistant", "content": ai_response})
 
 # ==========================================
@@ -294,7 +294,7 @@ with st.sidebar:
     
     admin_password = st.text_input("كلمة مرور المشرف 🔒", type="password")
     
-    if admin_password == "admin123":
+    if admin_password == "admin123": # يفضل تغييرها واستخدام st.secrets
         st.success("✅ تم التحقق")
         
         edit_info = st.text_area("معلومات عامة", st.session_state.db.get("info", ""), height=100)
@@ -304,25 +304,17 @@ with st.sidebar:
         edit_contacts = st.text_area("جهات الاتصال", st.session_state.db.get("contacts", ""), height=100)
         edit_majors = st.text_area("التخصصات", st.session_state.db.get("majors", ""), height=100)
         
-        col_save, col_clear = st.columns(2)
-        with col_save:
-            if st.button("💾 حفظ البيانات", use_container_width=True):
-                st.session_state.db = {
-                    "info": edit_info,
-                    "schedules": edit_schedules,
-                    "exams": edit_exams,
-                    "fees": edit_fees,
-                    "contacts": edit_contacts,
-                    "majors": edit_majors
-                }
-                save_data(st.session_state.db)
-                st.success("🎉 تم تحديث قاعدة معرفة الذكاء الاصطناعي بنجاح!")
-        
-        with col_clear:
-            if st.button("🗑️ مسح المحادثة", use_container_width=True):
-                st.session_state.messages = [{"role": "assistant", "content": "مرحباً بك في المساعد الذكي لجامعة القرآن الكريم - فرع غيل باوزير. تفضل بطرح استفسارك أو اختر من الخدمات المتاحة أعلاه."}]
-                st.success("✅ تم مسح المحادثة")
-                st.rerun()
+        if st.button("💾 حفظ البيانات", use_container_width=True):
+            st.session_state.db = {
+                "info": edit_info,
+                "schedules": edit_schedules,
+                "exams": edit_exams,
+                "fees": edit_fees,
+                "contacts": edit_contacts,
+                "majors": edit_majors
+            }
+            save_data(st.session_state.db)
+            st.success("🎉 تم تحديث قاعدة معرفة الذكاء الاصطناعي بنجاح!")
             
     elif admin_password != "":
         st.error("❌ كلمة المرور غير صحيحة")

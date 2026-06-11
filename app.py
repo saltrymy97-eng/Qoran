@@ -1,16 +1,18 @@
 import streamlit as st
 import json
 import os
-from datetime import datetime
+import time
 
-# استدعاء دوال الذكاء الاصطناعي (تأكد من وجود ملف services.py)
+# استدعاء دوال الذكاء الاصطناعي (تأكد من وجود ملف services.py الخاص بك)
 try:
     from services import ask_ai, smart_classify
+    SERVICES_AVAILABLE = True
 except ImportError:
-    st.warning("⚠️ يرجى التأكد من وجود ملف `services.py`.")
+    SERVICES_AVAILABLE = False
+    st.toast("⚠️ ملف services.py غير موجود، سيتم استخدام الردود التلقائية للتجربة.", icon="⚠️")
 
 # ==========================================
-# 1. إعداد الصفحة
+# 1. إعداد الصفحة الأساسية
 # ==========================================
 st.set_page_config(
     page_title="جامعة القرآن الكريم - فرع غيل باوزير",
@@ -20,38 +22,24 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. تصميم CSS الملكي الفاخر (شامل لوحة الإدارة وإصلاح الشاشة)
+# 2. تصميم CSS الملكي الفاخر (شامل إصلاحات الجوال)
 # ==========================================
 st.markdown("""
 <style>
-/* 🔴 إصلاح مشكلة سحب الشاشة بأكملها في الجوال 🔴 */
+/* 🔴 منع الشاشة بأكملها من الانزلاق لليمين واليسار في الجوال 🔴 */
 html, body, [data-testid="stAppViewContainer"], .main {
     overflow-x: hidden !important;
     max-width: 100vw !important;
 }
 
-/* خلفية داكنة ملكية للصفحة الرئيسية */
+/* خلفية داكنة ملكية (أسود أوبسيديان) */
 .stApp {
     background: radial-gradient(circle at 50% 0%, #1a1500 0%, #05070a 40%, #020305 100%);
     background-attachment: fixed;
     color: #e6e0d4;
 }
 
-/* الحاوية الزجاجية المركزية */
-.block-container {
-    background: linear-gradient(145deg, rgba(20, 22, 28, 0.6), rgba(5, 7, 10, 0.8));
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
-    border-radius: 30px;
-    border: 1px solid rgba(212, 175, 55, 0.15);
-    border-top: 1px solid rgba(255, 223, 115, 0.4);
-    box-shadow: 0 40px 80px -15px rgba(0, 0, 0, 0.9), 0 0 40px rgba(212, 175, 55, 0.05);
-    padding: 3.5rem 2rem;
-    margin-top: 2rem;
-    margin-bottom: 2rem;
-}
-
-/* النصوص الذهبية الفاخرة */
+/* النصوص والخطوط الذهبية */
 @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@700&display=swap');
 .basmala {
     font-family: 'Amiri', serif;
@@ -72,183 +60,133 @@ html, body, [data-testid="stAppViewContainer"], .main {
     color: #ffffff;
     margin-bottom: 5px;
     text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    line-height: 1.4;
 }
+
 .uni-title span { 
     color: #d4af37; 
     filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.6));
 }
 
 .branch-title {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     text-align: center;
     color: #b3a895;
-    letter-spacing: 2px;
-    margin-bottom: 30px;
+    letter-spacing: 1px;
+    margin-bottom: 25px;
     font-weight: 300;
 }
 
-/* فاصل ذهبي متوهج */
+/* فاصل ذهبي أنيق */
 hr {
     border: 0;
     height: 1px;
     background: linear-gradient(to right, transparent, rgba(212, 175, 55, 0.8), transparent);
     box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
-    margin: 35px 0;
+    margin: 20px 0 30px 0;
 }
 
 /* ========================================= */
-/* شريط الأزرار (تمرير أفقي آمن داخل صندوقه فقط) */
+/* 🌟 شريط الأزرار الأفقي القابل للتمرير (للجوال) 🌟 */
 /* ========================================= */
-@keyframes autoPan {
-    0% { transform: translateX(5%); }
-    100% { transform: translateX(-20%); }
-}
-
 @media (max-width: 768px) {
+    /* إجبار الأعمدة على البقاء في صف واحد وتفعيل التمرير الأفقي */
     [data-testid="stHorizontalBlock"] {
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        overflow-x: auto !important; /* يسمح بالتمرير الداخلي فقط */
+        overflow-x: auto !important;
         overflow-y: hidden !important;
-        padding-bottom: 25px !important;
-        padding-top: 15px !important;
-        width: 100% !important;
-        animation: autoPan 18s ease-in-out infinite alternate;
+        padding-bottom: 20px !important;
+        padding-top: 5px !important;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch; /* لأجهزة أبل */
+        /* إخفاء شريط التمرير الافتراضي */
+        scrollbar-width: none; 
     }
     
     [data-testid="stHorizontalBlock"]::-webkit-scrollbar {
         display: none !important;
     }
-    
-    [data-testid="stHorizontalBlock"]:hover, 
-    [data-testid="stHorizontalBlock"]:active,
-    [data-testid="stHorizontalBlock"]:focus-within {
-        animation-play-state: paused !important;
-    }
 
+    /* تحديد عرض ثابت لكل زر حتى لا ينضغط */
     [data-testid="column"] {
-        min-width: 160px !important; 
+        min-width: 150px !important; 
         flex: 0 0 auto !important;
         width: auto !important;
         padding: 0 5px !important;
     }
 }
 
-/* تصميم أزرار الخدمات */
+/* تصميم أزرار الخدمات (زجاجي أسود وذهبي) */
 div.stButton > button {
     background: linear-gradient(135deg, rgba(30, 35, 40, 0.6), rgba(10, 12, 15, 0.9)) !important;
     backdrop-filter: blur(15px) !important;
     border: 1px solid rgba(212, 175, 55, 0.3) !important;
     border-top: 1px solid rgba(255, 230, 150, 0.6) !important;
-    border-radius: 20px !important;
+    border-radius: 15px !important;
     color: #f4ebd8 !important;
-    padding: 18px 10px !important;
+    padding: 12px 10px !important;
     width: 100% !important;
     height: auto !important;
-    transition: all 0.4s ease !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
-    font-size: 1.1rem !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5) !important;
+    font-size: 1rem !important;
     font-weight: bold !important;
-    white-space: nowrap !important;
+    white-space: nowrap !important; /* منع النص من النزول لسطرين */
 }
 
-div.stButton > button:hover {
-    transform: translateY(-5px) scale(1.02) !important;
+/* تأثير عند اللمس/الماوس */
+div.stButton > button:hover, div.stButton > button:active {
+    transform: translateY(-3px) scale(1.02) !important;
     background: linear-gradient(135deg, rgba(40, 45, 50, 0.8), rgba(20, 25, 30, 0.9)) !important;
     border-color: #d4af37 !important;
     color: #ffffff !important;
-    box-shadow: 0 15px 40px rgba(212, 175, 55, 0.35), 0 0 15px rgba(212, 175, 55, 0.2) inset !important;
+    box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4) !important;
 }
 
 /* ========================================= */
-/* 👑 تصميم لوحة الإدارة الجانبية (Sidebar) 👑 */
-/* ========================================= */
-[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #05070a, #0a0e14) !important;
-    border-left: 1px solid rgba(212, 175, 55, 0.2) !important;
-    box-shadow: -15px 0 40px rgba(0,0,0,0.9) !important;
-}
-
-/* عناوين لوحة الإدارة */
-[data-testid="stSidebar"] .stMarkdown h1, 
-[data-testid="stSidebar"] .stMarkdown h2, 
-[data-testid="stSidebar"] .stMarkdown h3 {
-    color: #d4af37 !important;
-    text-shadow: 0 2px 10px rgba(212, 175, 55, 0.3) !important;
-}
-
-/* نصوص التسميات (Labels) في القائمة الجانبية */
-[data-testid="stSidebar"] label {
-    color: #b3a895 !important;
-    font-weight: bold !important;
-    margin-bottom: 5px !important;
-}
-
-/* حقول الإدخال في لوحة الإدارة */
-[data-testid="stSidebar"] input, 
-[data-testid="stSidebar"] textarea {
-    background: rgba(15, 20, 25, 0.8) !important;
-    border: 1px solid rgba(212, 175, 55, 0.3) !important;
-    border-radius: 12px !important;
-    color: #ffffff !important;
-    box-shadow: inset 0 2px 10px rgba(0,0,0,0.5) !important;
-    transition: all 0.3s ease !important;
-}
-
-[data-testid="stSidebar"] input:focus, 
-[data-testid="stSidebar"] textarea:focus {
-    border-color: #d4af37 !important;
-    box-shadow: 0 0 15px rgba(212, 175, 55, 0.4) !important;
-}
-
-/* رسائل النجاح والخطأ في الإدارة */
-[data-testid="stSidebar"] [data-testid="stNotification"] {
-    background: rgba(20, 25, 30, 0.9) !important;
-    border: 1px solid #d4af37 !important;
-    border-radius: 10px !important;
-    color: white !important;
-}
-
-/* ========================================= */
-/* رسائل الدردشة وحقل الإدخال الرئيسي */
+/* رسائل الدردشة وحقل الإدخال */
 /* ========================================= */
 [data-testid="stChatMessage"] {
     background: linear-gradient(145deg, rgba(15, 18, 25, 0.7), rgba(5, 8, 12, 0.9)) !important;
     backdrop-filter: blur(12px) !important;
     border: 1px solid rgba(255, 255, 255, 0.03) !important;
-    border-right: 4px solid #d4af37 !important;
-    border-radius: 20px !important;
-    padding: 1.8rem !important;
-    margin-bottom: 1.5rem !important;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.3) !important;
+    border-right: 3px solid #d4af37 !important;
+    border-radius: 15px !important;
+    padding: 1.5rem !important;
+    margin-bottom: 1rem !important;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3) !important;
     color: #e6e0d4 !important;
 }
 
+/* كبسولة الكتابة العائمة */
 [data-testid="stChatInput"] {
-    background: rgba(5, 7, 10, 0.9) !important;
-    backdrop-filter: blur(30px) !important;
-    border: 1px solid rgba(212, 175, 55, 0.4) !important;
-    border-radius: 40px !important;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 20px rgba(212, 175, 55, 0.1) !important;
-    padding: 10px 20px !important;
-    transition: all 0.3s ease !important;
+    background: rgba(10, 12, 15, 0.95) !important;
+    backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(212, 175, 55, 0.5) !important;
+    border-radius: 30px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important;
+    padding: 5px 10px !important;
+    margin-bottom: 10px !important;
 }
 
 [data-testid="stChatInput"]:focus-within {
     border-color: #ffd700 !important;
-    box-shadow: 0 0 40px rgba(212, 175, 55, 0.5) !important;
-    transform: translateY(-2px) !important;
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.4) !important;
 }
 
 [data-testid="stChatInput"] textarea {
     color: #ffffff !important;
-    font-size: 1.1rem !important;
+    font-size: 1rem !important;
 }
+
+/* إخفاء علامة Streamlit السفلية */
+footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. الدوال وإدارة البيانات
+# 3. إدارة البيانات (قاعدة المعرفة المصغرة)
 # ==========================================
 DATA_FILE = "data.json"
 
@@ -257,11 +195,12 @@ def load_data():
         with open(DATA_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     return {
-        "info": "معلومات عامة عن فرع جامعة القرآن الكريم والعلوم الإسلامية بغيل باوزير.",
-        "schedules": "جداول المحاضرات لجميع المستويات.",
-        "fees": "الرسوم الدراسية وطرق الدفع.",
-        "contacts": "أرقام التواصل وإيميل الفرع.",
-        "majors": "التخصصات المتاحة في الفرع."
+        "info": "أهلاً بك في جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير. كيف يمكنني مساعدتك؟",
+        "schedules": "الجداول الدراسية تُحدث بداية كل فصل دراسي. يرجى مراجعة شؤون الطلاب.",
+        "exams": "تبدأ الامتحانات النصفية في الأسبوع الثامن من الفصل الدراسي.",
+        "fees": "يمكن تسديد الرسوم عبر البنك أو الدفع المباشر في الإدارة المالية.",
+        "contacts": "للتواصل: 053XXXXX أو زيارة مبنى الفرع بغيل باوزير.",
+        "majors": "التخصصات: القرآن وعلومه، الشريعة، والدراسات الإسلامية."
     }
 
 def save_data(data):
@@ -272,96 +211,110 @@ if "db" not in st.session_state:
     st.session_state.db = load_data()
 
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    # رسالة ترحيبية افتراضية
+    st.session_state.messages = [{"role": "assistant", "content": "مرحباً بك في المساعد الذكي لجامعة القرآن الكريم - فرع غيل باوزير. تفضل بطرح استفسارك أو اختر من الخدمات المتاحة أعلاه."}]
 
 if "auto_question" not in st.session_state:
     st.session_state.auto_question = None
 
 # ==========================================
-# 4. الواجهة الرئيسية (الهيدر)
+# 4. الواجهة الرئيسية (رأس الصفحة)
 # ==========================================
 st.markdown('<div class="basmala">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>', unsafe_allow_html=True)
-st.markdown('<div class="uni-title"><span>🕌</span> جامعة القرآن الكريم والعلوم الإسلامية</div>', unsafe_allow_html=True)
+st.markdown('<div class="uni-title"><span>🕌</span> جامعة القرآن الكريم<br>والعلوم الإسلامية</div>', unsafe_allow_html=True)
 st.markdown('<div class="branch-title">✦ فرع غيل باوزير - حضرموت ✦</div>', unsafe_allow_html=True)
 
 # ==========================================
-# 5. شريط البطاقات الأفقي
+# 5. شريط الخدمات (التمرير الأفقي في الجوال)
 # ==========================================
 col1, col2, col3, col4, col5 = st.columns(5)
 
-if col1.button("📅 جداول المحاضرات"):
+if col1.button("📅 الجداول"):
     st.session_state.auto_question = "أريد الاستفسار عن جداول المحاضرات"
 if col2.button("📝 الامتحانات"):
     st.session_state.auto_question = "ما هي مواعيد وترتيبات الامتحانات؟"
-if col3.button("💰 الرسوم الدراسية"):
+if col3.button("💰 الرسوم"):
     st.session_state.auto_question = "أريد معرفة تفاصيل الرسوم الدراسية وطرق السداد"
-if col4.button("📞 جهات الاتصال"):
+if col4.button("📞 التواصل"):
     st.session_state.auto_question = "كيف يمكنني التواصل مع إدارة الفرع؟"
 if col5.button("🎓 التخصصات"):
-    st.session_state.auto_question = "ما هي التخصصات الأكاديمية المتاحة للتسجيل؟"
+    st.session_state.auto_question = "ما هي التخصصات الأكاديمية المتاحة؟"
 
 st.markdown('<hr>', unsafe_allow_html=True)
 
 # ==========================================
-# 6. محرك الدردشة
+# 6. محرك الدردشة (Chat Engine)
 # ==========================================
+# عرض الرسائل السابقة
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
+# استقبال إدخال المستخدم
 user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
 
+# معالجة الضغط على أزرار الخدمات
 if st.session_state.auto_question:
     user_input = st.session_state.auto_question
     st.session_state.auto_question = None
 
+# توليد الرد
 if user_input:
+    # حفظ وطباعة رسالة المستخدم
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.markdown(user_input)
     
+    # الرد من المساعد
     with st.chat_message("assistant"):
-        with st.spinner("جارٍ صياغة الإجابة..."):
-            try:
-                category = smart_classify(user_input)
-                context_data = st.session_state.db.get(category, st.session_state.db["info"])
-                ai_response = ask_ai(user_input, context_data)
-            except Exception as e:
-                ai_response = f"عذراً، حدث خطأ أثناء معالجة طلبك: {str(e)}"
+        with st.spinner("جارٍ معالجة استفسارك..."):
+            if SERVICES_AVAILABLE:
+                try:
+                    category = smart_classify(user_input)
+                    context_data = st.session_state.db.get(category, st.session_state.db["info"])
+                    ai_response = ask_ai(user_input, context_data)
+                except Exception as e:
+                    ai_response = f"عذراً، حدث خطأ في النظام: {str(e)}"
+            else:
+                # رد وهمي في حال غياب ملف الذكاء الاصطناعي (للتجربة)
+                time.sleep(1)
+                ai_response = "هذا رد تجريبي نظراً لعدم ربط دوال الذكاء الاصطناعي. يُرجى مراجعة إدارة الجامعة للمزيد من التفاصيل حول استفسارك."
             
             st.markdown(ai_response)
     
+    # حفظ رد المساعد
     st.session_state.messages.append({"role": "assistant", "content": ai_response})
 
 # ==========================================
-# 7. لوحة الإدارة الجانبية (Sidebar)
+# 7. لوحة الإدارة الجانبية (Sidebar Admin Panel)
 # ==========================================
 with st.sidebar:
-    st.markdown("## ⚙️ لوحة إدارة النظام")
+    st.markdown("<h2 style='color: #d4af37; text-align: center;'>⚙️ إدارة البيانات</h2>", unsafe_allow_html=True)
     st.markdown("---")
     
-    admin_password = st.text_input("كلمة المرور 🔒", type="password")
+    admin_password = st.text_input("كلمة مرور المشرف 🔒", type="password")
     
-    if admin_password == "admin123":
-        st.success("✅ تم تسجيل الدخول بنجاح")
+    if admin_password == "admin123": # يفضل تغييرها واستخدام st.secrets
+        st.success("✅ تم التحقق")
         
         edit_info = st.text_area("معلومات عامة", st.session_state.db.get("info", ""), height=100)
         edit_schedules = st.text_area("الجداول", st.session_state.db.get("schedules", ""), height=100)
+        edit_exams = st.text_area("الامتحانات", st.session_state.db.get("exams", ""), height=100)
         edit_fees = st.text_area("الرسوم", st.session_state.db.get("fees", ""), height=100)
         edit_contacts = st.text_area("جهات الاتصال", st.session_state.db.get("contacts", ""), height=100)
         edit_majors = st.text_area("التخصصات", st.session_state.db.get("majors", ""), height=100)
         
-        # زر الحفظ الخاص بلوحة الإدارة
-        if st.button("💾 حفظ التعديلات", use_container_width=True):
+        if st.button("💾 حفظ البيانات", use_container_width=True):
             st.session_state.db = {
                 "info": edit_info,
                 "schedules": edit_schedules,
+                "exams": edit_exams,
                 "fees": edit_fees,
                 "contacts": edit_contacts,
                 "majors": edit_majors
             }
             save_data(st.session_state.db)
-            st.success("🎉 تم تحديث بيانات الجامعة بنجاح!")
+            st.success("🎉 تم تحديث قاعدة معرفة الذكاء الاصطناعي بنجاح!")
             
     elif admin_password != "":
         st.error("❌ كلمة المرور غير صحيحة")

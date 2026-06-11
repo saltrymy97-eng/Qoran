@@ -3,11 +3,11 @@ import json
 import os
 from datetime import datetime
 
-# استدعاء دوال الذكاء الاصطناعي الخاصة بك (تأكد من وجود ملف services.py في نفس المجلد)
+# استدعاء دوال الذكاء الاصطناعي (تأكد من وجود ملف services.py)
 try:
     from services import ask_ai, smart_classify
 except ImportError:
-    st.warning("⚠️ يرجى التأكد من وجود ملف `services.py` الذي يحتوي على دوال الذكاء الاصطناعي.")
+    st.warning("⚠️ يرجى التأكد من وجود ملف `services.py`.")
 
 # ==========================================
 # 1. إعداد الصفحة
@@ -20,18 +20,24 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. تصميم CSS الملكي الفاخر (Royal Glassmorphism & Auto-Scroll)
+# 2. تصميم CSS الملكي الفاخر (شامل لوحة الإدارة وإصلاح الشاشة)
 # ==========================================
 st.markdown("""
 <style>
-/* خلفية داكنة ملكية (أسود أوبسيديان مع توهج ذهبي خافت) */
+/* 🔴 إصلاح مشكلة سحب الشاشة بأكملها في الجوال 🔴 */
+html, body, [data-testid="stAppViewContainer"], .main {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+}
+
+/* خلفية داكنة ملكية للصفحة الرئيسية */
 .stApp {
     background: radial-gradient(circle at 50% 0%, #1a1500 0%, #05070a 40%, #020305 100%);
     background-attachment: fixed;
     color: #e6e0d4;
 }
 
-/* الحاوية الزجاجية المركزية (تأثير الزجاج المصقول) */
+/* الحاوية الزجاجية المركزية */
 .block-container {
     background: linear-gradient(145deg, rgba(20, 22, 28, 0.6), rgba(5, 7, 10, 0.8));
     backdrop-filter: blur(30px);
@@ -45,7 +51,7 @@ st.markdown("""
     margin-bottom: 2rem;
 }
 
-/* النصوص الذهبية الفاخرة (تأثير الذهب السائل) */
+/* النصوص الذهبية الفاخرة */
 @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@700&display=swap');
 .basmala {
     font-family: 'Amiri', serif;
@@ -91,21 +97,27 @@ hr {
 }
 
 /* ========================================= */
-/* شريط الأزرار الديناميكي (التمرير التلقائي) */
+/* شريط الأزرار (تمرير أفقي آمن داخل صندوقه فقط) */
 /* ========================================= */
 @keyframes autoPan {
-    0% { transform: translateX(10%); }
-    100% { transform: translateX(-30%); }
+    0% { transform: translateX(5%); }
+    100% { transform: translateX(-20%); }
 }
 
 @media (max-width: 768px) {
     [data-testid="stHorizontalBlock"] {
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        overflow-x: visible !important;
+        overflow-x: auto !important; /* يسمح بالتمرير الداخلي فقط */
+        overflow-y: hidden !important;
         padding-bottom: 25px !important;
         padding-top: 15px !important;
-        animation: autoPan 15s ease-in-out infinite alternate;
+        width: 100% !important;
+        animation: autoPan 18s ease-in-out infinite alternate;
+    }
+    
+    [data-testid="stHorizontalBlock"]::-webkit-scrollbar {
+        display: none !important;
     }
     
     [data-testid="stHorizontalBlock"]:hover, 
@@ -115,14 +127,14 @@ hr {
     }
 
     [data-testid="column"] {
-        min-width: 170px !important; 
+        min-width: 160px !important; 
         flex: 0 0 auto !important;
         width: auto !important;
-        padding: 0 8px !important;
+        padding: 0 5px !important;
     }
 }
 
-/* تصميم أزرار الخدمات (زجاج أسود مع إطار ذهبي) */
+/* تصميم أزرار الخدمات */
 div.stButton > button {
     background: linear-gradient(135deg, rgba(30, 35, 40, 0.6), rgba(10, 12, 15, 0.9)) !important;
     backdrop-filter: blur(15px) !important;
@@ -130,25 +142,76 @@ div.stButton > button {
     border-top: 1px solid rgba(255, 230, 150, 0.6) !important;
     border-radius: 20px !important;
     color: #f4ebd8 !important;
-    padding: 18px 20px !important;
+    padding: 18px 10px !important;
     width: 100% !important;
     height: auto !important;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    transition: all 0.4s ease !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
-    font-size: 1.15rem !important;
+    font-size: 1.1rem !important;
     font-weight: bold !important;
     white-space: nowrap !important;
 }
 
 div.stButton > button:hover {
-    transform: translateY(-8px) scale(1.02) !important;
+    transform: translateY(-5px) scale(1.02) !important;
     background: linear-gradient(135deg, rgba(40, 45, 50, 0.8), rgba(20, 25, 30, 0.9)) !important;
     border-color: #d4af37 !important;
     color: #ffffff !important;
     box-shadow: 0 15px 40px rgba(212, 175, 55, 0.35), 0 0 15px rgba(212, 175, 55, 0.2) inset !important;
 }
 
-/* رسائل الدردشة (لمسة فخمة) */
+/* ========================================= */
+/* 👑 تصميم لوحة الإدارة الجانبية (Sidebar) 👑 */
+/* ========================================= */
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #05070a, #0a0e14) !important;
+    border-left: 1px solid rgba(212, 175, 55, 0.2) !important;
+    box-shadow: -15px 0 40px rgba(0,0,0,0.9) !important;
+}
+
+/* عناوين لوحة الإدارة */
+[data-testid="stSidebar"] .stMarkdown h1, 
+[data-testid="stSidebar"] .stMarkdown h2, 
+[data-testid="stSidebar"] .stMarkdown h3 {
+    color: #d4af37 !important;
+    text-shadow: 0 2px 10px rgba(212, 175, 55, 0.3) !important;
+}
+
+/* نصوص التسميات (Labels) في القائمة الجانبية */
+[data-testid="stSidebar"] label {
+    color: #b3a895 !important;
+    font-weight: bold !important;
+    margin-bottom: 5px !important;
+}
+
+/* حقول الإدخال في لوحة الإدارة */
+[data-testid="stSidebar"] input, 
+[data-testid="stSidebar"] textarea {
+    background: rgba(15, 20, 25, 0.8) !important;
+    border: 1px solid rgba(212, 175, 55, 0.3) !important;
+    border-radius: 12px !important;
+    color: #ffffff !important;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.5) !important;
+    transition: all 0.3s ease !important;
+}
+
+[data-testid="stSidebar"] input:focus, 
+[data-testid="stSidebar"] textarea:focus {
+    border-color: #d4af37 !important;
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.4) !important;
+}
+
+/* رسائل النجاح والخطأ في الإدارة */
+[data-testid="stSidebar"] [data-testid="stNotification"] {
+    background: rgba(20, 25, 30, 0.9) !important;
+    border: 1px solid #d4af37 !important;
+    border-radius: 10px !important;
+    color: white !important;
+}
+
+/* ========================================= */
+/* رسائل الدردشة وحقل الإدخال الرئيسي */
+/* ========================================= */
 [data-testid="stChatMessage"] {
     background: linear-gradient(145deg, rgba(15, 18, 25, 0.7), rgba(5, 8, 12, 0.9)) !important;
     backdrop-filter: blur(12px) !important;
@@ -161,7 +224,6 @@ div.stButton > button:hover {
     color: #e6e0d4 !important;
 }
 
-/* كبسولة الإدخال (حقل النص العائم) */
 [data-testid="stChatInput"] {
     background: rgba(5, 7, 10, 0.9) !important;
     backdrop-filter: blur(30px) !important;
@@ -223,7 +285,7 @@ st.markdown('<div class="uni-title"><span>🕌</span> جامعة القرآن ا
 st.markdown('<div class="branch-title">✦ فرع غيل باوزير - حضرموت ✦</div>', unsafe_allow_html=True)
 
 # ==========================================
-# 5. شريط البطاقات الأفقي (Swipeable & Auto-Pan on Mobile)
+# 5. شريط البطاقات الأفقي
 # ==========================================
 col1, col2, col3, col4, col5 = st.columns(5)
 
@@ -254,51 +316,42 @@ if st.session_state.auto_question:
     st.session_state.auto_question = None
 
 if user_input:
-    # 1. طباعة وحفظ رسالة المستخدم
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.markdown(user_input)
     
-    # 2. معالجة الذكاء الاصطناعي
     with st.chat_message("assistant"):
         with st.spinner("جارٍ صياغة الإجابة..."):
             try:
-                # تصنيف السؤال لمعرفة القسم المناسب
                 category = smart_classify(user_input)
-                
-                # جلب السياق المناسب من قاعدة البيانات
                 context_data = st.session_state.db.get(category, st.session_state.db["info"])
-                
-                # سؤال المساعد مع إرفاق السياق
                 ai_response = ask_ai(user_input, context_data)
             except Exception as e:
-                # رسالة خطأ بديلة في حال عدم ربط ملف services بشكل صحيح
-                ai_response = f"عذراً، حدث خطأ أثناء معالجة طلبك أو أن دوال الذكاء الاصطناعي غير متصلة بشكل صحيح. التفاصيل: {str(e)}"
+                ai_response = f"عذراً، حدث خطأ أثناء معالجة طلبك: {str(e)}"
             
             st.markdown(ai_response)
     
-    # 3. حفظ رسالة المساعد
     st.session_state.messages.append({"role": "assistant", "content": ai_response})
 
 # ==========================================
-# 7. لوحة الإدارة الجانبية
+# 7. لوحة الإدارة الجانبية (Sidebar)
 # ==========================================
 with st.sidebar:
-    st.header("⚙️ لوحة إدارة النظام")
+    st.markdown("## ⚙️ لوحة إدارة النظام")
     st.markdown("---")
     
-    admin_password = st.text_input("كلمة المرور", type="password")
+    admin_password = st.text_input("كلمة المرور 🔒", type="password")
     
-    # من الأفضل لاحقاً استخدام st.secrets["admin_password"] لحماية الباسوورد
     if admin_password == "admin123":
-        st.success("✅ تم تسجيل الدخول كمسؤول")
+        st.success("✅ تم تسجيل الدخول بنجاح")
         
-        edit_info = st.text_area("معلومات عامة", st.session_state.db.get("info", ""))
-        edit_schedules = st.text_area("الجداول", st.session_state.db.get("schedules", ""))
-        edit_fees = st.text_area("الرسوم", st.session_state.db.get("fees", ""))
-        edit_contacts = st.text_area("جهات الاتصال", st.session_state.db.get("contacts", ""))
-        edit_majors = st.text_area("التخصصات", st.session_state.db.get("majors", ""))
+        edit_info = st.text_area("معلومات عامة", st.session_state.db.get("info", ""), height=100)
+        edit_schedules = st.text_area("الجداول", st.session_state.db.get("schedules", ""), height=100)
+        edit_fees = st.text_area("الرسوم", st.session_state.db.get("fees", ""), height=100)
+        edit_contacts = st.text_area("جهات الاتصال", st.session_state.db.get("contacts", ""), height=100)
+        edit_majors = st.text_area("التخصصات", st.session_state.db.get("majors", ""), height=100)
         
+        # زر الحفظ الخاص بلوحة الإدارة
         if st.button("💾 حفظ التعديلات", use_container_width=True):
             st.session_state.db = {
                 "info": edit_info,

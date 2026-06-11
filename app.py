@@ -2,13 +2,18 @@ import streamlit as st
 import json
 import os
 from datetime import datetime
-from services import ask_ai, smart_classify
 
-# ======== إعدادات جامعة القرآن الكريم ========
-APP_TITLE = "جامعة القرآن الكريم والعلوم الإسلامية"
-APP_SUBTITLE = "فرع غيل باوزير - حضرموت"
-APP_ICON = "🕌"
+# ======== إعدادات وهمية لتشغيل الكود (استبدلها بملفاتك) ========
+# from services import ask_ai, smart_classify
+# from config import APP_TITLE, APP_SUBTITLE, APP_ICON, THEME
+APP_TITLE = "المساعد الأكاديمي"
+APP_SUBTITLE = "بوابتك الذكية للخدمات الجامعية"
+APP_ICON = "🏛️"
 THEME = {'primary': '#d4af37', 'text_muted': '#8892b0'}
+
+def ask_ai(q, c): return f"هذا رد تجريبي لسؤالك عن {c}"
+def smart_classify(q): return "عام"
+# ===============================================================
 
 # ======== إعداد الصفحة ========
 st.set_page_config(
@@ -277,3 +282,4 @@ with st.sidebar:
         <span style="color: #d4af37;">Powered by AI</span>
     </div>
     """, unsafe_allow_html=True)
+

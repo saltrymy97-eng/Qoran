@@ -140,16 +140,6 @@ st.markdown(f"""
         display: inline-block;
         width: 100%;
     }}
-    .assistant-title::after {{
-        content: '';
-        display: block;
-        width: 120px;
-        height: 3px;
-        background: linear-gradient(90deg, #d4af37, #f9e076, #d4af37);
-        margin: 10px auto 0;
-        border-radius: 3px;
-        box-shadow: 0 0 12px rgba(212,175,55,0.6);
-    }}
 
     [data-testid="stChatMessage"] {{
         background: rgba(10, 16, 28, 0.7) !important;

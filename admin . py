@@ -1,0 +1,117 @@
+import streamlit as st
+from auth import require_auth
+from services import load_json, save_json, update_data, get_logs
+from config import *
+import pandas as pd
+from datetime import datetime
+
+st.set_page_config(page_title="لوحة الإدارة", page_icon="⚙️", layout="wide")
+
+require_auth()  # التحقق من المصادقة
+
+# ======== CSS الإدارة ========
+st.markdown("""
+<style>
+    .admin-card {
+        background: rgba(255,255,255,0.03);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(212,175,55,0.2);
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 20px;
+    }
+    .stat-value {
+        font-size: 2em;
+        font-weight: bold;
+        color: #d4af37;
+    }
+    .stat-label {
+        font-size: 0.9em;
+        color: #aaa;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+st.title("⚙️ لوحة الإدارة المتقدمة")
+st.markdown("---")
+
+# ======== التبويبات ========
+tab1, tab2, tab3, tab4 = st.tabs(["📝 تحرير المحتوى", "📊 الإحصائيات", "📋 السجلات", "⚙️ إعدادات"])
+
+with tab1:
+    st.subheader("تحرير معلومات الجامعة")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("#### معلومات عامة")
+        current_info = load_json(INFO_FILE, {"info": ""}).get("info", "")
+        new_info = st.text_area("المعلومات العامة:", value=current_info, height=200)
+        if st.button("حفظ المعلومات", key="save_info"):
+            update_data("info", new_info)
+            st.success("تم حفظ المعلومات العامة")
+    
+    with col2:
+        st.markdown("#### الجداول الدراسية")
+        current_sched = load_json(SCHEDULES_FILE, {"schedules": ""}).get("schedules", "")
+        new_sched = st.text_area("الجداول:", value=current_sched, height=200)
+        if st.button("حفظ الجداول", key="save_sched"):
+            update_data("schedules", new_sched)
+            st.success("تم حفظ الجداول")
+    
+    col3, col4 = st.columns(2)
+    
+    with col3:
+        st.markdown("#### الرسوم الدراسية")
+        current_fees = load_json(FEES_FILE, {"fees": ""}).get("fees", "")
+        new_fees = st.text_area("الرسوم:", value=current_fees, height=150)
+        if st.button("حفظ الرسوم", key="save_fees"):
+            update_data("fees", new_fees)
+            st.success("تم حفظ الرسوم")
+    
+    with col4:
+        st.markdown("#### جهات الاتصال")
+        current_contacts = load_json(CONTACTS_FILE, {"contacts": ""}).get("contacts", "")
+        new_contacts = st.text_area("جهات الاتصال:", value=current_contacts, height=150)
+        if st.button("حفظ جهات الاتصال", key="save_contacts"):
+            update_data("contacts", new_contacts)
+            st.success("تم حفظ جهات الاتصال")
+
+with tab2:
+    st.subheader("إحصائيات النظام")
+    
+    # عدد الأسئلة
+    logs = get_logs()
+    total_questions = len(logs)
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown(f'<div class="admin-card"><div class="stat-value">{total_questions}</div><div class="stat-label">إجمالي الأسئلة</div></div>', unsafe_allow_html=True)
+    with col2:
+        # تصنيف الأسئلة
+        if logs:
+            df = pd.DataFrame(logs)
+            today = datetime.now().strftime("%Y-%m-%d")
+            today_count = len(df[df['timestamp'].str.startswith(today)])
+            st.markdown(f'<div class="admin-card"><div class="stat-value">{today_count}</div><div class="stat-label">أسئلة اليوم</div></div>', unsafe_allow_html=True)
+        else:
+            st.markdown('<div class="admin-card"><div class="stat-value">0</div><div class="stat-label">أسئلة اليوم</div></div>', unsafe_allow_html=True)
+    with col3:
+        st.markdown(f'<div class="admin-card"><div class="stat-value">4</div><div class="stat-label">فئات الخدمات</div></div>', unsafe_allow_html=True)
+
+with tab3:
+    st.subheader("سجل الأسئلة")
+    logs = get_logs()
+    if logs:
+        df = pd.DataFrame(logs)
+        df = df[["timestamp", "question", "reply", "user"]]
+        df.columns = ["التاريخ", "السؤال", "الرد", "المستخدم"]
+        st.dataframe(df, use_container_width=True)
+    else:
+        st.info("لا توجد أسئلة مسجلة بعد")
+
+with tab4:
+    st.subheader("إعدادات النظام")
+    st.text_input("مفتاح Groq API", type="password", value="********")
+    if st.button("تحديث المفتاح"):
+        st.warning("يجب تحديث المفتاح في ملف services.py")

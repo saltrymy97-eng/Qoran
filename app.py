@@ -1,110 +1,186 @@
 import streamlit as st
 import json
 import os
-from groq import Groq
+from services import ask_ai, smart_classify
+from config import *
 from datetime import datetime
 
 # ======== إعداد الصفحة ========
 st.set_page_config(
-    page_title="جامعة القرآن - غيل باوزير",
-    page_icon="🕌",
+    page_title=f"{APP_TITLE} - {APP_SUBTITLE}",
+    page_icon=APP_ICON,
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# ======== إعداد Groq ========
-GROQ_API_KEY = "gsk_مفتاحك_هنا"  # ضع مفتاحك الحقيقي
-groq_client = Groq(api_key=GROQ_API_KEY)
-
-# ======== CSS (نفس التصميم السابق) ========
-st.markdown("""
+# ======== CSS متطور جداً ========
+st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=El+Messiri:wght@400;600;700&display=swap');
     
-    * { font-family: 'El Messiri', sans-serif; }
+    * {{
+        font-family: 'El Messiri', sans-serif;
+    }}
 
-    .stApp {
+    .stApp {{
         background: linear-gradient(135deg, #030b1a 0%, #0a1a2f 25%, #0d1f3c 50%, #0a1a2f 75%, #030b1a 100%) !important;
         background-size: 400% 400% !important;
         animation: cosmicBG 30s ease infinite !important;
-    }
-    @keyframes cosmicBG {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
+    }}
+    @keyframes cosmicBG {{
+        0% {{ background-position: 0% 50%; }}
+        50% {{ background-position: 100% 50%; }}
+        100% {{ background-position: 0% 50%; }}
+    }}
 
-    .glass-container {
+    .stars {{
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+        background: radial-gradient(2px 2px at 20px 30px, #fff, transparent),
+                    radial-gradient(2px 2px at 40px 70px, #fff, transparent),
+                    radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+                    radial-gradient(1px 1px at 130px 80px, #fff, transparent),
+                    radial-gradient(2px 2px at 160px 30px, #fff, transparent);
+        background-size: 200px 200px;
+        animation: twinkle 4s infinite;
+    }}
+    @keyframes twinkle {{
+        0% {{ opacity: 0.5; }}
+        50% {{ opacity: 1; }}
+        100% {{ opacity: 0.5; }}
+    }}
+
+    .glass-container {{
         background: rgba(20, 30, 50, 0.3);
         backdrop-filter: blur(30px);
+        -webkit-backdrop-filter: blur(30px);
         border: 1px solid rgba(212, 175, 55, 0.15);
         border-radius: 40px;
         padding: 40px 35px;
         margin: 30px auto;
-        max-width: 900px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-    }
+        max-width: 1100px;
+        position: relative;
+        z-index: 1;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.6), inset 0 0 30px rgba(212,175,55,0.05);
+    }}
 
-    .basmala {
+    .basmala {{
         text-align: center;
         font-family: 'Amiri', serif;
-        font-size: 2.2em;
+        font-size: 2.5em;
         font-weight: 700;
         color: #d4af37;
+        text-shadow: 0 0 20px rgba(212,175,55,0.4);
         margin: 15px 0;
-    }
+    }}
 
-    .main-title {
+    .main-title {{
         text-align: center;
-        font-size: 2.5em;
+        font-size: 2.8em;
         font-weight: 700;
         color: #fff;
         text-shadow: 0 0 40px rgba(212,175,55,0.4);
-    }
-    .sub-title {
+        letter-spacing: 3px;
+    }}
+    .sub-title {{
         text-align: center;
-        font-size: 1.3em;
-        color: #d4af37;
-        letter-spacing: 5px;
+        font-size: 1.4em;
+        color: {THEME['primary']};
+        letter-spacing: 6px;
         margin-bottom: 25px;
-    }
+    }}
 
-    /* صناديق الدردشة */
-    .chat-message {
+    .service-card {{
+        background: rgba(30, 40, 60, 0.2);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(212,175,55,0.2);
+        border-radius: 30px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1.2);
+        cursor: pointer;
+        height: 150px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }}
+    .service-card:hover {{
+        transform: translateY(-10px) scale(1.05);
+        border-color: {THEME['primary']};
+        box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 40px rgba(212,175,55,0.25);
+    }}
+    .service-icon {{
+        font-size: 3em;
+        margin-bottom: 10px;
+    }}
+    .service-label {{
+        color: #fff;
+        font-size: 1.2em;
+        font-weight: 600;
+    }}
+
+    .chat-message {{
         padding: 18px 22px;
         border-radius: 20px;
-        margin: 12px 0;
+        margin: 10px 0;
         font-size: 1.1em;
         line-height: 1.9;
         backdrop-filter: blur(15px);
-    }
-    .user-message {
+    }}
+    .user-message {{
         background: rgba(212, 175, 55, 0.15);
         border-left: 4px solid #d4af37;
         color: #f0e6c0;
-    }
-    .bot-message {
+        text-align: right;
+    }}
+    .bot-message {{
         background: rgba(20, 40, 30, 0.5);
-        border-left: 4px solid #2e8b57;
+        border-left: 4px solid {THEME['primary']};
         color: #e0e0e0;
-    }
+    }}
 
-    .stChatInput textarea {
+    .stChatInput textarea {{
         background: rgba(255,255,255,0.07) !important;
         border: 1px solid rgba(212,175,55,0.3) !important;
         border-radius: 30px !important;
         color: #fff !important;
         padding: 15px 20px !important;
-    }
+    }}
 
-    section[data-testid="stSidebar"] {
-        background: rgba(10, 15, 30, 0.9) !important;
-        backdrop-filter: blur(30px) !important;
-    }
+    .stButton > button {{
+        background: linear-gradient(135deg, {THEME['primary']}, #b8941f) !important;
+        color: #000 !important;
+        font-weight: bold !important;
+        border-radius: 50px !important;
+        padding: 10px 25px !important;
+        font-size: 1em !important;
+        transition: all 0.3s !important;
+    }}
+    .stButton > button:hover {{
+        transform: scale(1.05) !important;
+        box-shadow: 0 10px 30px rgba(212,175,55,0.4) !important;
+    }}
+
+    .element-container:empty, .stMarkdown:empty, div:empty {{
+        display: none !important;
+    }}
     
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
+    #MainMenu {{visibility: hidden;}}
+    footer {{visibility: hidden;}}
+
+    section[data-testid="stSidebar"] {{
+        background: rgba(10, 15, 30, 0.85) !important;
+        backdrop-filter: blur(30px) !important;
+        border-left: 1px solid rgba(212,175,55,0.25) !important;
+    }}
 </style>
+<div class="stars"></div>
 """, unsafe_allow_html=True)
 
 # ======== دوال البيانات ========
@@ -120,28 +196,7 @@ def save_data(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-# ======== دوال الذكاء الاصطناعي ========
-SYSTEM_PROMPT = """أنت مساعد ذكي لفرع جامعة القرآن الكريم والعلوم الإسلامية في غيل باوزير، حضرموت.
-أجب بدقة من بيانات الجامعة. إذا لم تجد المعلومة، قل: 'لم أجد هذه المعلومة، يرجى التواصل مع الإدارة.'
-كن مختصرًا ومفيدًا."""
-
-def chat_with_ai(messages):
-    """يرسل تاريخ المحادثة كاملاً إلى Groq"""
-    try:
-        response = groq_client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                *messages
-            ],
-            temperature=0.5,
-            max_tokens=400
-        )
-        return response.choices[0].message.content
-    except:
-        return "⚠️ حدث خطأ تقني. يرجى المحاولة لاحقًا."
-
-# ======== بدء الجلسة ========
+# ======== بدء جلسة المحادثة ========
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -150,61 +205,60 @@ st.markdown('<div class="glass-container">', unsafe_allow_html=True)
 
 # البسملة والعنوان
 st.markdown('<div class="basmala">بسم الله الرحمن الرحيم</div>', unsafe_allow_html=True)
-st.markdown('<div class="main-title">🕌 جامعة القرآن الكريم والعلوم الإسلامية</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">✦ فرع غيل باوزير - حضرموت ✦</div>', unsafe_allow_html=True)
+st.markdown(f'<div class="main-title">{APP_ICON} {APP_TITLE}</div>', unsafe_allow_html=True)
+st.markdown(f'<div class="sub-title">✦ {APP_SUBTITLE} ✦</div>', unsafe_allow_html=True)
+
+# بطاقات الخدمات السريعة
+st.markdown("---")
+st.markdown("### 📌 الخدمات السريعة")
+cols = st.columns(5)
+services = [
+    ("📚", "جداول المحاضرات", "schedules"),
+    ("📅", "الامتحانات", "schedules"),
+    ("💰", "الرسوم الدراسية", "fees"),
+    ("📞", "جهات الاتصال", "contacts"),
+    ("🎓", "التخصصات", "majors")
+]
+
+for col, (icon, name, category) in zip(cols, services):
+    with col:
+        st.markdown(f"""
+        <div class="service-card" id="card-{name}">
+            <div class="service-icon">{icon}</div>
+            <div class="service-label">{name}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("", key=f"btn_{name}", use_container_width=True):
+            question = f"أريد معلومات عن {name}"
+            st.session_state.messages.append({"role": "user", "content": question})
+            reply = ask_ai(question, category)
+            st.session_state.messages.append({"role": "assistant", "content": reply})
+            st.rerun()
 
 st.markdown("---")
 
-# ======== منطقة الدردشة ========
+# ======== منطقة الدردشة التفاعلية ========
 st.markdown("### 💬 المحادثة التفاعلية")
 
-# عرض الرسائل السابقة
+# عرض تاريخ المحادثة
 for msg in st.session_state.messages:
     if msg["role"] == "user":
         st.markdown(f'<div class="chat-message user-message">🧑‍🎓 {msg["content"]}</div>', unsafe_allow_html=True)
     else:
         st.markdown(f'<div class="chat-message bot-message">🤖 {msg["content"]}</div>', unsafe_allow_html=True)
 
-# حقل الإدخال (يظهر دائمًا في الأسفل)
+# حقل الإدخال
 if prompt := st.chat_input("✍️ اكتب سؤالك هنا..."):
-    # إضافة سؤال المستخدم
     st.session_state.messages.append({"role": "user", "content": prompt})
-    st.markdown(f'<div class="chat-message user-message">🧑‍🎓 {prompt}</div>', unsafe_allow_html=True)
-    
-    # جلب الرد
-    with st.spinner("⏳ جاري الرد..."):
-        reply = chat_with_ai(st.session_state.messages)
+    cat = smart_classify(prompt)
+    reply = ask_ai(prompt, cat)
     st.session_state.messages.append({"role": "assistant", "content": reply})
-    st.markdown(f'<div class="chat-message bot-message">🤖 {reply}</div>', unsafe_allow_html=True)
-
-st.markdown("---")
-
-# بطاقات الخدمات السريعة
-st.markdown("### 📌 الخدمات السريعة")
-cols = st.columns(5)
-services = [
-    ("📚", "جداول", "schedules"),
-    ("📅", "الامتحانات", "schedules"),
-    ("💰", "الرسوم", "fees"),
-    ("📞", "اتصال", "contacts"),
-    ("🎓", "التخصصات", "majors")
-]
-
-for col, (icon, name, category) in zip(cols, services):
-    with col:
-        if st.button(f"{icon} {name}", key=f"btn_{name}", use_container_width=True):
-            # إضافة سؤال تلقائي
-            question = f"أريد معلومات عن {name}"
-            st.session_state.messages.append({"role": "user", "content": question})
-            with st.spinner("⏳"):
-                reply = chat_with_ai(st.session_state.messages)
-            st.session_state.messages.append({"role": "assistant", "content": reply})
-            st.rerun()
+    st.rerun()
 
 # تذييل
 st.markdown(f"""
-<div style="text-align:center; color:#888; margin-top:40px; font-size:0.9em;">
-    © {datetime.now().year} جامعة القرآن الكريم - جميع الحقوق محفوظة
+<div style="text-align:center; color:{THEME['text_muted']}; margin-top:40px; font-size:0.9em;">
+    © {datetime.now().year} {APP_TITLE} - جميع الحقوق محفوظة<br>
 </div>
 """, unsafe_allow_html=True)
 
@@ -212,18 +266,22 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # ======== لوحة الإدارة ========
 with st.sidebar:
+    st.markdown("---")
     st.markdown("## 🔐 الإدارة")
     password = st.text_input("كلمة المرور", type="password")
     
     if password == "admin123":
         st.success("✅ تم الدخول")
+        st.markdown("### 📝 تحرير البيانات")
+        
         data = load_data()
         
         info = st.text_area("📋 معلومات عامة:", value=data.get("info", ""), height=120)
         schedules = st.text_area("📚 الجداول:", value=data.get("schedules", ""), height=120)
         fees = st.text_area("💰 الرسوم:", value=data.get("fees", ""), height=100)
         contacts = st.text_area("📞 التواصل:", value=data.get("contacts", ""), height=100)
-        majors = st.text_area("🎓 التخصصات:", value=data.get("majors", ""), height=100)
+        majors = st.text_area("🎓 التخصصات:", value=data.get("majors", ""), height=100, 
+                              placeholder="مثال: القرآن الكريم وعلومه - الشريعة الإسلامية - اللغة العربية")
         
         if st.button("💾 حفظ", use_container_width=True):
             save_data({"info": info, "schedules": schedules, "fees": fees, "contacts": contacts, "majors": majors})

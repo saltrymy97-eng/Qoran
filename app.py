@@ -22,7 +22,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. تصميم CSS الملكي الفاخر (شامل إصلاحات الجوال ولوحة الإدارة)
+# 2. تصميم CSS الملكي الفاخر (إضاءة متناسقة)
 # ==========================================
 st.markdown("""
 <style>
@@ -39,9 +39,9 @@ html, body, [data-testid="stAppViewContainer"], .main {
     color: #e6e0d4;
 }
 
-/* تنسيق الشريط الجانبي ليطابق الواجهة الرئيسية */
+/* تنسيق الشريط الجانبي ليطابق الواجهة الرئيسية بإضاءة متناسقة */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(145deg, rgba(15, 22, 36, 0.97), rgba(5, 8, 12, 0.98)) !important;
+    background: radial-gradient(circle at 50% 0%, #1a1500 0%, #05070a 40%, #020305 100%) !important;
     backdrop-filter: blur(35px) !important;
     -webkit-backdrop-filter: blur(35px) !important;
     border-left: 1px solid rgba(212, 175, 55, 0.25) !important;
@@ -220,7 +220,6 @@ if "db" not in st.session_state:
     st.session_state.db = load_data()
 
 if "messages" not in st.session_state:
-    # رسالة ترحيبية افتراضية
     st.session_state.messages = [{"role": "assistant", "content": "مرحباً بك في المساعد الذكي لجامعة القرآن الكريم - فرع غيل باوزير. تفضل بطرح استفسارك أو اختر من الخدمات المتاحة أعلاه."}]
 
 if "auto_question" not in st.session_state:
@@ -254,27 +253,21 @@ st.markdown('<hr>', unsafe_allow_html=True)
 # ==========================================
 # 6. محرك الدردشة (Chat Engine)
 # ==========================================
-# عرض الرسائل السابقة
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# استقبال إدخال المستخدم
 user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
 
-# معالجة الضغط على أزرار الخدمات
 if st.session_state.auto_question:
     user_input = st.session_state.auto_question
     st.session_state.auto_question = None
 
-# توليد الرد
 if user_input:
-    # حفظ وطباعة رسالة المستخدم
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.markdown(user_input)
     
-    # الرد من المساعد
     with st.chat_message("assistant"):
         with st.spinner("جارٍ معالجة استفسارك..."):
             if SERVICES_AVAILABLE:
@@ -285,13 +278,11 @@ if user_input:
                 except Exception as e:
                     ai_response = f"عذراً، حدث خطأ في النظام: {str(e)}"
             else:
-                # رد وهمي في حال غياب ملف الذكاء الاصطناعي (للتجربة)
                 time.sleep(1)
                 ai_response = "هذا رد تجريبي نظراً لعدم ربط دوال الذكاء الاصطناعي. يُرجى مراجعة إدارة الجامعة للمزيد من التفاصيل حول استفسارك."
             
             st.markdown(ai_response)
     
-    # حفظ رد المساعد
     st.session_state.messages.append({"role": "assistant", "content": ai_response})
 
 # ==========================================
@@ -303,7 +294,7 @@ with st.sidebar:
     
     admin_password = st.text_input("كلمة مرور المشرف 🔒", type="password")
     
-    if admin_password == "admin123": # يفضل تغييرها واستخدام st.secrets
+    if admin_password == "admin123":
         st.success("✅ تم التحقق")
         
         edit_info = st.text_area("معلومات عامة", st.session_state.db.get("info", ""), height=100)

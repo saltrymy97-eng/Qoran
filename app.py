@@ -236,7 +236,7 @@ for col, (icon, name, category) in zip(cols, services):
             <div class="service-label">{name}</div>
         </div>
         """, unsafe_allow_html=True)
-        if st.button(name, key=f"btn_{name}", use_container_width=True, label_visibility="collapsed"):
+        if st.button("", key=f"btn_{name}", use_container_width=True):
             with st.spinner("⏳ جاري تحضير الرد..."):
                 reply = ask_ai(f"أريد معلومات عن {name}", category)
                 st.session_state.reply = reply
@@ -252,7 +252,7 @@ st.markdown("---")
 st.markdown('<div class="question-box">', unsafe_allow_html=True)
 st.markdown("### 💬 اسألني مباشرة عن أي شيء يخص الجامعة")
 with st.form("chat_form"):
-    user_input = st.text_input("", placeholder="✍️ اكتب سؤالك هنا...", label_visibility="collapsed")
+    user_input = st.text_input("", placeholder="✍️ اكتب سؤالك هنا...")
     submitted = st.form_submit_button("🔍 إرسال السؤال")
     
     if submitted and user_input:
@@ -279,5 +279,5 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("## 🛠️ أدوات متقدمة")
     if st.button("🔐 لوحة الإدارة", use_container_width=True):
-        st.switch_page("pages/admin.py")  # إذا كانت الصفحات مفعلة
+        st.switch_page("pages/admin.py")
     st.caption("للدخول إلى لوحة التحكم، انتقل إلى /admin")

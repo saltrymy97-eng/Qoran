@@ -2,9 +2,9 @@ import streamlit as st
 import json
 import os
 from datetime import datetime
-from services import ask_ai, smart_classify
+from services import ask_ai, smart_classify  # تم استبدال الدوال الوهمية بالاستيراد الحقيقي
 
-# ======== إعدادات جامعة القرآن الكريم ========
+# ======== إعدادات جامعة القرآن الكريم (تم التحديث) ========
 APP_TITLE = "جامعة القرآن الكريم والعلوم الإسلامية"
 APP_SUBTITLE = "فرع غيل باوزير - حضرموت"
 APP_ICON = "🕌"
@@ -170,110 +170,3 @@ st.markdown(f"""
         border-radius: 10px !important;
     }}
     .stTextInput > div > div > input:focus, .stTextArea > div > textarea:focus {{
-        border-color: #d4af37 !important;
-        box-shadow: 0 0 10px rgba(212,175,55,0.2) !important;
-    }}
-</style>
-""", unsafe_allow_html=True)
-
-# ======== دوال البيانات ========
-DATA_FILE = "data.json"
-
-def load_data():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {"info": "", "schedules": "", "fees": "", "contacts": "", "majors": ""}
-
-def save_data(data):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-
-# ======== جلسة المحادثة ========
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-# ======== الواجهة الرئيسية ========
-# هيدر فخم
-st.markdown('<div class="basmala gold-foil-text">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>', unsafe_allow_html=True)
-st.markdown(f'<div class="main-title">{APP_ICON} {APP_TITLE}</div>', unsafe_allow_html=True)
-st.markdown(f'<div class="sub-title">✦ {APP_SUBTITLE} ✦</div>', unsafe_allow_html=True)
-
-# بطاقات الخدمات السريعة (تأثير 3D خفيف)
-st.markdown("<hr class='gold-divider'>", unsafe_allow_html=True)
-st.markdown("<h3 style='color: #e2e8f0; font-weight: 600;'>📌 وصول سريع</h3>", unsafe_allow_html=True)
-
-services = [
-    ("📚\nالجداول", "schedules", "جداول المحاضرات"),
-    ("📅\nالامتحانات", "schedules", "الامتحانات"),
-    ("💰\nالرسوم", "fees", "الرسوم الدراسية"),
-    ("📞\nالدعم", "contacts", "جهات الاتصال"),
-    ("🎓\nالتخصصات", "majors", "التخصصات")
-]
-
-cols = st.columns(5)
-for col, (label, category, name) in zip(cols, services):
-    with col:
-        if st.button(label, key=f"btn_{category}_{name}", use_container_width=True):
-            question = f"أريد تفاصيل عن {name}"
-            st.session_state.messages.append({"role": "user", "content": question})
-            reply = ask_ai(question, category) 
-            st.session_state.messages.append({"role": "assistant", "content": reply})
-            st.rerun()
-
-st.markdown("<hr class='gold-divider'>", unsafe_allow_html=True)
-st.markdown("<h3 style='color: #e2e8f0; font-weight: 600;'>💬 المساعد الذكي</h3>", unsafe_allow_html=True)
-
-# عرض رسائل الدردشة 
-for msg in st.session_state.messages:
-    avatar = "🧑‍🎓" if msg["role"] == "user" else "✨"
-    with st.chat_message(msg["role"], avatar=avatar):
-        st.markdown(msg["content"])
-
-# حقل الإدخال 
-if prompt := st.chat_input("✍️ اسألني أي شيء هنا..."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    
-    with st.chat_message("user", avatar="🧑‍🎓"):
-        st.markdown(prompt)
-        
-    cat = smart_classify(prompt)
-    reply = ask_ai(prompt, cat)
-    
-    st.session_state.messages.append({"role": "assistant", "content": reply})
-    with st.chat_message("assistant", avatar="✨"):
-        st.markdown(reply)
-
-# ======== لوحة الإدارة الجانبية ========
-with st.sidebar:
-    st.markdown("<h2 class='gold-foil-text' style='text-align:center;'>🔐 غرفة التحكم</h2>", unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    password = st.text_input("مفتاح الدخول", type="password", placeholder="••••••••")
-    
-    if password == "admin123":
-        st.success("✅ تم التصديق")
-        st.markdown("<hr class='gold-divider'>", unsafe_allow_html=True)
-        st.markdown("<h3 style='color: #fff;'>📝 قاعدة البيانات المعرفية</h3>", unsafe_allow_html=True)
-        
-        data = load_data()
-        info = st.text_area("📋 نبذة عامة:", value=data.get("info", ""), height=100)
-        schedules = st.text_area("📚 الجداول الزمنية:", value=data.get("schedules", ""), height=100)
-        fees = st.text_area("💰 البيانات المالية:", value=data.get("fees", ""), height=100)
-        contacts = st.text_area("📞 قنوات الاتصال:", value=data.get("contacts", ""), height=100)
-        majors = st.text_area("🎓 التخصصات الأكاديمية:", value=data.get("majors", ""), height=100)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("💾 توثيق التحديثات", use_container_width=True):
-            save_data({"info": info, "schedules": schedules, "fees": fees, "contacts": contacts, "majors": majors})
-            st.success("✅ تمت المزامنة بنجاح!")
-            
-    elif password:
-        st.error("❌ بيانات الاعتماد غير صالحة")
-
-    st.markdown(f"""
-    <div style="text-align:center; color:#64748b; margin-top:80px; font-size:0.85em; letter-spacing: 1px;">
-        © {datetime.now().year} {APP_TITLE}<br>
-        <span style="color: #d4af37;">Powered by AI</span>
-    </div>
-    """, unsafe_allow_html=True)

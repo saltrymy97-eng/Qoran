@@ -1,143 +1,156 @@
-"""
-الخدمات الأساسية: البيانات + الذكاء الاصطناعي
-"""
 import json
 import os
-from datetime import datetime
 from groq import Groq
-from config import *
 
-# ======== عميل Groq ========
-# يجب وضع مفتاح Groq في متغير بيئة أو هنا
-import os
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "gsk_مفتاحك_هنا")
 groq_client = Groq(api_key=GROQ_API_KEY)
 
-# ======== دوال البيانات ========
-def load_json(filepath, default={}):
-    """تحميل ملف JSON"""
-    if os.path.exists(filepath):
-        with open(filepath, "r", encoding="utf-8") as f:
+DATA_FILE = "data.json"
+
+def load_data():
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
-    return default
+    return {"info": "", "schedules": "", "exams": "", "fees": "", "contacts": "", "majors": ""}
 
-def save_json(filepath, data):
-    """حفظ ملف JSON"""
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+# ======== شخصية المساعد الذكي ========
+SYSTEM_PROMPT = """أنت مساعد ذكي متخصص في فرع جامعة القرآن الكريم والعلوم الإسلامية في غيل باوزير - حضرموت، اليمن.
 
-# ======== البيانات المتخصصة ========
-def get_all_info():
-    """تجميع كل معلومات الجامعة"""
-    info = load_json(INFO_FILE, {"info": ""})
-    schedules = load_json(SCHEDULES_FILE, {"schedules": ""})
-    fees = load_json(FEES_FILE, {"fees": ""})
-    contacts = load_json(CONTACTS_FILE, {"contacts": ""})
-    
-    combined = f"""
-    معلومات عامة: {info.get('info', '')}
-    الجداول الدراسية: {schedules.get('schedules', '')}
-    الرسوم: {fees.get('fees', '')}
-    جهات الاتصال: {contacts.get('contacts', '')}
-    """
-    return combined
+شخصيتك:
+- خبير في شؤون الجامعة والدراسة
+- ودود ومحترم ومهذب جداً
+- تتكلم العربية الفصحى الميسرة الممزوجة بلهجة حضرموت اللطيفة
+- مختصر ومفيد في ردودك
+- تستخدم الإيموجي باعتدال لإضفاء لمسة ودية
 
-def get_specific_info(category):
-    """الحصول على معلومات حسب الفئة"""
-    mapping = {
-        "info": INFO_FILE,
-        "schedules": SCHEDULES_FILE,
-        "fees": FEES_FILE,
-        "contacts": CONTACTS_FILE
-    }
-    data = load_json(mapping.get(category, INFO_FILE))
-    # استخراج القيمة الأولى
-    if data:
-        return list(data.values())[0] if data else ""
-    return ""
-
-def update_data(category, content):
-    """تحديث بيانات فئة معينة"""
-    mapping = {
-        "info": (INFO_FILE, "info"),
-        "schedules": (SCHEDULES_FILE, "schedules"),
-        "fees": (FEES_FILE, "fees"),
-        "contacts": (CONTACTS_FILE, "contacts")
-    }
-    filepath, key = mapping.get(category)
-    save_json(filepath, {key: content})
-
-# ======== سجل الأسئلة ========
-def log_question(question, reply, user_ip="طالب"):
-    """تسجيل سؤال في السجل"""
-    log_entry = {
-        "timestamp": datetime.now().isoformat(),
-        "question": question,
-        "reply": reply[:100] + "...",  # ملخص
-        "user": user_ip
-    }
-    logs = load_json(LOGS_FILE, {"logs": []})
-    logs["logs"].append(log_entry)
-    # الاحتفاظ بآخر 100 سؤال فقط
-    logs["logs"] = logs["logs"][-100:]
-    save_json(LOGS_FILE, logs)
-
-def get_logs():
-    """استرجاع السجلات"""
-    return load_json(LOGS_FILE, {"logs": []}).get("logs", [])
-
-# ======== الذكاء الاصطناعي ========
-SYSTEM_PROMPT_TEMPLATE = """أنت المساعد الذكي لفرع جامعة القرآن الكريم والعلوم الإسلامية في غيل باوزير، حضرموت، اليمن.
-أنت خبير في شؤون الجامعة وتعرف كل التفاصيل. أجب على أسئلة الطلاب بدقة واحترافية.
-
-معلومات الجامعة الحالية:
+قاعدة معرفتك الحالية:
 {context}
 
-تعليمات:
-- أجب باللغة العربية الفصحى الميسرة أو العامية المفهومة
-- كن موجزًا ومفيدًا
-- إذا لم تجد الإجابة في المعلومات المتاحة، قل: "لم أجد هذه المعلومة في قاعدة البيانات. يرجى التواصل مع إدارة الفرع على الرقم الموجود في جهات الاتصال."
-- لا تختلق معلومات غير موجودة
-- استخدم الإيموجي باعتدال
-"""
+تعليمات صارمة:
+1. أجب فقط من المعلومات المتاحة في قاعدة المعرفة
+2. إذا لم تجد الإجابة، قل بأدب: "لم أجد هذه المعلومة حالياً. يمكنك التواصل مع إدارة الفرع على الرقم الموجود في جهات الاتصال."
+3. لا تختلق أي معلومات غير موجودة
+4. إذا سألك الطالب عن شيء خارج نطاق الجامعة، أجب: "أنا متخصص في شؤون الجامعة فقط. كيف يمكنني مساعدتك في أمور الدراسة؟"
+5. إذا قال الطالب شكراً، رد بعبارة لطيفة مثل: "العفو، في خدمتك دائماً 🌹"
+6. إذا ألقى الطالب السلام، ارد بأحسن منه
+7. تذكر دائماً أنك تمثل جامعة القرآن الكريم، فكن مثالياً في أخلاقك وردودك"""
 
-def ask_ai(question, category=None):
-    """إرسال سؤال إلى Groq مع فئة محددة"""
-    # إذا تم تحديد فئة، نركز على تلك المعلومات
-    if category:
-        context = get_specific_info(category)
-    else:
-        context = get_all_info()
+def ask_ai(question, category=None, chat_history=None):
+    """إرسال سؤال إلى Groq مع تاريخ المحادثة للسياق"""
+    data = load_data()
     
-    system_prompt = SYSTEM_PROMPT_TEMPLATE.format(context=context[:3000])  # حد أقصى للسياق
+    # بناء السياق من البيانات
+    if category and category in data:
+        context = data[category]
+    else:
+        context = f"""
+        معلومات عامة: {data.get('info','')}
+        الجداول الدراسية: {data.get('schedules','')}
+        الامتحانات: {data.get('exams','')}
+        الرسوم: {data.get('fees','')}
+        جهات الاتصال: {data.get('contacts','')}
+        التخصصات: {data.get('majors','')}
+        """
+    
+    system_prompt = SYSTEM_PROMPT.format(context=context[:3000])
+    
+    # بناء الرسائل مع تاريخ المحادثة
+    messages = [{"role": "system", "content": system_prompt}]
+    
+    # إضافة آخر 6 رسائل من تاريخ المحادثة للسياق
+    if chat_history:
+        for msg in chat_history[-6:]:
+            messages.append({
+                "role": msg["role"],
+                "content": msg["content"]
+            })
+    
+    # إضافة السؤال الحالي إذا لم يكن موجوداً في التاريخ
+    if not chat_history or chat_history[-1]["content"] != question:
+        messages.append({"role": "user", "content": question})
     
     try:
         response = groq_client.chat.completions.create(
-            model=GROQ_MODEL,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": question}
-            ],
-            temperature=TEMPERATURE,
-            max_tokens=MAX_TOKENS,
+            model="llama-3.3-70b-versatile",
+            messages=messages,
+            temperature=0.6,
+            max_tokens=500
         )
-        reply = response.choices[0].message.content
+        return response.choices[0].message.content
     except Exception as e:
-        reply = f"⚠️ حدث خطأ تقني: {str(e)}. يرجى المحاولة لاحقًا أو الاتصال بالإدارة."
-    
-    # تسجيل السؤال
-    log_question(question, reply)
-    return reply
+        return f"⚠️ عذراً، حدث خطأ تقني بسيط. يرجى المحاولة مرة أخرى. إذا تكررت المشكلة، تواصل مع الإدارة."
 
 def smart_classify(question):
-    """تصنيف ذكي للسؤال لتحديد الفئة المناسبة"""
-    question_lower = question.lower()
-    if any(word in question_lower for word in ["جدول", "محاضرات", "مواد", "مستوى"]):
-        return "schedules"
-    elif any(word in question_lower for word in ["رسوم", "فلوس", "دفع", "قسط", "مبلغ"]):
-        return "fees"
-    elif any(word in question_lower for word in ["اتصال", "رقم", "هاتف", "موقع", "عنوان", "أين"]):
-        return "contacts"
+    """تصنيف ذكي متطور للسؤال"""
+    q = question.strip()
+    
+    # قاموس الكلمات المفتاحية الموسع
+    keywords = {
+        "schedules": [
+            "جدول", "جداول", "محاضرات", "محاضره", "مواد", "ماده", "مستوى",
+            "دوام", "حضور", "غياب", "أستاذ", "دكتور", "مدرس", "معلم",
+            "حلقة", "حلقات", "قرآن", "تفسير", "فقه", "حديث", "نحو", "بلاغة",
+            "أصول", "عقيدة", "سيرة", "تلاوة", "تجويد", "دعوة", "أدب"
+        ],
+        "exams": [
+            "امتحان", "امتحانات", "اختبار", "اختبارات", "نصفي", "نهائي",
+            "نتيجة", "نتايج", "درجة", "درجات", "نجاح", "رسوب", "معدل"
+        ],
+        "fees": [
+            "رسوم", "رسومات", "فلوس", "مبلغ", "دفع", "تسديد", "قسط",
+            "أقساط", "مالية", "مصاريف", "حوالة", "بنك", "فاتورة", "سعر"
+        ],
+        "contacts": [
+            "اتصال", "رقم", "هاتف", "جوال", "موقع", "عنوان", "وين", "أين",
+            "فرع", "إدارة", "شؤون", "مكتب", "بريد", "إيميل", "واتساب"
+        ],
+        "majors": [
+            "تخصص", "تخصصات", "قسم", "أقسام", "شعبة", "شعب", "كلية",
+            "دراسة", "منهج", "مقرر", "مسار"
+        ]
+    }
+    
+    q_lower = q.lower()
+    
+    # البحث عن الكلمات المفتاحية
+    for category, words in keywords.items():
+        if any(word in q_lower for word in words):
+            return category
+    
+    # أسئلة الترحيب
+    if any(w in q_lower for w in ["سلام", "مرحبا", "هلا", "أهلا", "السلام"]):
+        return "info"
+    
+    # أسئلة الشكر
+    if any(w in q_lower for w in ["شكرا", "شكراً", "مشكور", "جزاك"]):
+        return "info"
+    
+    return "info"
+
+def get_greeting():
+    """رسالة ترحيبية ذكية حسب الوقت"""
+    from datetime import datetime
+    hour = datetime.now().hour
+    
+    if 5 <= hour < 12:
+        return "صباح الخير 🌅"
+    elif 12 <= hour < 17:
+        return "مساء الخير ☀️"
+    elif 17 <= hour < 21:
+        return "مساء النور 🌆"
     else:
-        return None  # عام
+        return "مساء الخير 🌙"
+
+def get_welcome_message():
+    """رسالة ترحيبية كاملة"""
+    greeting = get_greeting()
+    return f"""{greeting} أهلًا وسهلًا بك في المساعد الذكي لجامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير.
+
+📌 **الخدمات المتاحة:**
+📚 جداول المحاضرات
+📝 الامتحانات
+💰 الرسوم الدراسية
+📞 جهات الاتصال
+🎓 التخصصات
+
+كيف أقدر أخدمك اليوم؟"""

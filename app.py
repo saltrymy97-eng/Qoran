@@ -2,18 +2,13 @@ import streamlit as st
 import json
 import os
 from datetime import datetime
+from services import ask_ai, smart_classify
 
-# ======== إعدادات وهمية لتشغيل الكود (استبدلها بملفاتك) ========
-# from services import ask_ai, smart_classify
-# from config import APP_TITLE, APP_SUBTITLE, APP_ICON, THEME
-APP_TITLE = "المساعد الأكاديمي"
-APP_SUBTITLE = "بوابتك الذكية للخدمات الجامعية"
-APP_ICON = "🏛️"
-THEME = {'primary': '#d4af37', 'text_muted': '#8892b0'}
-
-def ask_ai(q, c): return f"هذا رد تجريبي لسؤالك عن {c}"
-def smart_classify(q): return "عام"
-# ===============================================================
+# ======== إعدادات جامعة القرآن الكريم ========
+APP_TITLE = "جامعة القرآن الكريم والعلوم الإسلامية"
+APP_SUBTITLE = "فرع غيل باوزير - حضرموت"
+APP_ICON = "🕌"
+# ===============================================
 
 # ======== إعداد الصفحة ========
 st.set_page_config(
@@ -23,30 +18,43 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ======== CSS الفاخر جداً (Luxury Design) ========
+# ======== CSS الفاخر جداً مع التعديلات الجديدة ========
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=El+Messiri:wght@300;400;600;700&display=swap');
     
     * {{ font-family: 'El Messiri', sans-serif; }}
 
-    /* تخصيص شريط التمرير (Scrollbar) ليناسب الفخامة */
+    /* تخصيص شريط التمرير */
     ::-webkit-scrollbar {{ width: 8px; background: #050b14; }}
     ::-webkit-scrollbar-thumb {{ background: linear-gradient(180deg, #d4af37, #8a6d1c); border-radius: 10px; }}
     ::-webkit-scrollbar-thumb:hover {{ background: #fcf6ba; }}
 
-    /* خلفية التطبيق: تدرج داكن وعميق يعطي إحساساً بالفضاء أو الفخامة الملكية */
+    /* خلفية التطبيق */
     .stApp {{
         background: linear-gradient(135deg, #02060d 0%, #0a1324 40%, #060e1a 100%) !important;
         background-attachment: fixed !important;
     }}
 
-    /* إخفاء الشريط العلوي الافتراضي مع ترك زر القائمة المنسدلة */
+    /* ======== إصلاحات الواجهة العلوية والسفلية ======== */
     header[data-testid="stHeader"] {{ background-color: transparent !important; }}
+    
+    /* إخفاء الأيقونات العلوية المزعجة (Share, GitHub, etc.) */
+    [data-testid="stHeaderActionElements"], [data-testid="stToolbar"] {{
+        display: none !important;
+    }}
+    
     #MainMenu {{ visibility: hidden; }}
     footer {{ visibility: hidden; }}
 
-    /* تأثير النص الذهبي الفاخر (Gold Foil) */
+    /* جعل الحاوية السفلية شفافة بالكامل ليطفو حقل الإدخال بحرية */
+    [data-testid="stBottomBlockContainer"], div[data-testid="stBottom"] {{
+        background: transparent !important;
+        padding-bottom: 10px !important;
+    }}
+    /* =================================================== */
+
+    /* تأثير النص الذهبي الفاخر */
     .gold-foil-text {{
         background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
         -webkit-background-clip: text;
@@ -103,7 +111,7 @@ st.markdown(f"""
         line-height: 1.6;
     }}
 
-    /* رسائل المحادثة (تصميم زجاجي أنيق) */
+    /* رسائل المحادثة */
     [data-testid="stChatMessage"] {{
         background: rgba(15, 23, 42, 0.6) !important;
         backdrop-filter: blur(12px) !important;
@@ -114,23 +122,20 @@ st.markdown(f"""
         box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }}
     
-    /* رسالة المستخدم */
     [data-testid="stChatMessage"]:nth-child(even) {{
         background: linear-gradient(135deg, rgba(212, 175, 55, 0.08), rgba(0,0,0,0)) !important;
         border-right: 3px solid #d4af37 !important;
         border-left: none !important;
     }}
     
-    /* رسالة الذكاء الاصطناعي */
     [data-testid="stChatMessage"]:nth-child(odd) {{
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9)) !important;
         border-left: 3px solid #60a5fa !important;
     }}
 
-    /* حقل الكتابة (طافي ومضيء) */
+    /* حقل الكتابة الطافي */
     [data-testid="stChatInput"] {{
         background: transparent !important;
-        padding-bottom: 30px !important;
     }}
     [data-testid="stChatInput"] textarea {{
         background: rgba(10, 15, 30, 0.85) !important;
@@ -149,7 +154,7 @@ st.markdown(f"""
         outline: none !important;
     }}
 
-    /* تخصيص أيقونات الإرسال في حقل الكتابة */
+    /* تخصيص أيقونات الإرسال */
     [data-testid="stChatInputSubmitButton"] {{
         color: #d4af37 !important;
         background: rgba(212,175,55,0.1) !important;
@@ -199,12 +204,10 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # ======== الواجهة الرئيسية ========
-# هيدر فخم
 st.markdown('<div class="basmala gold-foil-text">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="main-title">{APP_ICON} {APP_TITLE}</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="sub-title">✦ {APP_SUBTITLE} ✦</div>', unsafe_allow_html=True)
 
-# بطاقات الخدمات السريعة (تأثير 3D خفيف)
 st.markdown("<hr class='gold-divider'>", unsafe_allow_html=True)
 st.markdown("<h3 style='color: #e2e8f0; font-weight: 600;'>📌 وصول سريع</h3>", unsafe_allow_html=True)
 
@@ -229,13 +232,11 @@ for col, (label, category, name) in zip(cols, services):
 st.markdown("<hr class='gold-divider'>", unsafe_allow_html=True)
 st.markdown("<h3 style='color: #e2e8f0; font-weight: 600;'>💬 المساعد الذكي</h3>", unsafe_allow_html=True)
 
-# عرض رسائل الدردشة 
 for msg in st.session_state.messages:
     avatar = "🧑‍🎓" if msg["role"] == "user" else "✨"
     with st.chat_message(msg["role"], avatar=avatar):
         st.markdown(msg["content"])
 
-# حقل الإدخال 
 if prompt := st.chat_input("✍️ اسألني أي شيء هنا..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     

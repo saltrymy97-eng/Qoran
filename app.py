@@ -16,6 +16,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# ======== CSS فاخر مع تعديل هروب الأقواس لجافا سكريبت ========
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=El+Messiri:wght@300;400;600;700&display=swap');
@@ -180,20 +181,20 @@ st.markdown(f"""
 </style>
 <div class="particles" id="particles"></div>
 <script>
-    // إنشاء جزيئات ذهبية عشوائية
+    // إنشاء جزيئات ذهبية عشوائية – مع هروب الأقواس لتجنب تعارض Python
     const container = document.getElementById('particles');
     for (let i = 0; i < 40; i++) {{
         const p = document.createElement('div');
         p.style.cssText = `
             position: absolute;
-            width: ${Math.random() * 4 + 1}px;
-            height: ${Math.random() * 4 + 1}px;
-            background: rgba(212, 175, 55, ${Math.random() * 0.5 + 0.2});
+            width: ${{Math.random() * 4 + 1}}px;
+            height: ${{Math.random() * 4 + 1}}px;
+            background: rgba(212, 175, 55, ${{Math.random() * 0.5 + 0.2}});
             border-radius: 50%;
-            top: ${Math.random() * 100}%;
-            left: ${Math.random() * 100}%;
-            animation: float ${Math.random() * 8 + 4}s infinite;
-            animation-delay: -${Math.random() * 8}s;
+            top: ${{Math.random() * 100}}%;
+            left: ${{Math.random() * 100}}%;
+            animation: float ${{Math.random() * 8 + 4}}s infinite;
+            animation-delay: -${{Math.random() * 8}}s;
             filter: blur(1px);
         `;
         container.appendChild(p);
@@ -203,7 +204,7 @@ st.markdown(f"""
         @keyframes float {{
             0%, 100% {{ transform: translate(0, 0) scale(1); opacity: 0; }}
             20% {{ opacity: 0.8; }}
-            50% {{ transform: translate(${Math.random() * 100 - 50}px, -60px) scale(1.5); }}
+            50% {{ transform: translate(${{Math.random() * 100 - 50}}px, -60px) scale(1.5); }}
             80% {{ opacity: 0.8; }}
         }}
     `;
@@ -211,7 +212,7 @@ st.markdown(f"""
 </script>
 """, unsafe_allow_html=True)
 
-# باقي الكود (الدوال والواجهة) كما هو دون تغيير
+# ======== باقي الكود (الدوال والواجهة) دون تغيير ========
 DATA_FILE = "data.json"
 
 def load_data():

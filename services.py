@@ -1,11 +1,13 @@
 import json
 import os
+from datetime import datetime
 from groq import Groq
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "gsk_مفتاحك_هنا")
 groq_client = Groq(api_key=GROQ_API_KEY)
 
 DATA_FILE = "data.json"
+LOGS_FILE = "logs.json"
 
 def load_data():
     if os.path.exists(DATA_FILE):
@@ -34,6 +36,68 @@ SYSTEM_PROMPT = """أنت مساعد ذكي متخصص في فرع جامعة ا
 5. إذا قال الطالب شكراً، رد بعبارة لطيفة مثل: "العفو، في خدمتك دائماً 🌹"
 6. إذا ألقى الطالب السلام، ارد بأحسن منه
 7. تذكر دائماً أنك تمثل جامعة القرآن الكريم، فكن مثالياً في أخلاقك وردودك"""
+
+def load_logs():
+    """تحميل سجل الأسئلة"""
+    if os.path.exists(LOGS_FILE):
+        with open(LOGS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+def save_logs(logs):
+    """حفظ سجل الأسئلة"""
+    with open(LOGS_FILE, "w", encoding="utf-8") as f:
+        json.dump(logs, f, ensure_ascii=False, indent=2)
+
+def log_question(question, category):
+    """تسجيل سؤال في السجل"""
+    logs = load_logs()
+    logs.append({
+        "question": question,
+        "category": category,
+        "timestamp": datetime.now().isoformat()
+    })
+    # الاحتفاظ بآخر 1000 سؤال فقط
+    if len(logs) > 1000:
+        logs = logs[-1000:]
+    save_logs(logs)
+
+def get_stats():
+    """إرجاع إحصائيات الأسئلة"""
+    logs = load_logs()
+    
+    if not logs:
+        return {
+            "total": 0,
+            "today": 0,
+            "top_questions": [],
+            "categories": {}
+        }
+    
+    today = datetime.now().strftime("%Y-%m-%d")
+    today_count = sum(1 for log in logs if log["timestamp"].startswith(today))
+    
+    # تجميع الأسئلة المتشابهة
+    question_counts = {}
+    category_counts = {}
+    
+    for log in logs:
+        q = log["question"].strip()
+        question_counts[q] = question_counts.get(q, 0) + 1
+        
+        cat = log["category"]
+        category_counts[cat] = category_counts.get(cat, 0) + 1
+    
+    # ترتيب الأسئلة الأكثر شيوعاً
+    sorted_questions = sorted(question_counts.items(), key=lambda x: x[1], reverse=True)
+    top_questions = [{"question": q, "count": c} for q, c in sorted_questions[:10]]
+    
+    return {
+        "total": len(logs),
+        "today": today_count,
+        "top_questions": top_questions,
+        "categories": category_counts
+    }
 
 def ask_ai(question, category=None, chat_history=None):
     """إرسال سؤال إلى Groq مع تاريخ المحادثة للسياق"""
@@ -68,6 +132,9 @@ def ask_ai(question, category=None, chat_history=None):
     # إضافة السؤال الحالي إذا لم يكن موجوداً في التاريخ
     if not chat_history or chat_history[-1]["content"] != question:
         messages.append({"role": "user", "content": question})
+    
+    # تسجيل السؤال
+    log_question(question, category or "info")
     
     try:
         response = groq_client.chat.completions.create(
@@ -129,7 +196,6 @@ def smart_classify(question):
 
 def get_greeting():
     """رسالة ترحيبية ذكية حسب الوقت"""
-    from datetime import datetime
     hour = datetime.now().hour
     
     if 5 <= hour < 12:

@@ -26,33 +26,10 @@ if not SERVICES_AVAILABLE and "toast_shown" not in st.session_state:
     st.session_state.toast_shown = True
 
 # ==========================================
-# 2. تصميم CSS الزمردي الملكي الفاخر 💎 (الإصدار الآمن)
+# 2. تصميم CSS الزمردي الملكي الفاخر 💎
 # ==========================================
 st.markdown("""
 <style>
-/* 🌍 الإصلاح الآمن: توجيه النصوص للعربية دون كسر هيكل Streamlit */
-.stMarkdown, p, h1, h2, h3, h4, h5, h6, label, span, .stText {
-    direction: rtl !important;
-    text-align: right !important;
-}
-
-/* إصلاح رسائل البوت وحقل إدخال النص */
-[data-testid="stChatMessage"] {
-    direction: rtl !important;
-    text-align: right !important;
-}
-
-[data-testid="stChatInput"] textarea {
-    direction: rtl !important;
-    text-align: right !important;
-}
-
-/* إصلاح القائمة الجانبية من الداخل فقط */
-[data-testid="stSidebar"] .stMarkdownContainer {
-    direction: rtl !important;
-    text-align: right !important;
-}
-
 /* منع الشاشة بأكملها من الانزلاق لليمين واليسار في الجوال */
 html, body, [data-testid="stAppViewContainer"], .main {
     overflow-x: hidden !important;
@@ -162,6 +139,7 @@ div.stButton > button {
     white-space: nowrap !important;
 }
 
+/* تأثير عند اللمس/الماوس للأزرار */
 div.stButton > button:hover, div.stButton > button:active {
     transform: translateY(-4px) scale(1.03) !important;
     background: linear-gradient(135deg, rgba(21, 76, 44, 0.9), rgba(10, 32, 18, 0.95)) !important;
@@ -216,6 +194,14 @@ div.stButton > button:hover, div.stButton > button:active {
 /* إخفاء علامة Streamlit السفلية وزر الرفع لتنظيف الواجهة */
 footer {visibility: hidden;}
 .stDeployButton {display:none;}
+
+/* 👉 التعديل 1: إخفاء الحروف المقطوعة في زر القائمة الجانبية مع إبقاء السهم باللون الذهبي */
+[data-testid="collapsedControl"] {
+    color: transparent !important;
+}
+[data-testid="collapsedControl"] svg {
+    color: #d4af37 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -283,9 +269,10 @@ st.markdown('<hr>', unsafe_allow_html=True)
 # ==========================================
 # 6. محرك الدردشة (Chat Engine)
 # ==========================================
+# 👉 التعديل 2: إضافة أيقونة الروبوت والمستخدم لرسائل الدردشة
 # عرض الرسائل السابقة
 for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
+    with st.chat_message(msg["role"], avatar="🤖" if msg["role"] == "assistant" else "👤"):
         st.markdown(msg["content"])
 
 # استقبال إدخال المستخدم
@@ -298,10 +285,10 @@ if st.session_state.auto_question:
 # توليد الرد
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar="👤"):
         st.markdown(user_input)
     
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="🤖"):
         with st.spinner("جارٍ معالجة استفسارك..."):
             if SERVICES_AVAILABLE:
                 try:
@@ -322,7 +309,7 @@ if user_input:
 # 7. لوحة الإدارة الجانبية (Sidebar Admin Panel)
 # ==========================================
 with st.sidebar:
-    st.markdown("<h2 style='color: #d4af37; text-align: center; text-shadow: 0 2px 5px rgba(0,0,0,0.5); direction: rtl;'>⚙️ إدارة البيانات</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color: #d4af37; text-align: center; text-shadow: 0 2px 5px rgba(0,0,0,0.5);'>⚙️ إدارة البيانات</h2>", unsafe_allow_html=True)
     st.markdown("---")
     
     admin_password = st.text_input("كلمة مرور المشرف 🔒", type="password")

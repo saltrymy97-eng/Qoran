@@ -1,4 +1,4 @@
-import streamlit as st
+Import streamlit as st
 import json
 import os
 import time
@@ -194,14 +194,6 @@ div.stButton > button:hover, div.stButton > button:active {
 /* إخفاء علامة Streamlit السفلية وزر الرفع لتنظيف الواجهة */
 footer {visibility: hidden;}
 .stDeployButton {display:none;}
-
-/* 👉 التعديل 1: إخفاء الحروف المقطوعة في زر القائمة الجانبية مع إبقاء السهم باللون الذهبي */
-[data-testid="collapsedControl"] {
-    color: transparent !important;
-}
-[data-testid="collapsedControl"] svg {
-    color: #d4af37 !important;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -269,10 +261,9 @@ st.markdown('<hr>', unsafe_allow_html=True)
 # ==========================================
 # 6. محرك الدردشة (Chat Engine)
 # ==========================================
-# 👉 التعديل 2: إضافة أيقونة الروبوت والمستخدم لرسائل الدردشة
 # عرض الرسائل السابقة
 for msg in st.session_state.messages:
-    with st.chat_message(msg["role"], avatar="🤖" if msg["role"] == "assistant" else "👤"):
+    with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
 # استقبال إدخال المستخدم
@@ -285,10 +276,10 @@ if st.session_state.auto_question:
 # توليد الرد
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
-    with st.chat_message("user", avatar="👤"):
+    with st.chat_message("user"):
         st.markdown(user_input)
     
-    with st.chat_message("assistant", avatar="🤖"):
+    with st.chat_message("assistant"):
         with st.spinner("جارٍ معالجة استفسارك..."):
             if SERVICES_AVAILABLE:
                 try:

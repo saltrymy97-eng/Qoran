@@ -1,4 +1,4 @@
-Import streamlit as st
+import streamlit as st
 import json
 import os
 import time
@@ -26,74 +26,98 @@ if not SERVICES_AVAILABLE and "toast_shown" not in st.session_state:
     st.session_state.toast_shown = True
 
 # ==========================================
-# 2. تصميم CSS الزمردي الملكي الفاخر 💎
+# 2. تصميم CSS الزمردي الملكي الفاخر (نسخة الـ VIP) 💎✨
 # ==========================================
 st.markdown("""
 <style>
-/* منع الشاشة بأكملها من الانزلاق لليمين واليسار في الجوال */
+/* 🌍 إعدادات عامة ومنع الانزلاق */
 html, body, [data-testid="stAppViewContainer"], .main {
     overflow-x: hidden !important;
     max-width: 100vw !important;
+    scroll-behavior: smooth;
 }
 
-/* 🟢 خلفية زمردية داكنة ملكية مع إضاءة خافتة 🟢 */
+/* 🟢 خلفية سينمائية فائقة الفخامة 🟢 */
 .stApp {
-    background: radial-gradient(circle at 50% -10%, #0f3822 0%, #05160d 40%, #010603 100%);
+    background-color: #020905; /* أسود زمردي عميق جداً */
+    background-image: 
+        radial-gradient(circle at 15% 0%, rgba(20, 75, 43, 0.35), transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(212, 175, 55, 0.08), transparent 45%),
+        radial-gradient(circle at 50% 50%, rgba(5, 22, 13, 0.8), transparent 100%);
     background-attachment: fixed;
-    color: #f0e6d2;
+    color: #fdf5e6;
 }
 
-/* النصوص والخطوط الذهبية */
-@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@700&display=swap');
+/* 📜 شريط تمرير ذهبي مخصص للكمبيوتر 📜 */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(2, 9, 5, 0.9); 
+}
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #aa771c, #d4af37, #fcf6ba);
+    border-radius: 10px;
+}
+
+/* 👑 النصوص بتأثير الذهب الواقعي (Metallic Gold) 👑 */
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Tajawal:wght@500;700;900&display=swap');
+
 .basmala {
     font-family: 'Amiri', serif;
-    font-size: 2.6rem;
+    font-size: 2.8rem;
     text-align: center;
-    background: linear-gradient(to bottom, #fff1b8, #d4af37, #aa8511);
+    background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     margin-bottom: 5px;
-    text-shadow: 0px 4px 20px rgba(212, 175, 55, 0.4);
+    text-shadow: 0px 5px 25px rgba(212, 175, 55, 0.3);
+    letter-spacing: 1px;
 }
 
 .uni-title {
-    font-size: 2.2rem;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 2.5rem;
     text-align: center;
     font-weight: 900;
     color: #ffffff;
     margin-bottom: 5px;
     letter-spacing: 0.5px;
-    text-shadow: 0 4px 15px rgba(0,0,0,0.8);
+    text-shadow: 0 5px 20px rgba(0,0,0,0.9), 0 0 10px rgba(255,255,255,0.2);
     line-height: 1.4;
 }
 
 .uni-title span { 
-    color: #ffd700; 
-    filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.5));
+    color: #fcf6ba; 
+    filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.6));
 }
 
 .branch-title {
-    font-size: 1.1rem;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 1.15rem;
     text-align: center;
-    color: #c9bc9c;
-    letter-spacing: 2px;
-    margin-bottom: 25px;
-    font-weight: 300;
+    color: #d4c4a1;
+    letter-spacing: 3px;
+    margin-bottom: 30px;
+    font-weight: 500;
     text-transform: uppercase;
+    opacity: 0.9;
 }
 
-/* فاصل ذهبي متوهج */
+/* ⚔️ فاصل ذهبي متوهج كالليزر ⚔️ */
 hr {
     border: 0;
     height: 1px;
-    background: linear-gradient(to right, transparent, rgba(212, 175, 55, 0.9), transparent);
-    box-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
-    margin: 15px 0 35px 0;
+    background: linear-gradient(to right, transparent, rgba(252, 246, 186, 0.8), rgba(212, 175, 55, 1), rgba(252, 246, 186, 0.8), transparent);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.8), 0 0 5px rgba(255, 255, 255, 0.5);
+    margin: 20px 0 40px 0;
+    opacity: 0.7;
 }
 
 /* ========================================= */
-/* 🌟 شريط الأزرار الأفقي القابل للتمرير (للجوال) 🌟 */
+/* 🌟 شريط الأزرار الأفقي (سلس وعصري) 🌟 */
 /* ========================================= */
 @media (max-width: 768px) {
     [data-testid="stHorizontalBlock"] {
@@ -101,8 +125,8 @@ hr {
         flex-wrap: nowrap !important;
         overflow-x: auto !important;
         overflow-y: hidden !important;
-        padding-bottom: 20px !important;
-        padding-top: 5px !important;
+        padding-bottom: 25px !important;
+        padding-top: 10px !important;
         scroll-behavior: smooth;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none; 
@@ -113,87 +137,112 @@ hr {
     }
 
     [data-testid="column"] {
-        min-width: 145px !important; 
+        min-width: 150px !important; 
         flex: 0 0 auto !important;
         width: auto !important;
-        padding: 0 6px !important;
+        padding: 0 8px !important;
     }
 }
 
-/* 💠 تصميم أزرار الخدمات (زجاجي زمردي وذهبي) 💠 */
+/* 💠 أزرار الخدمات (تأثير زجاجي فائق النقاء) 💠 */
 div.stButton > button {
-    background: linear-gradient(135deg, rgba(15, 56, 34, 0.7), rgba(5, 22, 13, 0.9)) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(212, 175, 55, 0.35) !important;
-    border-top: 1px solid rgba(255, 240, 180, 0.5) !important;
-    border-radius: 12px !important;
+    font-family: 'Tajawal', sans-serif !important;
+    background: rgba(15, 56, 34, 0.25) !important;
+    backdrop-filter: blur(25px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(25px) saturate(150%) !important;
+    border: 1px solid rgba(212, 175, 55, 0.25) !important;
+    border-top: 1px solid rgba(252, 246, 186, 0.4) !important;
+    border-radius: 16px !important;
     color: #fdf5e6 !important;
-    padding: 12px 10px !important;
+    padding: 14px 10px !important;
     width: 100% !important;
     height: auto !important;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.05) !important;
-    font-size: 0.95rem !important;
-    font-weight: bold !important;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 2px 10px rgba(255, 255, 255, 0.05) !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
     white-space: nowrap !important;
 }
 
-/* تأثير عند اللمس/الماوس للأزرار */
+/* تأثير التوهج عند اللمس للزر */
 div.stButton > button:hover, div.stButton > button:active {
-    transform: translateY(-4px) scale(1.03) !important;
-    background: linear-gradient(135deg, rgba(21, 76, 44, 0.9), rgba(10, 32, 18, 0.95)) !important;
-    border-color: #ffd700 !important;
+    transform: translateY(-5px) scale(1.02) !important;
+    background: rgba(20, 75, 43, 0.6) !important;
+    border-color: #fcf6ba !important;
     color: #ffffff !important;
-    box-shadow: 0 12px 25px rgba(212, 175, 55, 0.35) !important;
+    box-shadow: 0 15px 35px rgba(212, 175, 55, 0.25), 0 0 15px rgba(212, 175, 55, 0.4) !important;
 }
 
 /* ========================================= */
-/* 💬 رسائل الدردشة (Glassmorphism الفاخر) 💬 */
+/* 💬 رسائل الدردشة (Premium Glass Bubbles) 💬 */
 /* ========================================= */
 [data-testid="stChatMessage"] {
-    background: rgba(8, 26, 16, 0.65) !important;
-    backdrop-filter: blur(16px) !important;
-    -webkit-backdrop-filter: blur(16px) !important;
-    border: 1px solid rgba(212, 175, 55, 0.15) !important;
+    background: rgba(8, 20, 14, 0.5) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
     border-right: 4px solid #d4af37 !important;
-    border-radius: 16px !important;
-    padding: 1.5rem !important;
-    margin-bottom: 1.2rem !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
-    color: #f0e6d2 !important;
-    font-size: 1.05rem !important;
-    line-height: 1.6 !important;
+    border-radius: 20px !important;
+    padding: 1.8rem !important;
+    margin-bottom: 1.5rem !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+    color: #fcfcfc !important;
+    font-family: 'Tajawal', sans-serif !important;
+    font-size: 1.1rem !important;
+    line-height: 1.7 !important;
+    transition: transform 0.3s ease !important;
+}
+
+[data-testid="stChatMessage"]:hover {
+    background: rgba(12, 30, 20, 0.6) !important;
+    border-right-color: #fcf6ba !important;
 }
 
 /* ========================================= */
-/* ⌨️ كبسولة الكتابة العائمة (Input Field) ⌨️ */
+/* ⌨️ كبسولة الكتابة العائمة (Neon Input Capsule) ⌨️ */
 /* ========================================= */
 [data-testid="stChatInput"] {
-    background: rgba(5, 15, 10, 0.95) !important;
-    backdrop-filter: blur(20px) !important;
-    border: 1px solid rgba(212, 175, 55, 0.4) !important;
-    border-radius: 30px !important;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.9) !important;
-    padding: 6px 12px !important;
-    margin-bottom: 15px !important;
-    transition: all 0.3s ease !important;
+    background: rgba(3, 10, 6, 0.85) !important;
+    backdrop-filter: blur(30px) saturate(200%) !important;
+    border: 1px solid rgba(212, 175, 55, 0.3) !important;
+    border-radius: 40px !important;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.9), 0 0 20px rgba(212, 175, 55, 0.05) !important;
+    padding: 8px 15px !important;
+    margin-bottom: 20px !important;
+    transition: all 0.4s ease !important;
 }
 
 [data-testid="stChatInput"]:focus-within {
-    border-color: #ffd700 !important;
-    box-shadow: 0 0 25px rgba(212, 175, 55, 0.4), inset 0 0 10px rgba(212, 175, 55, 0.1) !important;
-    transform: translateY(-2px) !important;
+    border-color: #fcf6ba !important;
+    background: rgba(5, 15, 9, 0.95) !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 25px rgba(212, 175, 55, 0.3), inset 0 0 10px rgba(212, 175, 55, 0.1) !important;
+    transform: translateY(-3px) !important;
 }
 
 [data-testid="stChatInput"] textarea {
     color: #ffffff !important;
-    font-size: 1.05rem !important;
+    font-family: 'Tajawal', sans-serif !important;
+    font-size: 1.1rem !important;
 }
 
 /* إخفاء علامة Streamlit السفلية وزر الرفع لتنظيف الواجهة */
 footer {visibility: hidden;}
 .stDeployButton {display:none;}
+
+/* 👉 إخفاء الحروف المقطوعة في زر القائمة الجانبية مع إبقاء السهم باللون الذهبي اللامع */
+[data-testid="collapsedControl"] {
+    color: transparent !important;
+    transition: all 0.3s ease !important;
+}
+[data-testid="collapsedControl"]:hover {
+    background: rgba(212, 175, 55, 0.1) !important;
+    border-radius: 50% !important;
+}
+[data-testid="collapsedControl"] svg {
+    color: #fcf6ba !important;
+    filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.8)) !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -261,9 +310,9 @@ st.markdown('<hr>', unsafe_allow_html=True)
 # ==========================================
 # 6. محرك الدردشة (Chat Engine)
 # ==========================================
-# عرض الرسائل السابقة
+# عرض الرسائل السابقة مع إضافة الرموز التعبيرية الأنيقة
 for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
+    with st.chat_message(msg["role"], avatar="🤖" if msg["role"] == "assistant" else "👤"):
         st.markdown(msg["content"])
 
 # استقبال إدخال المستخدم
@@ -276,10 +325,10 @@ if st.session_state.auto_question:
 # توليد الرد
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar="👤"):
         st.markdown(user_input)
     
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="🤖"):
         with st.spinner("جارٍ معالجة استفسارك..."):
             if SERVICES_AVAILABLE:
                 try:
@@ -300,7 +349,7 @@ if user_input:
 # 7. لوحة الإدارة الجانبية (Sidebar Admin Panel)
 # ==========================================
 with st.sidebar:
-    st.markdown("<h2 style='color: #d4af37; text-align: center; text-shadow: 0 2px 5px rgba(0,0,0,0.5);'>⚙️ إدارة البيانات</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color: #fcf6ba; text-align: center; text-shadow: 0 2px 10px rgba(212,175,55,0.5); font-family: Tajawal;'>⚙️ إدارة البيانات</h2>", unsafe_allow_html=True)
     st.markdown("---")
     
     admin_password = st.text_input("كلمة مرور المشرف 🔒", type="password")

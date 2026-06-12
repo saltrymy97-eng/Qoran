@@ -15,22 +15,21 @@ except ImportError:
 # ==========================================
 st.set_page_config(
     page_title="جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير",
-    page_icon="📖",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
 # عرض توست تحذيري مخفي داخل كود التشغيل الأولي لمنع التكرار المزعج
 if not SERVICES_AVAILABLE and "toast_shown" not in st.session_state:
-    st.toast("⚠️ ملف services.py غير موجود، سيتم استخدام الردود التلقائية للتجربة.", icon="⚠️")
+    st.toast("ملف services.py غير موجود، سيتم استخدام الردود التلقائية للتجربة.", icon=":material/warning:")
     st.session_state.toast_shown = True
 
 # ==========================================
-# 2. تصميم CSS الأكاديمي الفاخر والمريح 🏛️✨
+# 2. تصميم CSS الأكاديمي الفاخر والمريح
 # ==========================================
 st.markdown("""
 <style>
-/* 🌍 استيراد الخطوط الرسمية وإعدادات الصفحة العامة */
+/* استيراد الخطوط الرسمية وإعدادات الصفحة العامة */
 @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Tajawal:wght@400;500;700;800;900&display=swap');
 
 html, body, [data-testid="stAppViewContainer"], .main {
@@ -39,14 +38,14 @@ html, body, [data-testid="stAppViewContainer"], .main {
     scroll-behavior: smooth;
 }
 
-/* 🏢 الخلفية الأكاديمية النقية */
+/* الخلفية الأكاديمية النقية */
 .stApp {
-    background-color: #fbfcfb !important; /* لون عاجي ناعم جداً مريح للعين */
+    background-color: #fbfcfb !important;
     color: #2b3a30 !important;
     font-family: 'Tajawal', sans-serif !important;
 }
 
-/* 📜 شريط التمرير الجانبي */
+/* شريط التمرير الجانبي */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -59,12 +58,12 @@ html, body, [data-testid="stAppViewContainer"], .main {
     border-radius: 10px;
 }
 
-/* 👑 ترويسة الصفحة والهوية البصرية */
+/* ترويسة الصفحة والهوية البصرية */
 .basmala {
     font-family: 'Amiri', serif !important;
     font-size: 1.8rem !important;
     text-align: center;
-    color: #bfa15f !important; /* ذهبي ملكي مطفأ رصين */
+    color: #bfa15f !important;
     margin-bottom: 8px;
     font-weight: 700;
     letter-spacing: 0.5px;
@@ -75,7 +74,7 @@ html, body, [data-testid="stAppViewContainer"], .main {
     font-size: 2.2rem !important;
     text-align: center;
     font-weight: 800;
-    color: #0f5132 !important; /* الأخضر الزمردي الرسمي للجامعات الإسلامية */
+    color: #0f5132 !important;
     margin-bottom: 5px;
     line-height: 1.3;
 }
@@ -90,7 +89,7 @@ html, body, [data-testid="stAppViewContainer"], .main {
     font-weight: 500;
 }
 
-/* ⚔️ فاصل خطي أنيق وهادئ */
+/* فاصل خطي أنيق وهادئ */
 hr {
     border: 0 !important;
     height: 1px !important;
@@ -100,7 +99,7 @@ hr {
 }
 
 /* ========================================= */
-/* 🌟 شريط الأزرار السريع للخدمات 🌟 */
+/* شريط الأزرار السريع للخدمات */
 /* ========================================= */
 @media (max-width: 768px) {
     [data-testid="stHorizontalBlock"] {
@@ -119,7 +118,7 @@ hr {
     }
 }
 
-/* 💠 أزرار الخدمات المهندمة */
+/* أزرار الخدمات المهندمة */
 div.stButton > button {
     font-family: 'Tajawal', sans-serif !important;
     background-color: #ffffff !important;
@@ -143,12 +142,12 @@ div.stButton > button:hover, div.stButton > button:active {
 }
 
 /* ========================================= */
-/* 💬 فقاعات رسائل الدردشة الاحترافية 💬 */
+/* فقاعات رسائل الدردشة الاحترافية */
 /* ========================================= */
 [data-testid="stChatMessage"] {
     background-color: #ffffff !important;
     border: 1px solid #edf2f7 !important;
-    border-right: 4px solid #0f5132 !important; /* تمييز الرسائل باللون الرسمي للجامعة */
+    border-right: 4px solid #0f5132 !important;
     border-radius: 12px !important;
     padding: 1.2rem !important;
     margin-bottom: 1rem !important;
@@ -160,7 +159,7 @@ div.stButton > button:hover, div.stButton > button:active {
 }
 
 /* ========================================= */
-/* ⌨️ صندوق إدخال المحادثة العائم ⌨️ */
+/* صندوق إدخال المحادثة العائم */
 /* ========================================= */
 [data-testid="stChatInput"] {
     background-color: #ffffff !important;
@@ -181,10 +180,10 @@ div.stButton > button:hover, div.stButton > button:active {
 }
 
 /* ========================================= */
-/* ⚙️ لوحة التحكم الجانبية وتحسين التباين ⚙️ */
+/* لوحة التحكم الجانبية وتحسين التباين */
 /* ========================================= */
 [data-testid="stSidebar"] {
-    background-color: #f4f6f4 !important; /* لون خلفية القائمة أغمق قليلاً من الشاشة الرئيسية للتفريق */
+    background-color: #f4f6f4 !important;
     border-left: 1px solid #e2e8f0 !important;
 }
 
@@ -266,19 +265,19 @@ st.markdown('<div class="branch-title">✦ فرع غيل باوزير - حضرم
 # ==========================================
 col1, col2, col3, col4, col5 = st.columns(5)
 
-if col1.button("📅 الجداول"):
+if col1.button("الجداول", icon=":material/calendar_month:"):
     st.session_state.auto_question = "أريد الاستفسار عن جداول المحاضرات"
     st.rerun()
-if col2.button("📝 الامتحانات"):
+if col2.button("الامتحانات", icon=":material/edit_document:"):
     st.session_state.auto_question = "ما هي مواعيد وترتيبات الامتحانات؟"
     st.rerun()
-if col3.button("💰 الرسوم"):
+if col3.button("الرسوم", icon=":material/payments:"):
     st.session_state.auto_question = "أريد معرفة تفاصيل الرسوم الدراسية وطرق السداد"
     st.rerun()
-if col4.button("📞 التواصل"):
+if col4.button("التواصل", icon=":material/call:"):
     st.session_state.auto_question = "كيف يمكنني التواصل مع إدارة الفرع؟"
     st.rerun()
-if col5.button("🎓 التخصصات"):
+if col5.button("التخصصات", icon=":material/school:"):
     st.session_state.auto_question = "ما هي التخصصات الأكاديمية المتاحة؟"
     st.rerun()
 
@@ -288,7 +287,7 @@ st.markdown('<hr>', unsafe_allow_html=True)
 # 6. محرك الدردشة (Chat Engine)
 # ==========================================
 for msg in st.session_state.messages:
-    with st.chat_message(msg["role"], avatar="🤖" if msg["role"] == "assistant" else "👤"):
+    with st.chat_message(msg["role"], avatar=":material/school:" if msg["role"] == "assistant" else ":material/person:"):
         st.markdown(msg["content"])
 
 user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
@@ -299,10 +298,10 @@ if st.session_state.auto_question:
 
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
-    with st.chat_message("user", avatar="👤"):
+    with st.chat_message("user", avatar=":material/person:"):
         st.markdown(user_input)
     
-    with st.chat_message("assistant", avatar="🤖"):
+    with st.chat_message("assistant", avatar=":material/school:"):
         with st.spinner("جارٍ معالجة استفسارك..."):
             if SERVICES_AVAILABLE:
                 try:
@@ -323,17 +322,17 @@ if user_input:
 # 7. لوحة الإدارة الجانبية (Sidebar Admin Panel)
 # ==========================================
 with st.sidebar:
-    st.markdown("<h3 style='color: #0f5132; text-align: center; font-family: Tajawal; font-weight: 700;'>⚙️ إدارة البيانات</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color: #0f5132; text-align: center; font-family: Tajawal; font-weight: 700;'>إدارة البيانات</h3>", unsafe_allow_html=True)
     st.markdown("---")
     
-    admin_password = st.text_input("كلمة مرور المشرف 🔒", type="password")
+    admin_password = st.text_input("كلمة مرور المشرف", type="password")
     
     correct_password = st.secrets.get("ADMIN_PASSWORD", "admin123")
     
     if admin_password == correct_password:
-        st.success("✅ تم التحقق")
+        st.success("تم التحقق", icon=":material/check_circle:")
         
-        tab1, tab2 = st.tabs(["📝 تحرير البيانات", "📊 الإحصائيات"])
+        tab1, tab2 = st.tabs(["تحرير البيانات", "الإحصائيات"])
         
         with tab1:
             edit_info = st.text_area("معلومات عامة", st.session_state.db.get("info", ""), height=100)
@@ -343,7 +342,7 @@ with st.sidebar:
             edit_contacts = st.text_area("جهات الاتصال", st.session_state.db.get("contacts", ""), height=100)
             edit_majors = st.text_area("التخصصات", st.session_state.db.get("majors", ""), height=100)
             
-            if st.button("💾 حفظ البيانات", use_container_width=True):
+            if st.button("حفظ البيانات", icon=":material/save:", use_container_width=True):
                 st.session_state.db = {
                     "info": edit_info,
                     "schedules": edit_schedules,
@@ -353,7 +352,7 @@ with st.sidebar:
                     "majors": edit_majors
                 }
                 save_data(st.session_state.db)
-                st.success("🎉 تم تحديث قاعدة البيانات بنجاح!")
+                st.success("تم تحديث قاعدة البيانات بنجاح!", icon=":material/check_circle:")
         
         with tab2:
             if SERVICES_AVAILABLE:
@@ -361,12 +360,12 @@ with st.sidebar:
                     stats = get_stats()
                     col1, col2 = st.columns(2)
                     with col1:
-                        st.metric("📋 إجمالي الأسئلة", stats.get("total", 0))
+                        st.metric("إجمالي الأسئلة", stats.get("total", 0))
                     with col2:
-                        st.metric("📅 أسئلة اليوم", stats.get("today", 0))
+                        st.metric("أسئلة اليوم", stats.get("today", 0))
                     
                     st.markdown("---")
-                    st.markdown("### 🔥 أكثر 5 أسئلة شيوعاً")
+                    st.markdown("### أكثر 5 أسئلة شيوعاً")
                     top_q = stats.get("top_questions", [])
                     if top_q:
                         for i, q in enumerate(top_q[:5], 1):
@@ -375,7 +374,7 @@ with st.sidebar:
                         st.info("لا توجد أسئلة مسجلة بعد")
                     
                     st.markdown("---")
-                    st.markdown("### 📊 توزيع الفئات")
+                    st.markdown("### توزيع الفئات")
                     categories_data = stats.get("categories", {})
                     if categories_data:
                         for cat, count in categories_data.items():
@@ -386,7 +385,7 @@ with st.sidebar:
                 except Exception as e:
                     st.error(f"خطأ في تحميل الإحصائيات: {str(e)}")
             else:
-                st.warning("⚠️ الإحصائيات غير متاحة لعدم وجود ملف services.py")
+                st.warning("الإحصائيات غير متاحة لعدم وجود ملف services.py", icon=":material/warning:")
             
     elif admin_password != "":
-        st.error("❌ كلمة المرور غير صحيحة")
+        st.error("كلمة المرور غير صحيحة", icon=":material/error:")

@@ -14,8 +14,8 @@ except ImportError:
 # 1. إعداد الصفحة الأساسية
 # ==========================================
 st.set_page_config(
-    page_title="جامعة القرآن الكريم - فرع غيل باوزير",
-    page_icon="🕌",
+    page_title="جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير",
+    page_icon="📖",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -26,98 +26,81 @@ if not SERVICES_AVAILABLE and "toast_shown" not in st.session_state:
     st.session_state.toast_shown = True
 
 # ==========================================
-# 2. تصميم CSS الزمردي الملكي الفاخر (نسخة الـ VIP) 💎✨
+# 2. تصميم CSS الأكاديمي الفاخر والمريح 🏛️✨
 # ==========================================
 st.markdown("""
 <style>
-/* 🌍 إعدادات عامة ومنع الانزلاق */
+/* 🌍 استيراد الخطوط الرسمية وإعدادات الصفحة العامة */
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Tajawal:wght@400;500;700;800;900&display=swap');
+
 html, body, [data-testid="stAppViewContainer"], .main {
     overflow-x: hidden !important;
     max-width: 100vw !important;
     scroll-behavior: smooth;
 }
 
-/* 🟢 خلفية سينمائية فائقة الفخامة 🟢 */
+/* 🏢 الخلفية الأكاديمية النقية */
 .stApp {
-    background-color: #020905; /* أسود زمردي عميق جداً */
-    background-image: 
-        radial-gradient(circle at 15% 0%, rgba(20, 75, 43, 0.35), transparent 40%),
-        radial-gradient(circle at 85% 80%, rgba(212, 175, 55, 0.08), transparent 45%),
-        radial-gradient(circle at 50% 50%, rgba(5, 22, 13, 0.8), transparent 100%);
-    background-attachment: fixed;
-    color: #fdf5e6;
+    background-color: #fbfcfb !important; /* لون عاجي ناعم جداً مريح للعين */
+    color: #2b3a30 !important;
+    font-family: 'Tajawal', sans-serif !important;
 }
 
-/* 📜 شريط تمرير ذهبي مخصص للكمبيوتر 📜 */
+/* 📜 شريط التمرير الجانبي */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 ::-webkit-scrollbar-track {
-    background: rgba(2, 9, 5, 0.9); 
+    background: #f1f1f1; 
 }
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(to bottom, #aa771c, #d4af37, #fcf6ba);
+    background: #0f5132;
     border-radius: 10px;
 }
 
-/* 👑 النصوص بتأثير الذهب الواقعي (Metallic Gold) 👑 */
-@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Tajawal:wght@500;700;900&display=swap');
-
+/* 👑 ترويسة الصفحة والهوية البصرية */
 .basmala {
-    font-family: 'Amiri', serif;
-    font-size: 2.8rem;
+    font-family: 'Amiri', serif !important;
+    font-size: 1.8rem !important;
     text-align: center;
-    background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    margin-bottom: 5px;
-    text-shadow: 0px 5px 25px rgba(212, 175, 55, 0.3);
-    letter-spacing: 1px;
+    color: #bfa15f !important; /* ذهبي ملكي مطفأ رصين */
+    margin-bottom: 8px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
 }
 
 .uni-title {
-    font-family: 'Tajawal', sans-serif;
-    font-size: 2.5rem;
+    font-family: 'Tajawal', sans-serif !important;
+    font-size: 2.2rem !important;
     text-align: center;
-    font-weight: 900;
-    color: #ffffff;
+    font-weight: 800;
+    color: #0f5132 !important; /* الأخضر الزمردي الرسمي للجامعات الإسلامية */
     margin-bottom: 5px;
-    letter-spacing: 0.5px;
-    text-shadow: 0 5px 20px rgba(0,0,0,0.9), 0 0 10px rgba(255,255,255,0.2);
-    line-height: 1.4;
-}
-
-.uni-title span { 
-    color: #fcf6ba; 
-    filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.6));
+    line-height: 1.3;
 }
 
 .branch-title {
-    font-family: 'Tajawal', sans-serif;
-    font-size: 1.15rem;
+    font-family: 'Tajawal', sans-serif !important;
+    font-size: 1.05rem !important;
     text-align: center;
-    color: #d4c4a1;
-    letter-spacing: 3px;
-    margin-bottom: 30px;
+    color: #6c757d !important;
+    letter-spacing: 1px;
+    margin-bottom: 25px;
     font-weight: 500;
-    text-transform: uppercase;
-    opacity: 0.9;
 }
 
-/* ⚔️ فاصل ذهبي متوهج كالليزر ⚔️ */
+/* ⚔️ فاصل خطي أنيق وهادئ */
 hr {
-    border: 0;
-    height: 1px;
-    background: linear-gradient(to right, transparent, rgba(252, 246, 186, 0.8), rgba(212, 175, 55, 1), rgba(252, 246, 186, 0.8), transparent);
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.8), 0 0 5px rgba(255, 255, 255, 0.5);
-    margin: 20px 0 40px 0;
-    opacity: 0.7;
+    border: 0 !important;
+    height: 1px !important;
+    background: linear-gradient(to right, transparent, #bfa15f, transparent) !important;
+    margin: 25px 0 !important;
+    opacity: 0.4;
 }
 
 /* ========================================= */
-/* 🌟 شريط الأزرار الأفقي (سلس وعصري) 🌟 */
+/* 🌟 شريط الأزرار السريع للخدمات 🌟 */
 /* ========================================= */
 @media (max-width: 768px) {
     [data-testid="stHorizontalBlock"] {
@@ -125,123 +108,117 @@ hr {
         flex-wrap: nowrap !important;
         overflow-x: auto !important;
         overflow-y: hidden !important;
-        padding-bottom: 25px !important;
-        padding-top: 10px !important;
+        padding-bottom: 15px !important;
         scroll-behavior: smooth;
         -webkit-overflow-scrolling: touch;
-        scrollbar-width: none; 
     }
-    
-    [data-testid="stHorizontalBlock"]::-webkit-scrollbar {
-        display: none !important;
-    }
-
     [data-testid="column"] {
-        min-width: 150px !important; 
+        min-width: 140px !important; 
         flex: 0 0 auto !important;
         width: auto !important;
-        padding: 0 8px !important;
     }
 }
 
-/* 💠 أزرار الخدمات (تأثير زجاجي فائق النقاء) 💠 */
+/* 💠 أزرار الخدمات المهندمة */
 div.stButton > button {
     font-family: 'Tajawal', sans-serif !important;
-    background: rgba(15, 56, 34, 0.25) !important;
-    backdrop-filter: blur(25px) saturate(150%) !important;
-    -webkit-backdrop-filter: blur(25px) saturate(150%) !important;
-    border: 1px solid rgba(212, 175, 55, 0.25) !important;
-    border-top: 1px solid rgba(252, 246, 186, 0.4) !important;
-    border-radius: 16px !important;
-    color: #fdf5e6 !important;
-    padding: 14px 10px !important;
+    background-color: #ffffff !important;
+    color: #0f5132 !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    padding: 12px 8px !important;
     width: 100% !important;
-    height: auto !important;
-    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 2px 10px rgba(255, 255, 255, 0.05) !important;
-    font-size: 1rem !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.5px !important;
-    white-space: nowrap !important;
+    transition: all 0.25s ease !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
 }
 
-/* تأثير التوهج عند اللمس للزر */
 div.stButton > button:hover, div.stButton > button:active {
-    transform: translateY(-5px) scale(1.02) !important;
-    background: rgba(20, 75, 43, 0.6) !important;
-    border-color: #fcf6ba !important;
+    background-color: #0f5132 !important;
     color: #ffffff !important;
-    box-shadow: 0 15px 35px rgba(212, 175, 55, 0.25), 0 0 15px rgba(212, 175, 55, 0.4) !important;
+    border-color: #0f5132 !important;
+    box-shadow: 0 4px 12px rgba(15, 81, 50, 0.15) !important;
+    transform: translateY(-1px);
 }
 
 /* ========================================= */
-/* 💬 رسائل الدردشة (Premium Glass Bubbles) 💬 */
+/* 💬 فقاعات رسائل الدردشة الاحترافية 💬 */
 /* ========================================= */
 [data-testid="stChatMessage"] {
-    background: rgba(8, 20, 14, 0.5) !important;
-    backdrop-filter: blur(20px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.05) !important;
-    border-right: 4px solid #d4af37 !important;
-    border-radius: 20px !important;
-    padding: 1.8rem !important;
-    margin-bottom: 1.5rem !important;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
-    color: #fcfcfc !important;
+    background-color: #ffffff !important;
+    border: 1px solid #edf2f7 !important;
+    border-right: 4px solid #0f5132 !important; /* تمييز الرسائل باللون الرسمي للجامعة */
+    border-radius: 12px !important;
+    padding: 1.2rem !important;
+    margin-bottom: 1rem !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.01) !important;
+    color: #2d3748 !important;
     font-family: 'Tajawal', sans-serif !important;
-    font-size: 1.1rem !important;
-    line-height: 1.7 !important;
-    transition: transform 0.3s ease !important;
-}
-
-[data-testid="stChatMessage"]:hover {
-    background: rgba(12, 30, 20, 0.6) !important;
-    border-right-color: #fcf6ba !important;
+    font-size: 1.05rem !important;
+    line-height: 1.6 !important;
 }
 
 /* ========================================= */
-/* ⌨️ كبسولة الكتابة العائمة (Neon Input Capsule) ⌨️ */
+/* ⌨️ صندوق إدخال المحادثة العائم ⌨️ */
 /* ========================================= */
 [data-testid="stChatInput"] {
-    background: rgba(3, 10, 6, 0.85) !important;
-    backdrop-filter: blur(30px) saturate(200%) !important;
-    border: 1px solid rgba(212, 175, 55, 0.3) !important;
-    border-radius: 40px !important;
-    box-shadow: 0 15px 50px rgba(0,0,0,0.9), 0 0 20px rgba(212, 175, 55, 0.05) !important;
-    padding: 8px 15px !important;
-    margin-bottom: 20px !important;
-    transition: all 0.4s ease !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important;
+    padding: 6px 12px !important;
 }
 
 [data-testid="stChatInput"]:focus-within {
-    border-color: #fcf6ba !important;
-    background: rgba(5, 15, 9, 0.95) !important;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 25px rgba(212, 175, 55, 0.3), inset 0 0 10px rgba(212, 175, 55, 0.1) !important;
-    transform: translateY(-3px) !important;
+    border-color: #0f5132 !important;
+    box-shadow: 0 10px 25px rgba(15, 81, 50, 0.08) !important;
 }
 
 [data-testid="stChatInput"] textarea {
-    color: #ffffff !important;
+    color: #1e293b !important;
     font-family: 'Tajawal', sans-serif !important;
-    font-size: 1.1rem !important;
 }
 
-/* إخفاء علامة Streamlit السفلية وزر الرفع لتنظيف الواجهة */
+/* ========================================= */
+/* ⚙️ لوحة التحكم الجانبية وتحسين التباين ⚙️ */
+/* ========================================= */
+[data-testid="stSidebar"] {
+    background-color: #f4f6f4 !important; /* لون خلفية القائمة أغمق قليلاً من الشاشة الرئيسية للتفريق */
+    border-left: 1px solid #e2e8f0 !important;
+}
+
+/* تصحيح تباين حقول الإدخال لتظهر ناصعة وواضحة جداً */
+[data-testid="stSidebar"] .stTextInput input, 
+[data-testid="stSidebar"] .stTextArea textarea {
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+}
+
+[data-testid="stSidebar"] .stTextInput input:focus, 
+[data-testid="stSidebar"] .stTextArea textarea:focus {
+    border-color: #0f5132 !important;
+    box-shadow: 0 0 0 1px #0f5132 !important;
+}
+
+/* تعديل شكل الألسنة الداخلية في الإدارة */
+[data-testid="stSidebar"] [data-baseweb="tab"] {
+    color: #4a5568 !important;
+    font-family: 'Tajawal', sans-serif !important;
+}
+[data-testid="stSidebar"] [aria-selected="true"] {
+    color: #0f5132 !important;
+    font-weight: bold !important;
+}
+
+/* إخفاء عناصر Streamlit غير الضرورية لواجهة نظيفة */
 footer {visibility: hidden;}
 .stDeployButton {display:none;}
 
-/* 👉 إخفاء الحروف المقطوعة في زر القائمة الجانبية مع إبقاء السهم باللون الذهبي اللامع */
-[data-testid="collapsedControl"] {
-    color: transparent !important;
-    transition: all 0.3s ease !important;
-}
-[data-testid="collapsedControl"]:hover {
-    background: rgba(212, 175, 55, 0.1) !important;
-    border-radius: 50% !important;
-}
 [data-testid="collapsedControl"] svg {
-    color: #fcf6ba !important;
-    filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.8)) !important;
+    color: #0f5132 !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -281,7 +258,7 @@ if "auto_question" not in st.session_state:
 # 4. الواجهة الرئيسية (رأس الصفحة)
 # ==========================================
 st.markdown('<div class="basmala">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>', unsafe_allow_html=True)
-st.markdown('<div class="uni-title"><span>🕌</span> جامعة القرآن الكريم<br>والعلوم الإسلامية</div>', unsafe_allow_html=True)
+st.markdown('<div class="uni-title">جامعة القرآن الكريم<br>والعلوم الإسلامية</div>', unsafe_allow_html=True)
 st.markdown('<div class="branch-title">✦ فرع غيل باوزير - حضرموت ✦</div>', unsafe_allow_html=True)
 
 # ==========================================
@@ -310,19 +287,16 @@ st.markdown('<hr>', unsafe_allow_html=True)
 # ==========================================
 # 6. محرك الدردشة (Chat Engine)
 # ==========================================
-# عرض الرسائل السابقة مع إضافة الرموز التعبيرية الأنيقة
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"], avatar="🤖" if msg["role"] == "assistant" else "👤"):
         st.markdown(msg["content"])
 
-# استقبال إدخال المستخدم
 user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
 
 if st.session_state.auto_question:
     user_input = st.session_state.auto_question
     st.session_state.auto_question = None
 
-# توليد الرد
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user", avatar="👤"):
@@ -349,7 +323,7 @@ if user_input:
 # 7. لوحة الإدارة الجانبية (Sidebar Admin Panel)
 # ==========================================
 with st.sidebar:
-    st.markdown("<h2 style='color: #fcf6ba; text-align: center; text-shadow: 0 2px 10px rgba(212,175,55,0.5); font-family: Tajawal;'>⚙️ إدارة البيانات</h2>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color: #0f5132; text-align: center; font-family: Tajawal; font-weight: 700;'>⚙️ إدارة البيانات</h3>", unsafe_allow_html=True)
     st.markdown("---")
     
     admin_password = st.text_input("كلمة مرور المشرف 🔒", type="password")

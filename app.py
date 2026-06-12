@@ -2,8 +2,22 @@ import streamlit as st
 import json
 import os
 import time
+import re
 
-# استدعاء دوال الذكاء الاصطناعي (تأكد من وجود ملف services.py الخاص بك)
+# استيراد مكتبات قراءة الملفات (مع معالجة عدم وجودها)
+try:
+    from docx import Document
+    DOCX_AVAILABLE = True
+except ImportError:
+    DOCX_AVAILABLE = False
+
+try:
+    from PyPDF2 import PdfReader
+    PDF_AVAILABLE = True
+except ImportError:
+    PDF_AVAILABLE = False
+
+# استدعاء دوال الذكاء الاصطناعي
 try:
     from services import ask_ai, smart_classify, get_stats
     SERVICES_AVAILABLE = True
@@ -19,7 +33,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# عرض توست تحذيري مخفي داخل كود التشغيل الأولي لمنع التكرار المزعج
 if not SERVICES_AVAILABLE and "toast_shown" not in st.session_state:
     st.toast("ملف services.py غير موجود، سيتم استخدام الردود التلقائية للتجربة.", icon=":material/warning:")
     st.session_state.toast_shown = True
@@ -29,7 +42,6 @@ if not SERVICES_AVAILABLE and "toast_shown" not in st.session_state:
 # ==========================================
 st.markdown("""
 <style>
-/* استيراد الخطوط الرسمية وإعدادات الصفحة العامة */
 @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Tajawal:wght@400;500;700;800;900&display=swap');
 
 html, body, [data-testid="stAppViewContainer"], .main {
@@ -38,27 +50,16 @@ html, body, [data-testid="stAppViewContainer"], .main {
     scroll-behavior: smooth;
 }
 
-/* الخلفية الأكاديمية النقية */
 .stApp {
     background-color: #fbfcfb !important;
     color: #2b3a30 !important;
     font-family: 'Tajawal', sans-serif !important;
 }
 
-/* شريط التمرير الجانبي */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-::-webkit-scrollbar-track {
-    background: #f1f1f1; 
-}
-::-webkit-scrollbar-thumb {
-    background: #0f5132;
-    border-radius: 10px;
-}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #0f5132; border-radius: 10px; }
 
-/* ترويسة الصفحة والهوية البصرية */
 .basmala {
     font-family: 'Amiri', serif !important;
     font-size: 1.8rem !important;
@@ -89,7 +90,6 @@ html, body, [data-testid="stAppViewContainer"], .main {
     font-weight: 500;
 }
 
-/* فاصل خطي أنيق وهادئ */
 hr {
     border: 0 !important;
     height: 1px !important;
@@ -98,9 +98,6 @@ hr {
     opacity: 0.4;
 }
 
-/* ========================================= */
-/* شريط الأزرار السريع للخدمات */
-/* ========================================= */
 @media (max-width: 768px) {
     [data-testid="stHorizontalBlock"] {
         flex-direction: row !important;
@@ -112,13 +109,12 @@ hr {
         -webkit-overflow-scrolling: touch;
     }
     [data-testid="column"] {
-        min-width: 140px !important; 
+        min-width: 140px !important;
         flex: 0 0 auto !important;
         width: auto !important;
     }
 }
 
-/* أزرار الخدمات المهندمة */
 div.stButton > button {
     font-family: 'Tajawal', sans-serif !important;
     background-color: #ffffff !important;
@@ -141,9 +137,6 @@ div.stButton > button:hover, div.stButton > button:active {
     transform: translateY(-1px);
 }
 
-/* ========================================= */
-/* فقاعات رسائل الدردشة الاحترافية */
-/* ========================================= */
 [data-testid="stChatMessage"] {
     background-color: #ffffff !important;
     border: 1px solid #edf2f7 !important;
@@ -158,9 +151,6 @@ div.stButton > button:hover, div.stButton > button:active {
     line-height: 1.6 !important;
 }
 
-/* ========================================= */
-/* صندوق إدخال المحادثة العائم */
-/* ========================================= */
 [data-testid="stChatInput"] {
     background-color: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
@@ -179,16 +169,12 @@ div.stButton > button:hover, div.stButton > button:active {
     font-family: 'Tajawal', sans-serif !important;
 }
 
-/* ========================================= */
-/* لوحة التحكم الجانبية وتحسين التباين */
-/* ========================================= */
 [data-testid="stSidebar"] {
     background-color: #f4f6f4 !important;
     border-left: 1px solid #e2e8f0 !important;
 }
 
-/* تصحيح تباين حقول الإدخال لتظهر ناصعة وواضحة جداً */
-[data-testid="stSidebar"] .stTextInput input, 
+[data-testid="stSidebar"] .stTextInput input,
 [data-testid="stSidebar"] .stTextArea textarea {
     background-color: #ffffff !important;
     color: #1e293b !important;
@@ -196,13 +182,12 @@ div.stButton > button:hover, div.stButton > button:active {
     border-radius: 8px !important;
 }
 
-[data-testid="stSidebar"] .stTextInput input:focus, 
+[data-testid="stSidebar"] .stTextInput input:focus,
 [data-testid="stSidebar"] .stTextArea textarea:focus {
     border-color: #0f5132 !important;
     box-shadow: 0 0 0 1px #0f5132 !important;
 }
 
-/* تعديل شكل الألسنة الداخلية في الإدارة */
 [data-testid="stSidebar"] [data-baseweb="tab"] {
     color: #4a5568 !important;
     font-family: 'Tajawal', sans-serif !important;
@@ -212,18 +197,38 @@ div.stButton > button:hover, div.stButton > button:active {
     font-weight: bold !important;
 }
 
-/* إخفاء عناصر Streamlit غير الضرورية لواجهة نظيفة */
 footer {visibility: hidden;}
 .stDeployButton {display:none;}
-
-[data-testid="collapsedControl"] svg {
-    color: #0f5132 !important;
-}
+[data-testid="collapsedControl"] svg { color: #0f5132 !important; }
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. إدارة البيانات (قاعدة المعرفة المصغرة)
+# 3. دوال معالجة اللغة العربية
+# ==========================================
+def remove_tashkeel(text):
+    """إزالة التشكيل من النص العربي"""
+    tashkeel = re.compile(r'[\u0617-\u061A\u064B-\u0652\u06D6-\u06ED]')
+    return tashkeel.sub('', text)
+
+def normalize_arabic(text):
+    """توحيد شكل الحروف العربية"""
+    text = text.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا')
+    text = text.replace('ة', 'ه')
+    return text
+
+def clean_text(text):
+    """تنظيف النص العربي مع الحفاظ على بنيته"""
+    text = remove_tashkeel(text)
+    lines = []
+    for line in text.split('\n'):
+        line = line.strip()
+        if line:
+            lines.append(line)
+    return '\n'.join(lines)
+
+# ==========================================
+# 4. إدارة البيانات
 # ==========================================
 DATA_FILE = "data.json"
 
@@ -244,6 +249,112 @@ def save_data(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
+def extract_text_from_file(uploaded_file):
+    """استخراج النص العربي من ملف Word أو PDF"""
+    file_type = uploaded_file.type
+    
+    if "wordprocessingml" in file_type or uploaded_file.name.endswith('.docx'):
+        if not DOCX_AVAILABLE:
+            st.error("مكتبة python-docx غير مثبتة.")
+            return None
+        doc = Document(uploaded_file)
+        text_parts = []
+        for para in doc.paragraphs:
+            if para.text.strip():
+                text_parts.append(para.text.strip())
+        return clean_text('\n'.join(text_parts))
+    
+    elif "pdf" in file_type or uploaded_file.name.endswith('.pdf'):
+        if not PDF_AVAILABLE:
+            st.error("مكتبة PyPDF2 غير مثبتة.")
+            return None
+        reader = PdfReader(uploaded_file)
+        text_parts = []
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text_parts.append(page_text)
+        return clean_text('\n'.join(text_parts))
+    
+    else:
+        st.error("نوع الملف غير مدعوم. الرجاء رفع ملف Word (.docx) أو PDF.")
+        return None
+
+def distribute_text_to_fields(text):
+    """توزيع النص العربي على الحقول المناسبة بذكاء"""
+    fields = {
+        "info": "",
+        "schedules": "",
+        "exams": "",
+        "fees": "",
+        "contacts": "",
+        "majors": ""
+    }
+    
+    # قائمة بالعناوين المحتملة بالعربية (مع ignoring التشكيل)
+    patterns = {
+        "info": [
+            r"معلومات عامة[:\s]*", r"معلومات اساسية[:\s]*", r"عن الجامعة[:\s]*",
+            r"نبذة[:\s]*", r"تعريف[:\s]*", r"المعلومات العامة[:\s]*"
+        ],
+        "schedules": [
+            r"الجداول[:\s]*", r"جداول المحاضرات[:\s]*", r"الجداول الدراسية[:\s]*",
+            r"جدول[:\s]*", r"المحاضرات[:\s]*", r"المواعيد[:\s]*"
+        ],
+        "exams": [
+            r"الامتحانات[:\s]*", r"الاختبارات[:\s]*", r"مواعيد الامتحانات[:\s]*",
+            r"نظام الامتحانات[:\s]*", r"التقويم[:\s]*"
+        ],
+        "fees": [
+            r"الرسوم[:\s]*", r"الرسوم الدراسية[:\s]*", r"المصاريف[:\s]*",
+            r"التكاليف[:\s]*", r"الدفع[:\s]*", r"السداد[:\s]*", r"الاقساط[:\s]*"
+        ],
+        "contacts": [
+            r"جهات الاتصال[:\s]*", r"التواصل[:\s]*", r"اتصل بنا[:\s]*",
+            r"الهاتف[:\s]*", r"العنوان[:\s]*", r"الموقع[:\s]*", r"البريد[:\s]*"
+        ],
+        "majors": [
+            r"التخصصات[:\s]*", r"التخصص[:\s]*", r"الاقسام[:\s]*",
+            r"الشعب[:\s]*", r"البرامج[:\s]*", r"المسارات[:\s]*"
+        ]
+    }
+    
+    # تقسيم النص يدوياً
+    sections = {}
+    current_field = "info"
+    sections[current_field] = []
+    
+    lines = text.split('\n')
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+            
+        # محاولة مطابقة العناوين
+        matched = False
+        for field, field_patterns in patterns.items():
+            for pattern in field_patterns:
+                if re.match(pattern, line, re.IGNORECASE):
+                    current_field = field
+                    # إزالة العنوان من السطر
+                    line_content = re.sub(pattern, '', line, flags=re.IGNORECASE).strip()
+                    if line_content:
+                        sections.setdefault(current_field, []).append(line_content)
+                    matched = True
+                    break
+            if matched:
+                break
+        
+        if not matched:
+            sections.setdefault(current_field, []).append(line)
+    
+    # تجميع النص لكل حقل
+    for field in fields:
+        if field in sections:
+            fields[field] = '\n'.join(sections[field]).strip()
+    
+    return fields
+
 if "db" not in st.session_state:
     st.session_state.db = load_data()
 
@@ -254,14 +365,14 @@ if "auto_question" not in st.session_state:
     st.session_state.auto_question = None
 
 # ==========================================
-# 4. الواجهة الرئيسية (رأس الصفحة)
+# 5. الواجهة الرئيسية (رأس الصفحة)
 # ==========================================
 st.markdown('<div class="basmala">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>', unsafe_allow_html=True)
 st.markdown('<div class="uni-title">جامعة القرآن الكريم<br>والعلوم الإسلامية</div>', unsafe_allow_html=True)
 st.markdown('<div class="branch-title">✦ فرع غيل باوزير - حضرموت ✦</div>', unsafe_allow_html=True)
 
 # ==========================================
-# 5. شريط الخدمات (التمرير الأفقي في الجوال)
+# 6. شريط الخدمات
 # ==========================================
 col1, col2, col3, col4, col5 = st.columns(5)
 
@@ -284,7 +395,7 @@ if col5.button("التخصصات", icon=":material/school:"):
 st.markdown('<hr>', unsafe_allow_html=True)
 
 # ==========================================
-# 6. محرك الدردشة (Chat Engine)
+# 7. محرك الدردشة (Chat Engine)
 # ==========================================
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"], avatar=":material/school:" if msg["role"] == "assistant" else ":material/person:"):
@@ -319,7 +430,7 @@ if user_input:
     st.session_state.messages.append({"role": "assistant", "content": ai_response})
 
 # ==========================================
-# 7. لوحة الإدارة الجانبية (Sidebar Admin Panel)
+# 8. لوحة الإدارة الجانبية
 # ==========================================
 with st.sidebar:
     st.markdown("<h3 style='color: #0f5132; text-align: center; font-family: Tajawal; font-weight: 700;'>إدارة البيانات</h3>", unsafe_allow_html=True)
@@ -335,6 +446,26 @@ with st.sidebar:
         tab1, tab2 = st.tabs(["تحرير البيانات", "الإحصائيات"])
         
         with tab1:
+            # ميزة رفع الملفات
+            st.markdown("### 📂 رفع ملف بيانات")
+            uploaded_file = st.file_uploader(
+                "ارفع ملف Word أو PDF بالعربية",
+                type=["docx", "pdf"],
+                help="الملف يدعم اللغة العربية بالكامل مع التشكيل"
+            )
+            
+            if uploaded_file is not None:
+                if st.button("معالجة الملف", icon=":material/upload:"):
+                    extracted_text = extract_text_from_file(uploaded_file)
+                    if extracted_text:
+                        distributed_fields = distribute_text_to_fields(extracted_text)
+                        st.session_state.db = distributed_fields
+                        save_data(st.session_state.db)
+                        st.success("تم استخراج البيانات من الملف بنجاح!", icon=":material/check_circle:")
+                        st.rerun()
+            
+            st.markdown("---")
+            
             edit_info = st.text_area("معلومات عامة", st.session_state.db.get("info", ""), height=100)
             edit_schedules = st.text_area("الجداول", st.session_state.db.get("schedules", ""), height=100)
             edit_exams = st.text_area("الامتحانات", st.session_state.db.get("exams", ""), height=100)

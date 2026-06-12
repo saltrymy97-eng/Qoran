@@ -26,12 +26,29 @@ if not SERVICES_AVAILABLE and "toast_shown" not in st.session_state:
     st.session_state.toast_shown = True
 
 # ==========================================
-# 2. تصميم CSS الزمردي الملكي الفاخر 💎 (تم التحديث لدعم العربية بالكامل)
+# 2. تصميم CSS الزمردي الملكي الفاخر 💎 (الإصدار الآمن)
 # ==========================================
 st.markdown("""
 <style>
-/* 🌍 دعم كامل للغة العربية والاتجاه من اليمين إلى اليسار في التطبيق بالكامل */
-html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"] {
+/* 🌍 الإصلاح الآمن: توجيه النصوص للعربية دون كسر هيكل Streamlit */
+.stMarkdown, p, h1, h2, h3, h4, h5, h6, label, span, .stText {
+    direction: rtl !important;
+    text-align: right !important;
+}
+
+/* إصلاح رسائل البوت وحقل إدخال النص */
+[data-testid="stChatMessage"] {
+    direction: rtl !important;
+    text-align: right !important;
+}
+
+[data-testid="stChatInput"] textarea {
+    direction: rtl !important;
+    text-align: right !important;
+}
+
+/* إصلاح القائمة الجانبية من الداخل فقط */
+[data-testid="stSidebar"] .stMarkdownContainer {
     direction: rtl !important;
     text-align: right !important;
 }
@@ -145,7 +162,6 @@ div.stButton > button {
     white-space: nowrap !important;
 }
 
-/* تأثير عند اللمس/الماوس للأزرار */
 div.stButton > button:hover, div.stButton > button:active {
     transform: translateY(-4px) scale(1.03) !important;
     background: linear-gradient(135deg, rgba(21, 76, 44, 0.9), rgba(10, 32, 18, 0.95)) !important;
@@ -170,9 +186,6 @@ div.stButton > button:hover, div.stButton > button:active {
     color: #f0e6d2 !important;
     font-size: 1.05rem !important;
     line-height: 1.6 !important;
-    /* تأكيد الاتجاه العربي داخل كل رسالة لمنع أخطاء علامات الترقيم والنقاط */
-    direction: rtl !important;
-    text-align: right !important;
 }
 
 /* ========================================= */
@@ -187,7 +200,6 @@ div.stButton > button:hover, div.stButton > button:active {
     padding: 6px 12px !important;
     margin-bottom: 15px !important;
     transition: all 0.3s ease !important;
-    direction: rtl !important;
 }
 
 [data-testid="stChatInput"]:focus-within {
@@ -199,8 +211,6 @@ div.stButton > button:hover, div.stButton > button:active {
 [data-testid="stChatInput"] textarea {
     color: #ffffff !important;
     font-size: 1.05rem !important;
-    direction: rtl !important;
-    text-align: right !important;
 }
 
 /* إخفاء علامة Streamlit السفلية وزر الرفع لتنظيف الواجهة */
@@ -312,7 +322,7 @@ if user_input:
 # 7. لوحة الإدارة الجانبية (Sidebar Admin Panel)
 # ==========================================
 with st.sidebar:
-    st.markdown("<h2 style='color: #d4af37; text-align: center; text-shadow: 0 2px 5px rgba(0,0,0,0.5);'>⚙️ إدارة البيانات</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color: #d4af37; text-align: center; text-shadow: 0 2px 5px rgba(0,0,0,0.5); direction: rtl;'>⚙️ إدارة البيانات</h2>", unsafe_allow_html=True)
     st.markdown("---")
     
     admin_password = st.text_input("كلمة مرور المشرف 🔒", type="password")

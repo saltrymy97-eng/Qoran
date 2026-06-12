@@ -294,7 +294,7 @@ with st.sidebar:
     
     admin_password = st.text_input("كلمة مرور المشرف 🔒", type="password")
     
-    if admin_password == "admin123": # يفضل تغييرها واستخدام st.secrets
+    if admin_password == st.secrets["ADMIN_PASSWORD"]: # يفضل تغييرها واستخدام st.secrets
         st.success("✅ تم التحقق")
         
         edit_info = st.text_area("معلومات عامة", st.session_state.db.get("info", ""), height=100)

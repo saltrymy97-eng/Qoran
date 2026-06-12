@@ -5,7 +5,7 @@ import time
 
 # استدعاء دوال الذكاء الاصطناعي (تأكد من وجود ملف services.py الخاص بك)
 try:
-    from services import ask_ai, smart_classify
+    from services import ask_ai, smart_classify, get_stats
     SERVICES_AVAILABLE = True
 except ImportError:
     SERVICES_AVAILABLE = False
@@ -294,27 +294,63 @@ with st.sidebar:
     
     admin_password = st.text_input("كلمة مرور المشرف 🔒", type="password")
     
-    if admin_password == st.secrets["ADMIN_PASSWORD"]: # يفضل تغييرها واستخدام st.secrets
+    if admin_password == st.secrets["ADMIN_PASSWORD"]:
         st.success("✅ تم التحقق")
         
-        edit_info = st.text_area("معلومات عامة", st.session_state.db.get("info", ""), height=100)
-        edit_schedules = st.text_area("الجداول", st.session_state.db.get("schedules", ""), height=100)
-        edit_exams = st.text_area("الامتحانات", st.session_state.db.get("exams", ""), height=100)
-        edit_fees = st.text_area("الرسوم", st.session_state.db.get("fees", ""), height=100)
-        edit_contacts = st.text_area("جهات الاتصال", st.session_state.db.get("contacts", ""), height=100)
-        edit_majors = st.text_area("التخصصات", st.session_state.db.get("majors", ""), height=100)
+        # تبويبات الإدارة
+        tab1, tab2 = st.tabs(["📝 تحرير البيانات", "📊 الإحصائيات"])
         
-        if st.button("💾 حفظ البيانات", use_container_width=True):
-            st.session_state.db = {
-                "info": edit_info,
-                "schedules": edit_schedules,
-                "exams": edit_exams,
-                "fees": edit_fees,
-                "contacts": edit_contacts,
-                "majors": edit_majors
-            }
-            save_data(st.session_state.db)
-            st.success("🎉 تم تحديث قاعدة معرفة الذكاء الاصطناعي بنجاح!")
+        with tab1:
+            edit_info = st.text_area("معلومات عامة", st.session_state.db.get("info", ""), height=100)
+            edit_schedules = st.text_area("الجداول", st.session_state.db.get("schedules", ""), height=100)
+            edit_exams = st.text_area("الامتحانات", st.session_state.db.get("exams", ""), height=100)
+            edit_fees = st.text_area("الرسوم", st.session_state.db.get("fees", ""), height=100)
+            edit_contacts = st.text_area("جهات الاتصال", st.session_state.db.get("contacts", ""), height=100)
+            edit_majors = st.text_area("التخصصات", st.session_state.db.get("majors", ""), height=100)
+            
+            if st.button("💾 حفظ البيانات", use_container_width=True):
+                st.session_state.db = {
+                    "info": edit_info,
+                    "schedules": edit_schedules,
+                    "exams": edit_exams,
+                    "fees": edit_fees,
+                    "contacts": edit_contacts,
+                    "majors": edit_majors
+                }
+                save_data(st.session_state.db)
+                st.success("🎉 تم تحديث قاعدة معرفة الذكاء الاصطناعي بنجاح!")
+        
+        with tab2:
+            if SERVICES_AVAILABLE:
+                try:
+                    stats = get_stats()
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.metric("📋 إجمالي الأسئلة", stats["total"])
+                    with col2:
+                        st.metric("📅 أسئلة اليوم", stats["today"])
+                    
+                    st.markdown("---")
+                    st.markdown("### 🔥 أكثر 5 أسئلة شيوعاً")
+                    if stats["top_questions"]:
+                        for i, q in enumerate(stats["top_questions"][:5], 1):
+                            st.markdown(f"**{i}.** {q['question']}  `({q['count']} مرة)`")
+                    else:
+                        st.info("لا توجد أسئلة مسجلة بعد")
+                    
+                    st.markdown("---")
+                    st.markdown("### 📊 توزيع الفئات")
+                    if stats["categories"]:
+                        for cat, count in stats["categories"].items():
+                            st.markdown(f"- **{cat}**: {count} سؤال")
+                    else:
+                        st.info("لا توجد بيانات فئات")
+                        
+                except Exception as e:
+                    st.error(f"خطأ في تحميل الإحصائيات: {str(e)}")
+            else:
+                st.warning("⚠️ الإحصائيات غير متاحة لعدم وجود ملف services.py")
             
     elif admin_password != "":
         st.error("❌ كلمة المرور غير صحيحة")

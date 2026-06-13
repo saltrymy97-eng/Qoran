@@ -143,52 +143,6 @@ div.stButton > button:hover, div.stButton > button:active {
     line-height: 1.6 !important;
 }
 
-[data-testid="stChatInput"] {
-    background-color: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 16px !important;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important;
-    padding: 6px 12px !important;
-}
-
-[data-testid="stChatInput"]:focus-within {
-    border-color: #0f5132 !important;
-    box-shadow: 0 10px 25px rgba(15, 81, 50, 0.08) !important;
-}
-
-[data-testid="stChatInput"] textarea {
-    color: #1e293b !important;
-    font-family: 'Tajawal', sans-serif !important;
-}
-
-[data-testid="stSidebar"] {
-    background-color: #f4f6f4 !important;
-    border-left: 1px solid #e2e8f0 !important;
-}
-
-[data-testid="stSidebar"] .stTextInput input,
-[data-testid="stSidebar"] .stTextArea textarea {
-    background-color: #ffffff !important;
-    color: #1e293b !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 8px !important;
-}
-
-[data-testid="stSidebar"] .stTextInput input:focus,
-[data-testid="stSidebar"] .stTextArea textarea:focus {
-    border-color: #0f5132 !important;
-    box-shadow: 0 0 0 1px #0f5132 !important;
-}
-
-[data-testid="stSidebar"] [data-baseweb="tab"] {
-    color: #4a5568 !important;
-    font-family: 'Tajawal', sans-serif !important;
-}
-[data-testid="stSidebar"] [aria-selected="true"] {
-    color: #0f5132 !important;
-    font-weight: bold !important;
-}
-
 footer {visibility: hidden !important;}
 .stDeployButton {display: none !important;}
 [data-testid="stMainMenu"] {display: none !important;}
@@ -376,8 +330,9 @@ if not st.session_state.admin_mode:
         with st.chat_message(msg["role"], avatar=":material/school:" if msg["role"] == "assistant" else ":material/person:"):
             st.markdown(msg["content"])
 
-# ====== حقل الدردشة (موجود دائماً للجميع) ======
-user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
+# ====== حقل الإدخال (للجميع - طلاب وإدارة) ======
+st.markdown("---")
+user_input = st.text_input("💬 اكتب سؤالك أو استفسارك هنا...", key="main_input", placeholder="تفضل بطرح استفسارك...")
 
 if st.session_state.auto_question:
     user_input = st.session_state.auto_question
@@ -392,8 +347,6 @@ if user_input:
     # في وضع الطالب: دردشة عادية
     if not st.session_state.admin_mode:
         st.session_state.messages.append({"role": "user", "content": user_input})
-        with st.chat_message("user", avatar=":material/person:"):
-            st.markdown(user_input)
         
         with st.chat_message("assistant", avatar=":material/school:"):
             with st.spinner("جارٍ معالجة استفسارك..."):
@@ -411,6 +364,7 @@ if user_input:
                 st.markdown(ai_response)
         
         st.session_state.messages.append({"role": "assistant", "content": ai_response})
+        st.rerun()
 
 # ====== لوحة الإدارة ======
 if st.session_state.admin_mode:

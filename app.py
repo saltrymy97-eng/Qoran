@@ -197,11 +197,12 @@ div.stButton > button:hover, div.stButton > button:active {
     font-weight: bold !important;
 }
 
-/* ===== حماية الصفحة ===== */
+/* ===== 🛡️ حماية الصفحة ===== */
 footer {visibility: hidden !important;}
 .stDeployButton {display: none !important;}
 [data-testid="stMainMenu"] {display: none !important;}
 [data-testid="stToolbar"] {display: none !important;}
+[data-testid="stHeader"] {display: none !important;}
 [data-testid="collapsedControl"] svg { color: #0f5132 !important; }
 </style>
 """, unsafe_allow_html=True)
@@ -294,7 +295,7 @@ def distribute_text_to_fields(text):
         "majors": ""
     }
     
-    # قائمة بالعناوين المحتملة بالعربية
+    # قائمة بالعناوين المحتملة بالعربية (مع ignoring التشكيل)
     patterns = {
         "info": [
             r"معلومات عامة[:\s]*", r"معلومات اساسية[:\s]*", r"عن الجامعة[:\s]*",

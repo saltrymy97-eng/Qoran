@@ -197,8 +197,12 @@ div.stButton > button:hover, div.stButton > button:active {
     font-weight: bold !important;
 }
 
-footer {visibility: hidden;}
-.stDeployButton {display:none;}
+/* ===== 🛡️ حماية الصفحة ===== */
+footer {visibility: hidden !important;}
+.stDeployButton {display: none !important;}
+[data-testid="stMainMenu"] {display: none !important;}
+[data-testid="stToolbar"] {display: none !important;}
+[data-testid="stHeader"] {display: none !important;}
 [data-testid="collapsedControl"] svg { color: #0f5132 !important; }
 </style>
 """, unsafe_allow_html=True)

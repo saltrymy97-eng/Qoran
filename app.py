@@ -4,7 +4,6 @@ import os
 import time
 import re
 
-# --- استيراد المكتبات الإضافية مع معالجة الأخطاء ---
 try:
     from docx import Document
 except ImportError:
@@ -20,22 +19,15 @@ try:
 except ImportError:
     ask_ai = smart_classify = get_stats = None
 
-# ==========================================
-# 1. التكوين الأساسي للصفحة
-# ==========================================
 st.set_page_config(
     page_title="جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# --- تحميل الأسرار من بيئة Streamlit ---
 ADMIN_SECRET_CODE = st.secrets.get("ADMIN_SECRET_CODE", "ادارة جامعة القران الكريم وعلومه")
 ADMIN_PASSWORD = st.secrets.get("ADMIN_PASSWORD", "admin123")
 
-# ==========================================
-# 2. التصميم والأسلوب (CSS)
-# ==========================================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Tajawal:wght@400;500;700;800;900&display=swap');
@@ -51,7 +43,6 @@ html, body, [data-testid="stAppViewContainer"], .main {
     font-family: 'Tajawal', sans-serif !important;
 }
 
-/* --- الخطوط والعناوين --- */
 .basmala {
     font-family: 'Amiri', serif !important;
     font-size: 1.8rem !important; text-align: center; color: #bfa15f !important;
@@ -73,7 +64,6 @@ hr {
     margin: 25px 0 !important; opacity: 0.4;
 }
 
-/* --- أزرار الخدمات --- */
 div.stButton > button {
     font-family: 'Tajawal', sans-serif !important;
     background-color: #ffffff !important; color: #0f5132 !important;
@@ -88,7 +78,6 @@ div.stButton > button:hover, div.stButton > button:active {
     transform: translateY(-1px);
 }
 
-/* --- المحادثة --- */
 [data-testid="stChatMessage"] {
     background-color: #ffffff !important; border: 1px solid #edf2f7 !important;
     border-right: 4px solid #0f5132 !important; border-radius: 12px !important;
@@ -108,7 +97,6 @@ div.stButton > button:hover, div.stButton > button:active {
     color: #1e293b !important; font-family: 'Tajawal', sans-serif !important;
 }
 
-/* --- 🛡️ حماية الصفحة وإخفاء الأدوات الافتراضية --- */
 footer {visibility: hidden !important;}
 .stDeployButton {display: none !important;}
 [data-testid="stMainMenu"] {display: none !important;}
@@ -116,7 +104,6 @@ footer {visibility: hidden !important;}
 [data-testid="stHeader"] {display: none !important;}
 [data-testid="collapsedControl"] {display: none !important;}
 
-/* --- دعم الجوال للأزرار --- */
 @media (max-width: 768px) {
     [data-testid="stHorizontalBlock"] {
         flex-direction: row !important; flex-wrap: nowrap !important;
@@ -131,11 +118,7 @@ footer {visibility: hidden !important;}
 </style>
 """, unsafe_allow_html=True)
 
-# ==========================================
-# 3. الدوال المساعدة
-# ==========================================
 def clean_arabic_text(text):
-    """تنظيف النص العربي وإزالة التشكيل."""
     if not text:
         return ""
     tashkeel = re.compile(r'[\u0617-\u061A\u064B-\u0652\u06D6-\u06ED]')
@@ -145,7 +128,6 @@ def clean_arabic_text(text):
     return '\n'.join(lines)
 
 def extract_text_from_file(uploaded_file):
-    """استخراج النص من ملف Word أو PDF."""
     if not uploaded_file:
         return None
     file_type = uploaded_file.type
@@ -174,7 +156,6 @@ def extract_text_from_file(uploaded_file):
     return clean_arabic_text('\n'.join(text_parts))
 
 def smart_distribute_text(text):
-    """توزيع النص العربي على الحقول المناسبة."""
     fields = {"info": "", "schedules": "", "exams": "", "fees": "", "contacts": "", "majors": ""}
     if not text:
         return fields
@@ -213,7 +194,6 @@ def smart_distribute_text(text):
             
     return {field: '\n'.join(content) for field, content in sections.items()}
 
-# --- دوال إدارة البيانات ---
 DATA_FILE = "data.json"
 
 def load_data():
@@ -221,7 +201,7 @@ def load_data():
         with open(DATA_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     return {
-        "info": "أهلاً بك في جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير. كيف يمكنني مساعدتك؟",
+        "info": "جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير، مؤسسة تعليمية رائدة تجمع بين العلوم الشرعية والحديثة. نحن هنا لخدمتك.",
         "schedules": "الجداول الدراسية تُحدث بداية كل فصل دراسي. يرجى مراجعة شؤون الطلاب.",
         "exams": "تبدأ الامتحانات النصفية في الأسبوع الثامن من الفصل الدراسي.",
         "fees": "يمكن تسديد الرسوم عبر البنك أو الدفع المباشر في الإدارة المالية.",
@@ -233,9 +213,6 @@ def save_data(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-# ==========================================
-# 4. تهيئة الحالات (Session State)
-# ==========================================
 if "admin_mode" not in st.session_state:
     st.session_state.admin_mode = False
 if "db" not in st.session_state:
@@ -245,16 +222,11 @@ if "messages" not in st.session_state:
 if "auto_question" not in st.session_state:
     st.session_state.auto_question = None
 
-# ==========================================
-# 5. الواجهة الرئيسية
-# ==========================================
 st.markdown('<div class="basmala">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>', unsafe_allow_html=True)
 st.markdown('<div class="uni-title">جامعة القرآن الكريم<br>والعلوم الإسلامية</div>', unsafe_allow_html=True)
 st.markdown('<div class="branch-title">✦ فرع غيل باوزير - حضرموت ✦</div>', unsafe_allow_html=True)
 
-# --- وضع الطالب: عرض الخدمات والدردشة ---
 if not st.session_state.admin_mode:
-    # شريط الخدمات
     col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
         if st.button("الجداول", icon=":material/calendar_month:"):
@@ -278,18 +250,15 @@ if not st.session_state.admin_mode:
             st.rerun()
     st.markdown('<hr>', unsafe_allow_html=True)
 
-    # ✅ إصلاح التكرار: إضافة رسالة الترحيب مرة واحدة إلى القائمة فقط
     if not st.session_state.messages:
         welcome_msg = "مرحباً بك في المساعد الذكي لجامعة القرآن الكريم - فرع غيل باوزير. تفضل بطرح استفسارك أو اختر من الخدمات المتاحة أعلاه."
         st.session_state.messages.append({"role": "assistant", "content": welcome_msg})
 
-    # عرض جميع الرسائل (بما فيها الترحيب)
     for msg in st.session_state.messages:
         avatar = ":material/school:" if msg["role"] == "assistant" else ":material/person:"
         with st.chat_message(msg["role"], avatar=avatar):
             st.markdown(msg["content"])
 
-# --- وضع الإدارة: عرض لوحة التحكم ---
 else:
     st.markdown('<hr>', unsafe_allow_html=True)
     st.markdown("""
@@ -368,9 +337,7 @@ else:
         st.session_state.admin_mode = False
         st.rerun()
 
-# ==========================================
-# 6. حقل الدردشة الموحد (للطالب والإدارة)
-# ==========================================
+# ====== حقل الدردشة الدائم ======
 user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
 
 if st.session_state.auto_question:
@@ -378,12 +345,10 @@ if st.session_state.auto_question:
     st.session_state.auto_question = None
 
 if user_input:
-    # 1. التحقق من الكود السري
     if user_input.strip() == ADMIN_SECRET_CODE:
         st.session_state.admin_mode = True
         st.rerun()
 
-    # 2. وضع الطالب: معالجة السؤال بالذكاء الاصطناعي
     elif not st.session_state.admin_mode:
         st.session_state.messages.append({"role": "user", "content": user_input})
         with st.chat_message("user", avatar=":material/person:"):
@@ -405,6 +370,5 @@ if user_input:
         st.session_state.messages.append({"role": "assistant", "content": ai_response})
         st.rerun()
 
-    # 3. وضع الإدارة: لا معالجة، فقط تنبيه
     else:
         st.warning("أنت في لوحة الإدارة. استخدم الخيارات أعلاه أو اكتب 'خروج'.")

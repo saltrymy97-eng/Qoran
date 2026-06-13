@@ -41,7 +41,16 @@ st.markdown("""
 /* --- خطوط Google --- */
 @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Tajawal:wght@400;500;700;800;900&family=Scheherazade+New:wght@400;600;700&display=swap');
 
+/* ===== 🛡️ منع الوضع الداكن تماماً ===== */
+:root {
+    color-scheme: light only;
+}
+
 html, body, [data-testid="stAppViewContainer"], .main {
+    forced-color-adjust: none;
+    -webkit-forced-color-adjust: none;
+    background-color: #fbfcfb !important;
+    color: #2b3a30 !important;
     overflow-x: hidden !important;
     max-width: 100vw !important;
     scroll-behavior: smooth;
@@ -63,7 +72,7 @@ html, body, [data-testid="stAppViewContainer"], .main {
     text-align: center;
     color: #0f5132 !important;
     margin-top: 5px;
-    margin-bottom: 15px;   /* مسافة أكبر عن اسم الجامعة */
+    margin-bottom: 15px;
     font-weight: 700;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
     line-height: 1.6;
@@ -105,7 +114,7 @@ html, body, [data-testid="stAppViewContainer"], .main {
     border-top: 1px solid #e2e8f0;
     border-bottom: 1px solid #e2e8f0;
     padding: 14px 0;
-    direction: rtl;             /* ضمان الاتجاه الصحيح */
+    direction: rtl;
     unicode-bidi: embed;
 }
 
@@ -215,6 +224,32 @@ footer {visibility: hidden !important;}
     }
     .basmala {
         font-size: 2.4rem !important;
+    }
+}
+
+/* ===== إجبار الألوان الفاتحة حتى في الوضع الداكن ===== */
+@media (prefers-color-scheme: dark) {
+    html, body, [data-testid="stAppViewContainer"], .main, .stApp {
+        background-color: #fbfcfb !important;
+        color: #2b3a30 !important;
+    }
+    
+    [data-testid="stChatMessage"] {
+        background-color: #ffffff !important;
+        color: #2d3748 !important;
+    }
+    
+    [data-testid="stChatInput"] {
+        background-color: #ffffff !important;
+    }
+    
+    [data-testid="stChatInput"] textarea {
+        color: #1e293b !important;
+    }
+    
+    div.stButton > button {
+        background-color: #ffffff !important;
+        color: #0f5132 !important;
     }
 }
 </style>

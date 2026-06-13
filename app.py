@@ -4,6 +4,7 @@ import os
 import time
 import re
 
+# --- استيراد المكتبات الإضافية ---
 try:
     from docx import Document
 except ImportError:
@@ -19,84 +20,175 @@ try:
 except ImportError:
     ask_ai = smart_classify = get_stats = None
 
+# ==========================================
+# 1. التكوين الأساسي للصفحة
+# ==========================================
 st.set_page_config(
     page_title="جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
+# --- تحميل الأسرار ---
 ADMIN_SECRET_CODE = st.secrets.get("ADMIN_SECRET_CODE", "ادارة جامعة القران الكريم وعلومه")
 ADMIN_PASSWORD = st.secrets.get("ADMIN_PASSWORD", "admin123")
 
+# ==========================================
+# 2. التصميم الرسمي (CSS)
+# ==========================================
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Tajawal:wght@400;500;700;800;900&display=swap');
+/* --- خطوط Google --- */
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Tajawal:wght@400;500;700;800;900&family=Scheherazade+New:wght@400;600;700&display=swap');
 
 html, body, [data-testid="stAppViewContainer"], .main {
     overflow-x: hidden !important;
     max-width: 100vw !important;
     scroll-behavior: smooth;
 }
+
+/* --- خلفية الصفحة مع نقشة إسلامية شفافة --- */
 .stApp {
     background-color: #fbfcfb !important;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" opacity="0.03"><path d="M50 10 L90 90 L10 90 Z" fill="%230f5132"/><circle cx="50" cy="55" r="15" fill="%23bfa15f"/></svg>');
+    background-size: 200px 200px;
     color: #2b3a30 !important;
     font-family: 'Tajawal', sans-serif !important;
 }
 
+/* --- البسملة (خط Scheherazade) --- */
 .basmala {
-    font-family: 'Amiri', serif !important;
-    font-size: 1.8rem !important; text-align: center; color: #bfa15f !important;
-    margin-bottom: 8px; font-weight: 700; letter-spacing: 0.5px;
-}
-.uni-title {
-    font-family: 'Tajawal', sans-serif !important;
-    font-size: 2.2rem !important; text-align: center; font-weight: 800;
-    color: #0f5132 !important; margin-bottom: 5px; line-height: 1.3;
-}
-.branch-title {
-    font-family: 'Tajawal', sans-serif !important;
-    font-size: 1.05rem !important; text-align: center; color: #6c757d !important;
-    letter-spacing: 1px; margin-bottom: 25px; font-weight: 500;
-}
-hr {
-    border: 0 !important; height: 1px !important;
-    background: linear-gradient(to right, transparent, #bfa15f, transparent) !important;
-    margin: 25px 0 !important; opacity: 0.4;
+    font-family: 'Scheherazade New', serif !important;
+    font-size: 3.2rem !important;
+    text-align: center;
+    color: #0f5132 !important;
+    margin-bottom: 0px;
+    font-weight: 700;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+    line-height: 1.6;
 }
 
+/* --- عنوان الجامعة --- */
+.uni-title {
+    font-family: 'Tajawal', sans-serif !important;
+    font-size: 2.4rem !important;
+    text-align: center;
+    font-weight: 800;
+    color: #0f5132 !important;
+    margin-bottom: 5px;
+    line-height: 1.3;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.03);
+}
+
+/* --- اسم الفرع --- */
+.branch-title {
+    font-family: 'Tajawal', sans-serif !important;
+    font-size: 1.1rem !important;
+    text-align: center;
+    color: #6c757d !important;
+    letter-spacing: 2px;
+    margin-bottom: 25px;
+    font-weight: 500;
+}
+
+/* --- آية قرآنية أعلى الدردشة --- */
+.quran-verse {
+    font-family: 'Scheherazade New', serif !important;
+    font-size: 1.4rem !important;
+    text-align: center;
+    color: #bfa15f !important;
+    margin: 20px 0 10px 0;
+    font-weight: 600;
+    border-top: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 12px 0;
+}
+
+hr {
+    border: 0 !important;
+    height: 1px !important;
+    background: linear-gradient(to right, transparent, #bfa15f, transparent) !important;
+    margin: 25px 0 !important;
+    opacity: 0.4;
+}
+
+/* --- أزرار الخدمات --- */
 div.stButton > button {
     font-family: 'Tajawal', sans-serif !important;
-    background-color: #ffffff !important; color: #0f5132 !important;
-    border: 1px solid #e2e8f0 !important; border-radius: 10px !important;
-    padding: 12px 8px !important; width: 100% !important;
-    transition: all 0.25s ease !important; box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
-    font-size: 0.95rem !important; font-weight: 600 !important;
+    background-color: #ffffff !important;
+    color: #0f5132 !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    padding: 12px 8px !important;
+    width: 100% !important;
+    transition: all 0.25s ease !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
 }
 div.stButton > button:hover, div.stButton > button:active {
-    background-color: #0f5132 !important; color: #ffffff !important;
-    border-color: #0f5132 !important; box-shadow: 0 4px 12px rgba(15,81,50,0.15) !important;
+    background-color: #0f5132 !important;
+    color: #ffffff !important;
+    border-color: #0f5132 !important;
+    box-shadow: 0 4px 12px rgba(15,81,50,0.15) !important;
     transform: translateY(-1px);
 }
 
+/* --- المحادثة --- */
 [data-testid="stChatMessage"] {
-    background-color: #ffffff !important; border: 1px solid #edf2f7 !important;
-    border-right: 4px solid #0f5132 !important; border-radius: 12px !important;
-    padding: 1.2rem !important; margin-bottom: 1rem !important;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.01) !important; color: #2d3748 !important;
-    font-family: 'Tajawal', sans-serif !important; font-size: 1.05rem !important; line-height: 1.6 !important;
-}
-[data-testid="stChatInput"] {
-    background-color: #ffffff !important; border: 1px solid #cbd5e1 !important;
-    border-radius: 16px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important;
-    padding: 6px 12px !important;
-}
-[data-testid="stChatInput"]:focus-within {
-    border-color: #0f5132 !important; box-shadow: 0 10px 25px rgba(15,81,50,0.08) !important;
-}
-[data-testid="stChatInput"] textarea {
-    color: #1e293b !important; font-family: 'Tajawal', sans-serif !important;
+    background-color: #ffffff !important;
+    border: 1px solid #edf2f7 !important;
+    border-right: 4px solid #0f5132 !important;
+    border-radius: 16px !important;
+    padding: 1.2rem !important;
+    margin-bottom: 1.2rem !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;
+    color: #2d3748 !important;
+    font-family: 'Tajawal', sans-serif !important;
+    font-size: 1.05rem !important;
+    line-height: 1.7 !important;
+    animation: fadeIn 0.6s ease-in-out;
 }
 
+/* --- حركة Fade-in للرسائل --- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+[data-testid="stChatInput"] {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 20px !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important;
+    padding: 8px 16px !important;
+}
+[data-testid="stChatInput"]:focus-within {
+    border-color: #0f5132 !important;
+    box-shadow: 0 10px 25px rgba(15,81,50,0.08) !important;
+}
+[data-testid="stChatInput"] textarea {
+    color: #1e293b !important;
+    font-family: 'Tajawal', sans-serif !important;
+}
+
+/* --- تذييل الصفحة الرسمي --- */
+.official-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    padding: 8px;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.8rem;
+    color: #6c757d;
+    background: rgba(251, 252, 251, 0.9);
+    border-top: 1px solid #e2e8f0;
+    z-index: 999;
+}
+
+/* --- إخفاء الأدوات الافتراضية --- */
 footer {visibility: hidden !important;}
 .stDeployButton {display: none !important;}
 [data-testid="stMainMenu"] {display: none !important;}
@@ -104,20 +196,28 @@ footer {visibility: hidden !important;}
 [data-testid="stHeader"] {display: none !important;}
 [data-testid="collapsedControl"] {display: none !important;}
 
+/* --- دعم الجوال --- */
 @media (max-width: 768px) {
     [data-testid="stHorizontalBlock"] {
-        flex-direction: row !important; flex-wrap: nowrap !important;
-        overflow-x: auto !important; overflow-y: hidden !important;
-        padding-bottom: 15px !important; scroll-behavior: smooth;
-        -webkit-overflow-scrolling: touch;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        padding-bottom: 15px !important;
     }
     [data-testid="column"] {
-        min-width: 140px !important; flex: 0 0 auto !important; width: auto !important;
+        min-width: 140px !important;
+        flex: 0 0 auto !important;
+    }
+    .basmala {
+        font-size: 2.4rem !important;
     }
 }
 </style>
 """, unsafe_allow_html=True)
 
+# ==========================================
+# 3. الدوال المساعدة
+# ==========================================
 def clean_arabic_text(text):
     if not text:
         return ""
@@ -194,6 +294,7 @@ def smart_distribute_text(text):
             
     return {field: '\n'.join(content) for field, content in sections.items()}
 
+# --- إدارة البيانات ---
 DATA_FILE = "data.json"
 
 def load_data():
@@ -213,6 +314,9 @@ def save_data(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
+# ==========================================
+# 4. تهيئة الحالات
+# ==========================================
 if "admin_mode" not in st.session_state:
     st.session_state.admin_mode = False
 if "db" not in st.session_state:
@@ -222,11 +326,16 @@ if "messages" not in st.session_state:
 if "auto_question" not in st.session_state:
     st.session_state.auto_question = None
 
+# ==========================================
+# 5. عرض الواجهة
+# ==========================================
 st.markdown('<div class="basmala">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>', unsafe_allow_html=True)
 st.markdown('<div class="uni-title">جامعة القرآن الكريم<br>والعلوم الإسلامية</div>', unsafe_allow_html=True)
 st.markdown('<div class="branch-title">✦ فرع غيل باوزير - حضرموت ✦</div>', unsafe_allow_html=True)
 
+# --- وضع الطالب ---
 if not st.session_state.admin_mode:
+    # أزرار الخدمات
     col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
         if st.button("الجداول", icon=":material/calendar_month:"):
@@ -248,17 +357,22 @@ if not st.session_state.admin_mode:
         if st.button("التخصصات", icon=":material/school:"):
             st.session_state.auto_question = "ما هي التخصصات الأكاديمية المتاحة؟"
             st.rerun()
-    st.markdown('<hr>', unsafe_allow_html=True)
 
+    # --- آية قرآنية ---
+    st.markdown('<div class="quran-verse">﴿وَقُل رَّبِّ زِدْنِي عِلْمًا﴾</div>', unsafe_allow_html=True)
+
+    # --- رسالة ترحيب واحدة فقط ---
     if not st.session_state.messages:
         welcome_msg = "مرحباً بك في المساعد الذكي لجامعة القرآن الكريم - فرع غيل باوزير. تفضل بطرح استفسارك أو اختر من الخدمات المتاحة أعلاه."
         st.session_state.messages.append({"role": "assistant", "content": welcome_msg})
 
+    # --- عرض الدردشة ---
     for msg in st.session_state.messages:
         avatar = ":material/school:" if msg["role"] == "assistant" else ":material/person:"
         with st.chat_message(msg["role"], avatar=avatar):
             st.markdown(msg["content"])
 
+# --- وضع الإدارة ---
 else:
     st.markdown('<hr>', unsafe_allow_html=True)
     st.markdown("""
@@ -271,7 +385,7 @@ else:
     admin_password = st.text_input("🔑 كلمة مرور المشرف", type="password", key="admin_pwd")
     
     if admin_password == ADMIN_PASSWORD:
-        st.success("✅ تم التحقق - أهلاً بك في لوحة الإدارة")
+        st.success("✅ تم التحقق بنجاح")
         tab1, tab2 = st.tabs(["📝 تحرير البيانات", "📊 الإحصائيات"])
         
         with tab1:
@@ -337,7 +451,9 @@ else:
         st.session_state.admin_mode = False
         st.rerun()
 
-# ====== حقل الدردشة الدائم ======
+# ==========================================
+# 6. حقل الدردشة الدائم
+# ==========================================
 user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
 
 if st.session_state.auto_question:
@@ -372,3 +488,6 @@ if user_input:
 
     else:
         st.warning("أنت في لوحة الإدارة. استخدم الخيارات أعلاه أو اكتب 'خروج'.")
+
+# --- تذييل الصفحة الرسمي ---
+st.markdown('<div class="official-footer">جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير © 2026</div>', unsafe_allow_html=True)

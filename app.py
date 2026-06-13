@@ -34,23 +34,42 @@ ADMIN_SECRET_CODE = st.secrets.get("ADMIN_SECRET_CODE", "ادارة جامعة �
 ADMIN_PASSWORD = st.secrets.get("ADMIN_PASSWORD", "admin123")
 
 # ==========================================
-# 2. التصميم الرسمي (CSS)
+# 2. التصميم الرسمي (CSS) مع دعم الوضع الداكن
 # ==========================================
 st.markdown("""
 <style>
 /* --- خطوط Google --- */
 @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Tajawal:wght@400;500;700;800;900&family=Scheherazade+New:wght@400;600;700&display=swap');
 
-/* ===== 🛡️ منع الوضع الداكن تماماً ===== */
+/* ===== الوضع الفاتح (افتراضي) ===== */
 :root {
-    color-scheme: light only;
+    --bg: #fbfcfb;
+    --text: #2b3a30;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --primary: #0f5132;
+    --gold: #bfa15f;
+    --muted: #6c757d;
+    --shadow: rgba(0,0,0,0.03);
+}
+
+/* ===== الوضع الداكن (عند تفضيل النظام) ===== */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #1a1f1c;
+        --text: #dce4dc;
+        --surface: #252b27;
+        --border: #3a4a3e;
+        --primary: #2d8a5e;
+        --gold: #d4af6a;
+        --muted: #9aa0a0;
+        --shadow: rgba(0,0,0,0.2);
+    }
 }
 
 html, body, [data-testid="stAppViewContainer"], .main {
-    forced-color-adjust: none;
-    -webkit-forced-color-adjust: none;
-    background-color: #fbfcfb !important;
-    color: #2b3a30 !important;
+    background-color: var(--bg) !important;
+    color: var(--text) !important;
     overflow-x: hidden !important;
     max-width: 100vw !important;
     scroll-behavior: smooth;
@@ -58,19 +77,19 @@ html, body, [data-testid="stAppViewContainer"], .main {
 
 /* --- خلفية الصفحة مع نقشة إسلامية شفافة --- */
 .stApp {
-    background-color: #fbfcfb !important;
+    background-color: var(--bg) !important;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" opacity="0.03"><path d="M50 10 L90 90 L10 90 Z" fill="%230f5132"/><circle cx="50" cy="55" r="15" fill="%23bfa15f"/></svg>');
     background-size: 200px 200px;
-    color: #2b3a30 !important;
+    color: var(--text) !important;
     font-family: 'Tajawal', sans-serif !important;
 }
 
-/* --- البسملة الاحترافية (خط Amiri) --- */
+/* --- البسملة --- */
 .basmala {
     font-family: 'Amiri', serif !important;
     font-size: 3.5rem !important;
     text-align: center;
-    color: #0f5132 !important;
+    color: var(--primary) !important;
     margin-top: 5px;
     margin-bottom: 15px;
     font-weight: 700;
@@ -85,7 +104,7 @@ html, body, [data-testid="stAppViewContainer"], .main {
     font-size: 2.4rem !important;
     text-align: center;
     font-weight: 800;
-    color: #0f5132 !important;
+    color: var(--primary) !important;
     margin-top: 0px;
     margin-bottom: 5px;
     line-height: 1.3;
@@ -97,22 +116,22 @@ html, body, [data-testid="stAppViewContainer"], .main {
     font-family: 'Tajawal', sans-serif !important;
     font-size: 1.1rem !important;
     text-align: center;
-    color: #6c757d !important;
+    color: var(--muted) !important;
     letter-spacing: 2px;
     margin-bottom: 25px;
     font-weight: 500;
 }
 
-/* --- الآية القرآنية (خط Amiri) --- */
+/* --- الآية القرآنية --- */
 .quran-verse {
     font-family: 'Amiri', serif !important;
     font-size: 1.5rem !important;
     text-align: center;
-    color: #bfa15f !important;
+    color: var(--gold) !important;
     margin: 20px 0 15px 0;
     font-weight: 600;
-    border-top: 1px solid #e2e8f0;
-    border-bottom: 1px solid #e2e8f0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
     padding: 14px 0;
     direction: rtl;
     unicode-bidi: embed;
@@ -121,7 +140,7 @@ html, body, [data-testid="stAppViewContainer"], .main {
 hr {
     border: 0 !important;
     height: 1px !important;
-    background: linear-gradient(to right, transparent, #bfa15f, transparent) !important;
+    background: linear-gradient(to right, transparent, var(--gold), transparent) !important;
     margin: 25px 0 !important;
     opacity: 0.4;
 }
@@ -129,64 +148,64 @@ hr {
 /* --- أزرار الخدمات --- */
 div.stButton > button {
     font-family: 'Tajawal', sans-serif !important;
-    background-color: #ffffff !important;
-    color: #0f5132 !important;
-    border: 1px solid #e2e8f0 !important;
+    background-color: var(--surface) !important;
+    color: var(--primary) !important;
+    border: 1px solid var(--border) !important;
     border-radius: 10px !important;
     padding: 12px 8px !important;
     width: 100% !important;
     transition: all 0.25s ease !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+    box-shadow: 0 2px 4px var(--shadow) !important;
     font-size: 0.95rem !important;
     font-weight: 600 !important;
 }
 div.stButton > button:hover, div.stButton > button:active {
-    background-color: #0f5132 !important;
-    color: #ffffff !important;
-    border-color: #0f5132 !important;
+    background-color: var(--primary) !important;
+    color: var(--surface) !important;
+    border-color: var(--primary) !important;
     box-shadow: 0 4px 12px rgba(15,81,50,0.15) !important;
     transform: translateY(-1px);
 }
 
-/* --- المحادثة --- */
+/* --- رسائل الدردشة --- */
 [data-testid="stChatMessage"] {
-    background-color: #ffffff !important;
-    border: 1px solid #edf2f7 !important;
-    border-right: 4px solid #0f5132 !important;
+    background-color: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-right: 4px solid var(--primary) !important;
     border-radius: 16px !important;
     padding: 1.2rem !important;
     margin-bottom: 1.2rem !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;
-    color: #2d3748 !important;
+    box-shadow: 0 4px 12px var(--shadow) !important;
+    color: var(--text) !important;
     font-family: 'Tajawal', sans-serif !important;
     font-size: 1.05rem !important;
     line-height: 1.7 !important;
     animation: fadeIn 0.6s ease-in-out;
 }
 
-/* --- حركة Fade-in للرسائل --- */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* --- حقل الإدخال --- */
 [data-testid="stChatInput"] {
-    background-color: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
+    background-color: var(--surface) !important;
+    border: 1px solid var(--border) !important;
     border-radius: 20px !important;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important;
+    box-shadow: 0 10px 25px var(--shadow) !important;
     padding: 8px 16px !important;
 }
 [data-testid="stChatInput"]:focus-within {
-    border-color: #0f5132 !important;
+    border-color: var(--primary) !important;
     box-shadow: 0 10px 25px rgba(15,81,50,0.08) !important;
 }
 [data-testid="stChatInput"] textarea {
-    color: #1e293b !important;
+    color: var(--text) !important;
     font-family: 'Tajawal', sans-serif !important;
 }
 
-/* --- تذييل الصفحة الرسمي --- */
+/* --- تذييل الصفحة --- */
 .official-footer {
     position: fixed;
     bottom: 0;
@@ -196,9 +215,9 @@ div.stButton > button:hover, div.stButton > button:active {
     padding: 8px;
     font-family: 'Tajawal', sans-serif;
     font-size: 0.8rem;
-    color: #6c757d;
-    background: rgba(251, 252, 251, 0.9);
-    border-top: 1px solid #e2e8f0;
+    color: var(--muted);
+    background: var(--bg);
+    border-top: 1px solid var(--border);
     z-index: 999;
 }
 
@@ -224,32 +243,6 @@ footer {visibility: hidden !important;}
     }
     .basmala {
         font-size: 2.4rem !important;
-    }
-}
-
-/* ===== إجبار الألوان الفاتحة حتى في الوضع الداكن ===== */
-@media (prefers-color-scheme: dark) {
-    html, body, [data-testid="stAppViewContainer"], .main, .stApp {
-        background-color: #fbfcfb !important;
-        color: #2b3a30 !important;
-    }
-    
-    [data-testid="stChatMessage"] {
-        background-color: #ffffff !important;
-        color: #2d3748 !important;
-    }
-    
-    [data-testid="stChatInput"] {
-        background-color: #ffffff !important;
-    }
-    
-    [data-testid="stChatInput"] textarea {
-        color: #1e293b !important;
-    }
-    
-    div.stButton > button {
-        background-color: #ffffff !important;
-        color: #0f5132 !important;
     }
 }
 </style>
@@ -417,8 +410,8 @@ else:
     st.markdown('<hr>', unsafe_allow_html=True)
     st.markdown("""
     <div style="text-align: center; padding: 10px 0 20px 0;">
-        <h2 style="color: #0f5132; font-family: 'Tajawal', sans-serif; font-weight: 800; font-size: 2rem;">🔐 لوحة الإدارة</h2>
-        <p style="color: #6c757d; font-family: 'Tajawal', sans-serif;">جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير</p>
+        <h2 style="color: var(--primary); font-family: 'Tajawal', sans-serif; font-weight: 800; font-size: 2rem;">🔐 لوحة الإدارة</h2>
+        <p style="color: var(--muted); font-family: 'Tajawal', sans-serif;">جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير</p>
     </div>
     """, unsafe_allow_html=True)
 

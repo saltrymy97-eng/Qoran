@@ -202,33 +202,7 @@ footer {visibility: hidden !important;}
 .stDeployButton {display: none !important;}
 [data-testid="stMainMenu"] {display: none !important;}
 [data-testid="stToolbar"] {display: none !important;}
-[data-testid="stHeader"] {display: none !important;}
 [data-testid="collapsedControl"] svg { color: #0f5132 !important; }
-
-/* ===== 🔘 زر الإدارة المخفي ===== */
-.admin-hidden-btn {
-    position: fixed;
-    bottom: 15px;
-    left: 15px;
-    z-index: 9999;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #0f5132;
-    opacity: 0.15;
-    border: none;
-    cursor: pointer;
-    transition: opacity 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 18px;
-    text-decoration: none;
-}
-.admin-hidden-btn:hover {
-    opacity: 0.7;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -320,7 +294,7 @@ def distribute_text_to_fields(text):
         "majors": ""
     }
     
-    # قائمة بالعناوين المحتملة بالعربية (مع ignoring التشكيل)
+    # قائمة بالعناوين المحتملة بالعربية
     patterns = {
         "info": [
             r"معلومات عامة[:\s]*", r"معلومات اساسية[:\s]*", r"عن الجامعة[:\s]*",
@@ -549,14 +523,3 @@ with st.sidebar:
             
     elif admin_password != "":
         st.error("كلمة المرور غير صحيحة", icon=":material/error:")
-
-# ==========================================
-# 9. زر الإدارة المخفي (أسفل يسار الصفحة)
-# ==========================================
-st.markdown("""
-<a href="?admin=true" class="admin-hidden-btn" title="لوحة الإدارة">⚙️</a>
-""", unsafe_allow_html=True)
-
-# إذا تم فتح الصفحة مع ?admin=true، افتح الشريط الجانبي
-if st.query_params.get("admin") == "true":
-    st.session_state.sidebar_open = True

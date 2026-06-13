@@ -56,16 +56,18 @@ html, body, [data-testid="stAppViewContainer"], .main {
     font-family: 'Tajawal', sans-serif !important;
 }
 
-/* --- البسملة (خط Scheherazade) --- */
+/* --- البسملة الاحترافية (خط Amiri) --- */
 .basmala {
-    font-family: 'Scheherazade New', serif !important;
-    font-size: 3.2rem !important;
+    font-family: 'Amiri', serif !important;
+    font-size: 3.5rem !important;
     text-align: center;
     color: #0f5132 !important;
-    margin-bottom: 0px;
+    margin-top: 5px;
+    margin-bottom: 15px;   /* مسافة أكبر عن اسم الجامعة */
     font-weight: 700;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
     line-height: 1.6;
+    letter-spacing: 1px;
 }
 
 /* --- عنوان الجامعة --- */
@@ -75,6 +77,7 @@ html, body, [data-testid="stAppViewContainer"], .main {
     text-align: center;
     font-weight: 800;
     color: #0f5132 !important;
+    margin-top: 0px;
     margin-bottom: 5px;
     line-height: 1.3;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.03);
@@ -91,17 +94,19 @@ html, body, [data-testid="stAppViewContainer"], .main {
     font-weight: 500;
 }
 
-/* --- آية قرآنية أعلى الدردشة --- */
+/* --- الآية القرآنية (خط Amiri) --- */
 .quran-verse {
-    font-family: 'Scheherazade New', serif !important;
-    font-size: 1.4rem !important;
+    font-family: 'Amiri', serif !important;
+    font-size: 1.5rem !important;
     text-align: center;
     color: #bfa15f !important;
-    margin: 20px 0 10px 0;
+    margin: 20px 0 15px 0;
     font-weight: 600;
     border-top: 1px solid #e2e8f0;
     border-bottom: 1px solid #e2e8f0;
-    padding: 12px 0;
+    padding: 14px 0;
+    direction: rtl;             /* ضمان الاتجاه الصحيح */
+    unicode-bidi: embed;
 }
 
 hr {
@@ -358,7 +363,7 @@ if not st.session_state.admin_mode:
             st.session_state.auto_question = "ما هي التخصصات الأكاديمية المتاحة؟"
             st.rerun()
 
-    # --- آية قرآنية ---
+    # --- الآية القرآنية ---
     st.markdown('<div class="quran-verse">﴿وَقُل رَّبِّ زِدْنِي عِلْمًا﴾</div>', unsafe_allow_html=True)
 
     # --- رسالة ترحيب واحدة فقط ---
@@ -490,4 +495,4 @@ if user_input:
         st.warning("أنت في لوحة الإدارة. استخدم الخيارات أعلاه أو اكتب 'خروج'.")
 
 # --- تذييل الصفحة الرسمي ---
-st.markdown('<div class="official-footer">جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير © 2026</div>', unsafe_allow_html=True)
+st.markdown('<div class="official-footer">المطور: سالم التريمي</div>', unsafe_allow_html=True)

@@ -197,7 +197,7 @@ div.stButton > button:hover, div.stButton > button:active {
     font-weight: bold !important;
 }
 
-/* ===== 🛡️ حماية الصفحة - إخفاء كل شيء ===== */
+/* ===== 🛡️ حماية الصفحة ===== */
 footer {visibility: hidden !important;}
 .stDeployButton {display: none !important;}
 [data-testid="stMainMenu"] {display: none !important;}
@@ -207,7 +207,10 @@ footer {visibility: hidden !important;}
 
 /* ===== إخفاء الشريط السفلي نهائياً ===== */
 [data-testid="stBottom"] {display: none !important;}
-[data-testid="stChatInput"] + div {display: none !important;}
+
+/* ===== إخفاء حقل الدردشة في وضع الإدارة ===== */
+body.admin-active [data-testid="stChatInput"] {display: none !important;}
+body.admin-active [data-testid="stChatInput"] + div {display: none !important;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -369,14 +372,24 @@ if "auto_question" not in st.session_state:
     st.session_state.auto_question = None
 
 # ==========================================
-# 6. الواجهة الرئيسية (رأس الصفحة)
+# 6. تفعيل كلاس الإدارة (لإخفاء الشات)
+# ==========================================
+if st.session_state.admin_mode:
+    st.markdown("""
+    <script>
+    document.body.classList.add('admin-active');
+    </script>
+    """, unsafe_allow_html=True)
+
+# ==========================================
+# 7. الواجهة الرئيسية (رأس الصفحة)
 # ==========================================
 st.markdown('<div class="basmala">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>', unsafe_allow_html=True)
 st.markdown('<div class="uni-title">جامعة القرآن الكريم<br>والعلوم الإسلامية</div>', unsafe_allow_html=True)
 st.markdown('<div class="branch-title">✦ فرع غيل باوزير - حضرموت ✦</div>', unsafe_allow_html=True)
 
 # ==========================================
-# 7. شريط الخدمات (يظهر فقط للطلاب)
+# 8. شريط الخدمات (يظهر فقط للطلاب)
 # ==========================================
 if not st.session_state.admin_mode:
     col1, col2, col3, col4, col5 = st.columns(5)
@@ -400,14 +413,15 @@ if not st.session_state.admin_mode:
     st.markdown('<hr>', unsafe_allow_html=True)
 
 # ==========================================
-# 8. محرك الدردشة
+# 9. محرك الدردشة (للطلاب فقط)
 # ==========================================
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"], avatar=":material/school:" if msg["role"] == "assistant" else ":material/person:"):
-        st.markdown(msg["content"])
+if not st.session_state.admin_mode:
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"], avatar=":material/school:" if msg["role"] == "assistant" else ":material/person:"):
+            st.markdown(msg["content"])
 
 # ==========================================
-# 9. وضع الإدارة - واجهة محسنة بنفس تصميم الرئيسية
+# 10. وضع الإدارة - واجهة محسنة
 # ==========================================
 if st.session_state.admin_mode:
     st.markdown('<hr>', unsafe_allow_html=True)
@@ -507,12 +521,12 @@ if st.session_state.admin_mode:
     
     # زر الخروج من وضع الإدارة
     st.markdown("---")
-    if st.button("🔙 خروج من لوحة الإدارة", icon=":material/logout:", key="logout_admin"):
+    if st.button("🔙 خروج من لوحة الإدارة والعودة للمساعد الذكي", icon=":material/logout:", use_container_width=True, key="logout_admin"):
         st.session_state.admin_mode = False
         st.rerun()
 
 # ==========================================
-# 10. حقل الإدخال (للطلاب فقط)
+# 11. حقل الإدخال (للطلاب فقط)
 # ==========================================
 if not st.session_state.admin_mode:
     user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
@@ -522,7 +536,7 @@ if not st.session_state.admin_mode:
         st.session_state.auto_question = None
 
     if user_input:
-        # ===== 🎯 الكود السري الجديد =====
+        # ===== 🎯 الكود السري =====
         if user_input.strip() == "ادارة جامعة القران الكريم وعلومه":
             st.session_state.admin_mode = True
             st.rerun()

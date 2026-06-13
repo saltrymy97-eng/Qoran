@@ -161,13 +161,13 @@ div.stButton > button:hover, div.stButton > button:active {
     font-family: 'Tajawal', sans-serif !important;
 }
 
+/* ===== 🛡️ حماية الصفحة ===== */
 footer {visibility: hidden !important;}
 .stDeployButton {display: none !important;}
 [data-testid="stMainMenu"] {display: none !important;}
 [data-testid="stToolbar"] {display: none !important;}
 [data-testid="stHeader"] {display: none !important;}
 [data-testid="collapsedControl"] {display: none !important;}
-[data-testid="stBottom"] {display: none !important;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -282,8 +282,6 @@ def distribute_text_to_fields(text):
 
 if "admin_mode" not in st.session_state:
     st.session_state.admin_mode = False
-if "admin_logged_in" not in st.session_state:
-    st.session_state.admin_logged_in = False
 if "db" not in st.session_state:
     st.session_state.db = load_data()
 if "messages" not in st.session_state:
@@ -328,7 +326,7 @@ if not st.session_state.admin_mode:
         with st.chat_message(msg["role"], avatar=avatar):
             st.markdown(msg["content"])
 
-# ====== حقل الدردشة ======
+# ====== حقل الدردشة (ظاهر دوماً) ======
 user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
 
 if st.session_state.auto_question:

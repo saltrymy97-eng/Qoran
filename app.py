@@ -4,7 +4,6 @@ import os
 import time
 import re
 
-# استيراد مكتبات قراءة الملفات (مع معالجة عدم وجودها)
 try:
     from docx import Document
     DOCX_AVAILABLE = True
@@ -17,16 +16,12 @@ try:
 except ImportError:
     PDF_AVAILABLE = False
 
-# استدعاء دوال الذكاء الاصطناعي
 try:
     from services import ask_ai, smart_classify, get_stats
     SERVICES_AVAILABLE = True
 except ImportError:
     SERVICES_AVAILABLE = False
 
-# ==========================================
-# 1. إعداد الصفحة الأساسية
-# ==========================================
 st.set_page_config(
     page_title="جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير",
     layout="wide",
@@ -37,9 +32,6 @@ if not SERVICES_AVAILABLE and "toast_shown" not in st.session_state:
     st.toast("ملف services.py غير موجود، سيتم استخدام الردود التلقائية للتجربة.", icon=":material/warning:")
     st.session_state.toast_shown = True
 
-# ==========================================
-# 2. تصميم CSS الأكاديمي الفاخر والمريح
-# ==========================================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Tajawal:wght@400;500;700;800;900&display=swap');
@@ -197,26 +189,16 @@ div.stButton > button:hover, div.stButton > button:active {
     font-weight: bold !important;
 }
 
-/* ===== 🛡️ حماية الصفحة ===== */
 footer {visibility: hidden !important;}
 .stDeployButton {display: none !important;}
 [data-testid="stMainMenu"] {display: none !important;}
 [data-testid="stToolbar"] {display: none !important;}
 [data-testid="stHeader"] {display: none !important;}
 [data-testid="collapsedControl"] {display: none !important;}
-
-/* ===== إخفاء الشريط السفلي نهائياً ===== */
 [data-testid="stBottom"] {display: none !important;}
-
-/* ===== إخفاء حقل الدردشة في وضع الإدارة ===== */
-body.admin-active [data-testid="stChatInput"] {display: none !important;}
-body.admin-active [data-testid="stChatInput"] + div {display: none !important;}
 </style>
 """, unsafe_allow_html=True)
 
-# ==========================================
-# 3. دوال معالجة اللغة العربية
-# ==========================================
 def remove_tashkeel(text):
     tashkeel = re.compile(r'[\u0617-\u061A\u064B-\u0652\u06D6-\u06ED]')
     return tashkeel.sub('', text)
@@ -235,9 +217,6 @@ def clean_text(text):
             lines.append(line)
     return '\n'.join(lines)
 
-# ==========================================
-# 4. إدارة البيانات
-# ==========================================
 DATA_FILE = "data.json"
 
 def load_data():
@@ -289,12 +268,8 @@ def extract_text_from_file(uploaded_file):
 
 def distribute_text_to_fields(text):
     fields = {
-        "info": "",
-        "schedules": "",
-        "exams": "",
-        "fees": "",
-        "contacts": "",
-        "majors": ""
+        "info": "", "schedules": "", "exams": "",
+        "fees": "", "contacts": "", "majors": ""
     }
     
     patterns = {
@@ -356,9 +331,6 @@ def distribute_text_to_fields(text):
     
     return fields
 
-# ==========================================
-# 5. الحالة السرية للإدارة
-# ==========================================
 if "admin_mode" not in st.session_state:
     st.session_state.admin_mode = False
 
@@ -371,26 +343,12 @@ if "messages" not in st.session_state:
 if "auto_question" not in st.session_state:
     st.session_state.auto_question = None
 
-# ==========================================
-# 6. تفعيل كلاس الإدارة (لإخفاء الشات)
-# ==========================================
-if st.session_state.admin_mode:
-    st.markdown("""
-    <script>
-    document.body.classList.add('admin-active');
-    </script>
-    """, unsafe_allow_html=True)
-
-# ==========================================
-# 7. الواجهة الرئيسية (رأس الصفحة)
-# ==========================================
+# ====== الواجهة الرئيسية ======
 st.markdown('<div class="basmala">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>', unsafe_allow_html=True)
 st.markdown('<div class="uni-title">جامعة القرآن الكريم<br>والعلوم الإسلامية</div>', unsafe_allow_html=True)
 st.markdown('<div class="branch-title">✦ فرع غيل باوزير - حضرموت ✦</div>', unsafe_allow_html=True)
 
-# ==========================================
-# 8. شريط الخدمات (يظهر فقط للطلاب)
-# ==========================================
+# ====== شريط الخدمات (للطلاب فقط) ======
 if not st.session_state.admin_mode:
     col1, col2, col3, col4, col5 = st.columns(5)
 
@@ -412,17 +370,49 @@ if not st.session_state.admin_mode:
 
     st.markdown('<hr>', unsafe_allow_html=True)
 
-# ==========================================
-# 9. محرك الدردشة (للطلاب فقط)
-# ==========================================
+# ====== محرك الدردشة (للطلاب فقط) ======
 if not st.session_state.admin_mode:
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"], avatar=":material/school:" if msg["role"] == "assistant" else ":material/person:"):
             st.markdown(msg["content"])
 
-# ==========================================
-# 10. وضع الإدارة - واجهة محسنة
-# ==========================================
+# ====== حقل الدردشة (موجود دائماً للجميع) ======
+user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
+
+if st.session_state.auto_question:
+    user_input = st.session_state.auto_question
+    st.session_state.auto_question = None
+
+if user_input:
+    # التحقق من الكود السري
+    if user_input.strip() == "ادارة جامعة القران الكريم وعلومه":
+        st.session_state.admin_mode = True
+        st.rerun()
+    
+    # في وضع الطالب: دردشة عادية
+    if not st.session_state.admin_mode:
+        st.session_state.messages.append({"role": "user", "content": user_input})
+        with st.chat_message("user", avatar=":material/person:"):
+            st.markdown(user_input)
+        
+        with st.chat_message("assistant", avatar=":material/school:"):
+            with st.spinner("جارٍ معالجة استفسارك..."):
+                if SERVICES_AVAILABLE:
+                    try:
+                        category = smart_classify(user_input)
+                        context_data = st.session_state.db.get(category, st.session_state.db["info"])
+                        ai_response = ask_ai(user_input, context_data)
+                    except Exception as e:
+                        ai_response = f"عذراً، حدث خطأ في النظام: {str(e)}"
+                else:
+                    time.sleep(1)
+                    ai_response = "هذا رد تجريبي نظراً لعدم ربط دوال الذكاء الاصطناعي. يُرجى مراجعة إدارة الجامعة للمزيد من التفاصيل حول استفسارك."
+                
+                st.markdown(ai_response)
+        
+        st.session_state.messages.append({"role": "assistant", "content": ai_response})
+
+# ====== لوحة الإدارة ======
 if st.session_state.admin_mode:
     st.markdown('<hr>', unsafe_allow_html=True)
     st.markdown("""
@@ -519,46 +509,8 @@ if st.session_state.admin_mode:
     elif admin_password != "":
         st.error("❌ كلمة المرور غير صحيحة")
     
-    # زر الخروج من وضع الإدارة
+    # زر الخروج
     st.markdown("---")
     if st.button("🔙 خروج من لوحة الإدارة والعودة للمساعد الذكي", icon=":material/logout:", use_container_width=True, key="logout_admin"):
         st.session_state.admin_mode = False
         st.rerun()
-
-# ==========================================
-# 11. حقل الإدخال (للطلاب فقط)
-# ==========================================
-if not st.session_state.admin_mode:
-    user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
-
-    if st.session_state.auto_question:
-        user_input = st.session_state.auto_question
-        st.session_state.auto_question = None
-
-    if user_input:
-        # ===== 🎯 الكود السري =====
-        if user_input.strip() == "ادارة جامعة القران الكريم وعلومه":
-            st.session_state.admin_mode = True
-            st.rerun()
-        
-        # ===== دردشة عادية =====
-        st.session_state.messages.append({"role": "user", "content": user_input})
-        with st.chat_message("user", avatar=":material/person:"):
-            st.markdown(user_input)
-        
-        with st.chat_message("assistant", avatar=":material/school:"):
-            with st.spinner("جارٍ معالجة استفسارك..."):
-                if SERVICES_AVAILABLE:
-                    try:
-                        category = smart_classify(user_input)
-                        context_data = st.session_state.db.get(category, st.session_state.db["info"])
-                        ai_response = ask_ai(user_input, context_data)
-                    except Exception as e:
-                        ai_response = f"عذراً، حدث خطأ في النظام: {str(e)}"
-                else:
-                    time.sleep(1)
-                    ai_response = "هذا رد تجريبي نظراً لعدم ربط دوال الذكاء الاصطناعي. يُرجى مراجعة إدارة الجامعة للمزيد من التفاصيل حول استفسارك."
-                
-                st.markdown(ai_response)
-        
-        st.session_state.messages.append({"role": "assistant", "content": ai_response})

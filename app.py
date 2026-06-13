@@ -204,6 +204,10 @@ footer {visibility: hidden !important;}
 [data-testid="stToolbar"] {display: none !important;}
 [data-testid="stHeader"] {display: none !important;}
 [data-testid="collapsedControl"] {display: none !important;}
+
+/* ===== إخفاء الشريط السفلي نهائياً ===== */
+[data-testid="stBottom"] {display: none !important;}
+[data-testid="stChatInput"] + div {display: none !important;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -403,11 +407,20 @@ for msg in st.session_state.messages:
         st.markdown(msg["content"])
 
 # ==========================================
-# 9. إذا كان وضع الإدارة نشط ← أظهر لوحة الإدارة
+# 9. وضع الإدارة - واجهة محسنة بنفس تصميم الرئيسية
 # ==========================================
 if st.session_state.admin_mode:
-    st.markdown("---")
-    st.markdown("<h2 style='color: #0f5132; text-align: center;'>🔐 لوحة إدارة المساعد الذكي</h2>", unsafe_allow_html=True)
+    st.markdown('<hr>', unsafe_allow_html=True)
+    st.markdown("""
+    <div style="text-align: center; padding: 10px 0 20px 0;">
+        <h2 style="color: #0f5132; font-family: 'Tajawal', sans-serif; font-weight: 800; font-size: 2rem; margin-bottom: 5px;">
+            🔐 لوحة الإدارة
+        </h2>
+        <p style="color: #6c757d; font-family: 'Tajawal', sans-serif; font-size: 1.05rem;">
+            جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
     admin_password = st.text_input("🔑 كلمة مرور المشرف", type="password", key="admin_pwd")
     correct_password = st.secrets.get("ADMIN_PASSWORD", "admin123")
@@ -438,12 +451,12 @@ if st.session_state.admin_mode:
             
             st.markdown("---")
             
-            edit_info = st.text_area("معلومات عامة", st.session_state.db.get("info", ""), height=100, key="info_admin")
-            edit_schedules = st.text_area("الجداول", st.session_state.db.get("schedules", ""), height=100, key="sched_admin")
-            edit_exams = st.text_area("الامتحانات", st.session_state.db.get("exams", ""), height=100, key="exams_admin")
-            edit_fees = st.text_area("الرسوم", st.session_state.db.get("fees", ""), height=100, key="fees_admin")
-            edit_contacts = st.text_area("جهات الاتصال", st.session_state.db.get("contacts", ""), height=100, key="contacts_admin")
-            edit_majors = st.text_area("التخصصات", st.session_state.db.get("majors", ""), height=100, key="majors_admin")
+            edit_info = st.text_area("📋 معلومات عامة", st.session_state.db.get("info", ""), height=100, key="info_admin")
+            edit_schedules = st.text_area("📚 الجداول", st.session_state.db.get("schedules", ""), height=100, key="sched_admin")
+            edit_exams = st.text_area("📝 الامتحانات", st.session_state.db.get("exams", ""), height=100, key="exams_admin")
+            edit_fees = st.text_area("💰 الرسوم", st.session_state.db.get("fees", ""), height=100, key="fees_admin")
+            edit_contacts = st.text_area("📞 جهات الاتصال", st.session_state.db.get("contacts", ""), height=100, key="contacts_admin")
+            edit_majors = st.text_area("🎓 التخصصات", st.session_state.db.get("majors", ""), height=100, key="majors_admin")
             
             if st.button("💾 حفظ البيانات", icon=":material/save:", use_container_width=True, key="save_admin"):
                 st.session_state.db = {
@@ -463,12 +476,12 @@ if st.session_state.admin_mode:
                     stats = get_stats()
                     col1, col2 = st.columns(2)
                     with col1:
-                        st.metric("إجمالي الأسئلة", stats.get("total", 0))
+                        st.metric("📊 إجمالي الأسئلة", stats.get("total", 0))
                     with col2:
-                        st.metric("أسئلة اليوم", stats.get("today", 0))
+                        st.metric("📅 أسئلة اليوم", stats.get("today", 0))
                     
                     st.markdown("---")
-                    st.markdown("### أكثر 5 أسئلة شيوعاً")
+                    st.markdown("### 🔍 أكثر 5 أسئلة شيوعاً")
                     top_q = stats.get("top_questions", [])
                     if top_q:
                         for i, q in enumerate(top_q[:5], 1):
@@ -477,7 +490,7 @@ if st.session_state.admin_mode:
                         st.info("لا توجد أسئلة مسجلة بعد")
                     
                     st.markdown("---")
-                    st.markdown("### توزيع الفئات")
+                    st.markdown("### 📂 توزيع الفئات")
                     categories_data = stats.get("categories", {})
                     if categories_data:
                         for cat, count in categories_data.items():
@@ -491,9 +504,15 @@ if st.session_state.admin_mode:
                     
     elif admin_password != "":
         st.error("❌ كلمة المرور غير صحيحة")
+    
+    # زر الخروج من وضع الإدارة
+    st.markdown("---")
+    if st.button("🔙 خروج من لوحة الإدارة", icon=":material/logout:", key="logout_admin"):
+        st.session_state.admin_mode = False
+        st.rerun()
 
 # ==========================================
-# 10. حقل الإدخال (يظهر للطلاب فقط)
+# 10. حقل الإدخال (للطلاب فقط)
 # ==========================================
 if not st.session_state.admin_mode:
     user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
@@ -503,8 +522,8 @@ if not st.session_state.admin_mode:
         st.session_state.auto_question = None
 
     if user_input:
-        # ===== التحقق من الكود السري =====
-        if user_input.strip().lower() == "admin123456":
+        # ===== 🎯 الكود السري الجديد =====
+        if user_input.strip() == "ادارة جامعة القران الكريم وعلومه":
             st.session_state.admin_mode = True
             st.rerun()
         

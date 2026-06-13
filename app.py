@@ -25,7 +25,12 @@ except ImportError:
     SERVICES_AVAILABLE = False
 
 # ==========================================
-# 1. إعداد الصفحة الأساسية
+# 1. التحقق من وضع الإدارة عبر الرابط السري
+# ==========================================
+is_admin = st.query_params.get("admin") == "true"
+
+# ==========================================
+# 2. إعداد الصفحة الأساسية
 # ==========================================
 st.set_page_config(
     page_title="جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير",
@@ -38,7 +43,7 @@ if not SERVICES_AVAILABLE and "toast_shown" not in st.session_state:
     st.session_state.toast_shown = True
 
 # ==========================================
-# 2. تصميم CSS الأكاديمي الفاخر والمريح
+# 3. تصميم CSS الأكاديمي الفاخر والمريح
 # ==========================================
 st.markdown("""
 <style>
@@ -197,31 +202,29 @@ div.stButton > button:hover, div.stButton > button:active {
     font-weight: bold !important;
 }
 
-/* ===== 🛡️ حماية الصفحة ===== */
+/* ===== 🛡️ حماية الصفحة - إخفاء كل شيء ===== */
 footer {visibility: hidden !important;}
 .stDeployButton {display: none !important;}
 [data-testid="stMainMenu"] {display: none !important;}
 [data-testid="stToolbar"] {display: none !important;}
-[data-testid="collapsedControl"] svg { color: #0f5132 !important; }
+[data-testid="stHeader"] {display: none !important;}
+[data-testid="collapsedControl"] {display: none !important;}
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. دوال معالجة اللغة العربية
+# 4. دوال معالجة اللغة العربية
 # ==========================================
 def remove_tashkeel(text):
-    """إزالة التشكيل من النص العربي"""
     tashkeel = re.compile(r'[\u0617-\u061A\u064B-\u0652\u06D6-\u06ED]')
     return tashkeel.sub('', text)
 
 def normalize_arabic(text):
-    """توحيد شكل الحروف العربية"""
     text = text.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا')
     text = text.replace('ة', 'ه')
     return text
 
 def clean_text(text):
-    """تنظيف النص العربي مع الحفاظ على بنيته"""
     text = remove_tashkeel(text)
     lines = []
     for line in text.split('\n'):
@@ -231,7 +234,7 @@ def clean_text(text):
     return '\n'.join(lines)
 
 # ==========================================
-# 4. إدارة البيانات
+# 5. إدارة البيانات
 # ==========================================
 DATA_FILE = "data.json"
 
@@ -253,7 +256,6 @@ def save_data(data):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 def extract_text_from_file(uploaded_file):
-    """استخراج النص العربي من ملف Word أو PDF"""
     file_type = uploaded_file.type
     
     if "wordprocessingml" in file_type or uploaded_file.name.endswith('.docx'):
@@ -284,7 +286,6 @@ def extract_text_from_file(uploaded_file):
         return None
 
 def distribute_text_to_fields(text):
-    """توزيع النص العربي على الحقول المناسبة بذكاء"""
     fields = {
         "info": "",
         "schedules": "",
@@ -294,7 +295,6 @@ def distribute_text_to_fields(text):
         "majors": ""
     }
     
-    # قائمة بالعناوين المحتملة بالعربية
     patterns = {
         "info": [
             r"معلومات عامة[:\s]*", r"معلومات اساسية[:\s]*", r"عن الجامعة[:\s]*",
@@ -322,7 +322,6 @@ def distribute_text_to_fields(text):
         ]
     }
     
-    # تقسيم النص يدوياً
     sections = {}
     current_field = "info"
     sections[current_field] = []
@@ -333,13 +332,11 @@ def distribute_text_to_fields(text):
         if not line:
             continue
             
-        # محاولة مطابقة العناوين
         matched = False
         for field, field_patterns in patterns.items():
             for pattern in field_patterns:
                 if re.match(pattern, line, re.IGNORECASE):
                     current_field = field
-                    # إزالة العنوان من السطر
                     line_content = re.sub(pattern, '', line, flags=re.IGNORECASE).strip()
                     if line_content:
                         sections.setdefault(current_field, []).append(line_content)
@@ -351,7 +348,6 @@ def distribute_text_to_fields(text):
         if not matched:
             sections.setdefault(current_field, []).append(line)
     
-    # تجميع النص لكل حقل
     for field in fields:
         if field in sections:
             fields[field] = '\n'.join(sections[field]).strip()
@@ -368,15 +364,109 @@ if "auto_question" not in st.session_state:
     st.session_state.auto_question = None
 
 # ==========================================
-# 5. الواجهة الرئيسية (رأس الصفحة)
+# 6. إذا كان الرابط السري = صفحة الإدارة فقط
+# ==========================================
+if is_admin:
+    st.markdown("""
+    <div style="text-align: center; padding: 20px;">
+        <h2 style="color: #0f5132;">🔐 لوحة إدارة المساعد الذكي</h2>
+        <p style="color: #6c757d;">جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    admin_password = st.text_input("🔑 كلمة مرور المشرف", type="password")
+    correct_password = st.secrets.get("ADMIN_PASSWORD", "admin123")
+    
+    if admin_password == correct_password:
+        st.success("✅ تم التحقق - أهلاً بك في لوحة الإدارة")
+        
+        tab1, tab2 = st.tabs(["📝 تحرير البيانات", "📊 الإحصائيات"])
+        
+        with tab1:
+            st.markdown("### 📂 رفع ملف بيانات")
+            uploaded_file = st.file_uploader(
+                "ارفع ملف Word أو PDF بالعربية",
+                type=["docx", "pdf"],
+                help="الملف يدعم اللغة العربية بالكامل مع التشكيل"
+            )
+            
+            if uploaded_file is not None:
+                if st.button("🚀 معالجة الملف", icon=":material/upload:"):
+                    extracted_text = extract_text_from_file(uploaded_file)
+                    if extracted_text:
+                        distributed_fields = distribute_text_to_fields(extracted_text)
+                        st.session_state.db = distributed_fields
+                        save_data(st.session_state.db)
+                        st.success("تم استخراج البيانات من الملف بنجاح!")
+                        st.rerun()
+            
+            st.markdown("---")
+            
+            edit_info = st.text_area("معلومات عامة", st.session_state.db.get("info", ""), height=100)
+            edit_schedules = st.text_area("الجداول", st.session_state.db.get("schedules", ""), height=100)
+            edit_exams = st.text_area("الامتحانات", st.session_state.db.get("exams", ""), height=100)
+            edit_fees = st.text_area("الرسوم", st.session_state.db.get("fees", ""), height=100)
+            edit_contacts = st.text_area("جهات الاتصال", st.session_state.db.get("contacts", ""), height=100)
+            edit_majors = st.text_area("التخصصات", st.session_state.db.get("majors", ""), height=100)
+            
+            if st.button("💾 حفظ البيانات", icon=":material/save:", use_container_width=True):
+                st.session_state.db = {
+                    "info": edit_info,
+                    "schedules": edit_schedules,
+                    "exams": edit_exams,
+                    "fees": edit_fees,
+                    "contacts": edit_contacts,
+                    "majors": edit_majors
+                }
+                save_data(st.session_state.db)
+                st.success("تم تحديث قاعدة البيانات بنجاح!")
+        
+        with tab2:
+            if SERVICES_AVAILABLE:
+                try:
+                    stats = get_stats()
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.metric("إجمالي الأسئلة", stats.get("total", 0))
+                    with col2:
+                        st.metric("أسئلة اليوم", stats.get("today", 0))
+                    
+                    st.markdown("---")
+                    st.markdown("### أكثر 5 أسئلة شيوعاً")
+                    top_q = stats.get("top_questions", [])
+                    if top_q:
+                        for i, q in enumerate(top_q[:5], 1):
+                            st.markdown(f"**{i}.** {q['question']}  `({q['count']} مرة)`")
+                    else:
+                        st.info("لا توجد أسئلة مسجلة بعد")
+                    
+                    st.markdown("---")
+                    st.markdown("### توزيع الفئات")
+                    categories_data = stats.get("categories", {})
+                    if categories_data:
+                        for cat, count in categories_data.items():
+                            st.markdown(f"- **{cat}**: {count} سؤال")
+                    else:
+                        st.info("لا توجد بيانات فئات")
+                except Exception as e:
+                    st.error(f"خطأ في تحميل الإحصائيات: {str(e)}")
+            else:
+                st.warning("الإحصائيات غير متاحة لعدم وجود ملف services.py")
+                    
+    elif admin_password != "":
+        st.error("❌ كلمة المرور غير صحيحة")
+    
+    # إنهاء هنا - لا نظهر الدردشة
+    st.stop()
+
+# ==========================================
+# 7. الواجهة الرئيسية (للمستخدم العادي)
 # ==========================================
 st.markdown('<div class="basmala">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>', unsafe_allow_html=True)
 st.markdown('<div class="uni-title">جامعة القرآن الكريم<br>والعلوم الإسلامية</div>', unsafe_allow_html=True)
 st.markdown('<div class="branch-title">✦ فرع غيل باوزير - حضرموت ✦</div>', unsafe_allow_html=True)
 
-# ==========================================
-# 6. شريط الخدمات
-# ==========================================
+# شريط الخدمات
 col1, col2, col3, col4, col5 = st.columns(5)
 
 if col1.button("الجداول", icon=":material/calendar_month:"):
@@ -397,9 +487,7 @@ if col5.button("التخصصات", icon=":material/school:"):
 
 st.markdown('<hr>', unsafe_allow_html=True)
 
-# ==========================================
-# 7. محرك الدردشة (Chat Engine)
-# ==========================================
+# محرك الدردشة
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"], avatar=":material/school:" if msg["role"] == "assistant" else ":material/person:"):
         st.markdown(msg["content"])
@@ -431,95 +519,3 @@ if user_input:
             st.markdown(ai_response)
     
     st.session_state.messages.append({"role": "assistant", "content": ai_response})
-
-# ==========================================
-# 8. لوحة الإدارة الجانبية
-# ==========================================
-with st.sidebar:
-    st.markdown("<h3 style='color: #0f5132; text-align: center; font-family: Tajawal; font-weight: 700;'>إدارة البيانات</h3>", unsafe_allow_html=True)
-    st.markdown("---")
-    
-    admin_password = st.text_input("كلمة مرور المشرف", type="password")
-    
-    correct_password = st.secrets.get("ADMIN_PASSWORD", "admin123")
-    
-    if admin_password == correct_password:
-        st.success("تم التحقق", icon=":material/check_circle:")
-        
-        tab1, tab2 = st.tabs(["تحرير البيانات", "الإحصائيات"])
-        
-        with tab1:
-            # ميزة رفع الملفات
-            st.markdown("### 📂 رفع ملف بيانات")
-            uploaded_file = st.file_uploader(
-                "ارفع ملف Word أو PDF بالعربية",
-                type=["docx", "pdf"],
-                help="الملف يدعم اللغة العربية بالكامل مع التشكيل"
-            )
-            
-            if uploaded_file is not None:
-                if st.button("معالجة الملف", icon=":material/upload:"):
-                    extracted_text = extract_text_from_file(uploaded_file)
-                    if extracted_text:
-                        distributed_fields = distribute_text_to_fields(extracted_text)
-                        st.session_state.db = distributed_fields
-                        save_data(st.session_state.db)
-                        st.success("تم استخراج البيانات من الملف بنجاح!", icon=":material/check_circle:")
-                        st.rerun()
-            
-            st.markdown("---")
-            
-            edit_info = st.text_area("معلومات عامة", st.session_state.db.get("info", ""), height=100)
-            edit_schedules = st.text_area("الجداول", st.session_state.db.get("schedules", ""), height=100)
-            edit_exams = st.text_area("الامتحانات", st.session_state.db.get("exams", ""), height=100)
-            edit_fees = st.text_area("الرسوم", st.session_state.db.get("fees", ""), height=100)
-            edit_contacts = st.text_area("جهات الاتصال", st.session_state.db.get("contacts", ""), height=100)
-            edit_majors = st.text_area("التخصصات", st.session_state.db.get("majors", ""), height=100)
-            
-            if st.button("حفظ البيانات", icon=":material/save:", use_container_width=True):
-                st.session_state.db = {
-                    "info": edit_info,
-                    "schedules": edit_schedules,
-                    "exams": edit_exams,
-                    "fees": edit_fees,
-                    "contacts": edit_contacts,
-                    "majors": edit_majors
-                }
-                save_data(st.session_state.db)
-                st.success("تم تحديث قاعدة البيانات بنجاح!", icon=":material/check_circle:")
-        
-        with tab2:
-            if SERVICES_AVAILABLE:
-                try:
-                    stats = get_stats()
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric("إجمالي الأسئلة", stats.get("total", 0))
-                    with col2:
-                        st.metric("أسئلة اليوم", stats.get("today", 0))
-                    
-                    st.markdown("---")
-                    st.markdown("### أكثر 5 أسئلة شيوعاً")
-                    top_q = stats.get("top_questions", [])
-                    if top_q:
-                        for i, q in enumerate(top_q[:5], 1):
-                            st.markdown(f"**{i}.** {q['question']}  `({q['count']} مرة)`")
-                    else:
-                        st.info("لا توجد أسئلة مسجلة بعد")
-                    
-                    st.markdown("---")
-                    st.markdown("### توزيع الفئات")
-                    categories_data = stats.get("categories", {})
-                    if categories_data:
-                        for cat, count in categories_data.items():
-                            st.markdown(f"- **{cat}**: {count} سؤال")
-                    else:
-                        st.info("لا توجد بيانات فئات")
-                        
-                except Exception as e:
-                    st.error(f"خطأ في تحميل الإحصائيات: {str(e)}")
-            else:
-                st.warning("الإحصائيات غير متاحة لعدم وجود ملف services.py", icon=":material/warning:")
-            
-    elif admin_password != "":
-        st.error("كلمة المرور غير صحيحة", icon=":material/error:")

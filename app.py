@@ -4,6 +4,7 @@ import os
 import time
 import re
 
+# استيراد مكتبات قراءة الملفات (مع معالجة عدم وجودها)
 try:
     from docx import Document
     DOCX_AVAILABLE = True
@@ -16,12 +17,16 @@ try:
 except ImportError:
     PDF_AVAILABLE = False
 
+# استدعاء دوال الذكاء الاصطناعي
 try:
     from services import ask_ai, smart_classify, get_stats
     SERVICES_AVAILABLE = True
 except ImportError:
     SERVICES_AVAILABLE = False
 
+# ==========================================
+# 1. إعداد الصفحة الأساسية
+# ==========================================
 st.set_page_config(
     page_title="جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير",
     layout="wide",
@@ -32,6 +37,9 @@ if not SERVICES_AVAILABLE and "toast_shown" not in st.session_state:
     st.toast("ملف services.py غير موجود، سيتم استخدام الردود التلقائية للتجربة.", icon=":material/warning:")
     st.session_state.toast_shown = True
 
+# ==========================================
+# 2. تصميم CSS الأكاديمي الفاخر والمريح (بدون إخفاء stChatInput)
+# ==========================================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Tajawal:wght@400;500;700;800;900&display=swap');
@@ -143,6 +151,25 @@ div.stButton > button:hover, div.stButton > button:active {
     line-height: 1.6 !important;
 }
 
+[data-testid="stChatInput"] {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important;
+    padding: 6px 12px !important;
+}
+
+[data-testid="stChatInput"]:focus-within {
+    border-color: #0f5132 !important;
+    box-shadow: 0 10px 25px rgba(15, 81, 50, 0.08) !important;
+}
+
+[data-testid="stChatInput"] textarea {
+    color: #1e293b !important;
+    font-family: 'Tajawal', sans-serif !important;
+}
+
+/* ===== 🛡️ حماية الصفحة (بدون لمس chat input) ===== */
 footer {visibility: hidden !important;}
 .stDeployButton {display: none !important;}
 [data-testid="stMainMenu"] {display: none !important;}
@@ -153,6 +180,9 @@ footer {visibility: hidden !important;}
 </style>
 """, unsafe_allow_html=True)
 
+# ==========================================
+# 3. دوال معالجة اللغة العربية
+# ==========================================
 def remove_tashkeel(text):
     tashkeel = re.compile(r'[\u0617-\u061A\u064B-\u0652\u06D6-\u06ED]')
     return tashkeel.sub('', text)
@@ -171,6 +201,9 @@ def clean_text(text):
             lines.append(line)
     return '\n'.join(lines)
 
+# ==========================================
+# 4. إدارة البيانات
+# ==========================================
 DATA_FILE = "data.json"
 
 def load_data():
@@ -285,6 +318,9 @@ def distribute_text_to_fields(text):
     
     return fields
 
+# ==========================================
+# 5. الحالة السرية للإدارة
+# ==========================================
 if "admin_mode" not in st.session_state:
     st.session_state.admin_mode = False
 
@@ -297,12 +333,16 @@ if "messages" not in st.session_state:
 if "auto_question" not in st.session_state:
     st.session_state.auto_question = None
 
-# ====== الواجهة الرئيسية ======
+# ==========================================
+# 6. الواجهة الرئيسية (رأس الصفحة)
+# ==========================================
 st.markdown('<div class="basmala">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>', unsafe_allow_html=True)
 st.markdown('<div class="uni-title">جامعة القرآن الكريم<br>والعلوم الإسلامية</div>', unsafe_allow_html=True)
 st.markdown('<div class="branch-title">✦ فرع غيل باوزير - حضرموت ✦</div>', unsafe_allow_html=True)
 
-# ====== شريط الخدمات (للطلاب فقط) ======
+# ==========================================
+# 7. شريط الخدمات (يظهر فقط للطلاب)
+# ==========================================
 if not st.session_state.admin_mode:
     col1, col2, col3, col4, col5 = st.columns(5)
 
@@ -324,29 +364,37 @@ if not st.session_state.admin_mode:
 
     st.markdown('<hr>', unsafe_allow_html=True)
 
-# ====== محرك الدردشة (للطلاب فقط) ======
+# ==========================================
+# 8. عرض الرسائل السابقة (للطلاب فقط)
+# ==========================================
 if not st.session_state.admin_mode:
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"], avatar=":material/school:" if msg["role"] == "assistant" else ":material/person:"):
             st.markdown(msg["content"])
 
-# ====== حقل الإدخال (للجميع - طلاب وإدارة) ======
-st.markdown("---")
-user_input = st.text_input("💬 اكتب سؤالك أو استفسارك هنا...", key="main_input", placeholder="تفضل بطرح استفسارك...")
+# ==========================================
+# 9. حقل الدردشة (يظهر دائمًا)
+# ==========================================
+user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
 
 if st.session_state.auto_question:
     user_input = st.session_state.auto_question
     st.session_state.auto_question = None
 
 if user_input:
-    # التحقق من الكود السري
+    # ----- الكود السري -----
     if user_input.strip() == "ادارة جامعة القران الكريم وعلومه":
         st.session_state.admin_mode = True
         st.rerun()
-    
-    # في وضع الطالب: دردشة عادية
+
+    # ----- في وضع الطالب: معالجة السؤال -----
     if not st.session_state.admin_mode:
+        # أضف سؤال المستخدم إلى السجل
         st.session_state.messages.append({"role": "user", "content": user_input})
+        
+        # عرض الرد مباشرة (بدون إعادة تشغيل لتجنب التكرار)
+        with st.chat_message("user", avatar=":material/person:"):
+            st.markdown(user_input)
         
         with st.chat_message("assistant", avatar=":material/school:"):
             with st.spinner("جارٍ معالجة استفسارك..."):
@@ -364,9 +412,18 @@ if user_input:
                 st.markdown(ai_response)
         
         st.session_state.messages.append({"role": "assistant", "content": ai_response})
-        st.rerun()
+        st.rerun()  # إعادة تشغيل لإظهار الرسائل بشكل صحيح في الأعلى
 
-# ====== لوحة الإدارة ======
+    # ----- في وضع الإدارة: لا تفعل شيئًا (مجرد رسالة) -----
+    else:
+        st.info("أنت في لوحة الإدارة. اكتب 'خروج' للعودة إلى المساعد الذكي.")
+        if user_input.strip() == "خروج":
+            st.session_state.admin_mode = False
+            st.rerun()
+
+# ==========================================
+# 10. لوحة الإدارة (تظهر عند الحاجة)
+# ==========================================
 if st.session_state.admin_mode:
     st.markdown('<hr>', unsafe_allow_html=True)
     st.markdown("""
@@ -463,7 +520,7 @@ if st.session_state.admin_mode:
     elif admin_password != "":
         st.error("❌ كلمة المرور غير صحيحة")
     
-    # زر الخروج
+    # زر الخروج من الإدارة
     st.markdown("---")
     if st.button("🔙 خروج من لوحة الإدارة والعودة للمساعد الذكي", icon=":material/logout:", use_container_width=True, key="logout_admin"):
         st.session_state.admin_mode = False

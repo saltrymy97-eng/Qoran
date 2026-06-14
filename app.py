@@ -479,6 +479,73 @@ else:
                     else:
                         st.info("الذاكرة فارغة بالفعل.")
 
+            # 🩺 زر التشخيص
+            st.markdown("---")
+            if st.button("🩺 تشخيص النظام", use_container_width=True):
+                with st.spinner("جارٍ فحص النظام..."):
+                    results = {}
+                    
+                    # 1. فحص data.json
+                    data_file = "data.json"
+                    if os.path.exists(data_file):
+                        try:
+                            with open(data_file, "r", encoding="utf-8") as f:
+                                data = json.load(f)
+                            results["📄 data.json"] = "✅ موجود"
+                            # فحص المحتوى
+                            for key in ["info", "schedules", "exams", "fees", "contacts", "majors"]:
+                                val = data.get(key, "")
+                                if val:
+                                    if isinstance(val, dict):
+                                        results[f"  └─ {key}"] = f"✅ موجود ({len(val)} عنصر)"
+                                    else:
+                                        results[f"  └─ {key}"] = f"✅ موجود ({len(val)} حرف)"
+                                else:
+                                    results[f"  └─ {key}"] = "⚠️ فارغ"
+                        except Exception as e:
+                            results["📄 data.json"] = f"❌ خطأ: {str(e)}"
+                    else:
+                        results["📄 data.json"] = "❌ الملف غير موجود"
+                    
+                    # 2. فحص مفتاح Groq
+                    groq_key = st.secrets.get("GROQ_API_KEY", "")
+                    if groq_key:
+                        results["🔑 مفتاح Groq"] = f"✅ موجود (...{groq_key[-4:]})"
+                    else:
+                        results["🔑 مفتاح Groq"] = "❌ غير موجود"
+                    
+                    # 3. فحص training_data.json
+                    if os.path.exists("training_data.json"):
+                        try:
+                            with open("training_data.json", "r", encoding="utf-8") as f:
+                                memory = json.load(f)
+                            results["🧠 training_data.json"] = f"✅ موجود ({len(memory)} سؤال)"
+                        except:
+                            results["🧠 training_data.json"] = "❌ تالف"
+                    else:
+                        results["🧠 training_data.json"] = "⚠️ غير موجود (سيتم إنشاؤه)"
+                    
+                    # 4. فحص logs.json
+                    if os.path.exists("logs.json"):
+                        try:
+                            with open("logs.json", "r", encoding="utf-8") as f:
+                                logs = json.load(f)
+                            results["📊 logs.json"] = f"✅ موجود ({len(logs)} سجل)"
+                        except:
+                            results["📊 logs.json"] = "❌ تالف"
+                    else:
+                        results["📊 logs.json"] = "⚠️ غير موجود (سيتم إنشاؤه)"
+                    
+                    # عرض النتائج
+                    st.markdown("### 📋 نتائج التشخيص")
+                    for key, value in results.items():
+                        if "❌" in value:
+                            st.error(f"{key}: {value}")
+                        elif "⚠️" in value:
+                            st.warning(f"{key}: {value}")
+                        else:
+                            st.success(f"{key}: {value}")
+
     elif admin_password != "":
         st.error("❌ كلمة المرور غير صحيحة")
     

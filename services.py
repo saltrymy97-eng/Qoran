@@ -24,14 +24,13 @@ LOGS_FILE = "logs.json"
 # 2. إدارة البيانات
 # ==========================================
 def load_data():
-    """تحميل بيانات الجامعة من الملف، أو إرجاع بيانات افتراضية إذا لم يوجد"""
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
         except json.JSONDecodeError:
             pass
-    
+
     default_data = {
         "info": "جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير، مؤسسة تعليمية رائدة تجمع بين العلوم الشرعية والإدارية والتقنية.",
         "schedules": "الجداول الدراسية تُحدث بداية كل فصل دراسي. يرجى مراجعة شؤون الطلاب للاطلاع على جدول المحاضرات والمواعيد.",
@@ -45,7 +44,6 @@ def load_data():
     return default_data
 
 def save_data(data):
-    """حفظ بيانات الجامعة في الملف"""
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
@@ -53,30 +51,27 @@ def save_data(data):
 # 3. شخصية المساعد الذكي
 # ==========================================
 SYSTEM_PROMPT = (
-    "أنت مساعد رسمي ومهذب لجامعة القرآن الكريم والعلوم الإسلامية فرع غيل باوزير - حضرموت. "
-    "أجب على سؤال الطالب باستخدام المعلومات المتوفرة فقط أدناه. "
-    "إذا كانت المعلومات غير كافية للإجابة بشكل دقيق، قل نصاً: 'عذراً، هذه المعلومة غير متوفرة لدي حالياً، يرجى التواصل مع شؤون الطلاب'. "
-    "ممنوع اختلاق أو تخمين أي أسعار أو تواريخ أو معلومات من خارج السياق.\n\n"
-    "المعلومات المتوفرة للاستناد عليها:\n{context}"
+    "أنت مساعد رسمي لجامعة القرآن الكريم والعلوم الإسلامية فرع غيل باوزير - حضرموت.\n"
+    "أعد صياغة المعلومات التالية للإجابة على سؤال الطالب بأسلوب مهذب ومختصر.\n"
+    "إذا كانت المعلومات لا تحتوي على إجابة السؤال، قل بالضبط: 'عذراً، هذه المعلومة غير متوفرة لدي حالياً، يرجى التواصل مع شؤون الطلاب.'\n"
+    "لا تختلق أي معلومات. لا تخمن. لا تضف شيئاً من عندك.\n\n"
+    "المعلومات:\n{context}"
 )
 
 # ==========================================
 # 4. إدارة السجل والإحصائيات
 # ==========================================
 def load_logs():
-    """تحميل سجل الأسئلة"""
     if os.path.exists(LOGS_FILE):
         with open(LOGS_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     return []
 
 def save_logs(logs):
-    """حفظ سجل الأسئلة"""
     with open(LOGS_FILE, "w", encoding="utf-8") as f:
         json.dump(logs, f, ensure_ascii=False, indent=2)
 
 def log_question(question, category):
-    """تسجيل سؤال في السجل"""
     logs = load_logs()
     logs.append({
         "question": question.strip(),
@@ -88,27 +83,24 @@ def log_question(question, category):
     save_logs(logs)
 
 def get_stats():
-    """إرجاع إحصائيات الأسئلة"""
     logs = load_logs()
-    
     if not logs:
         return {"total": 0, "today": 0, "top_questions": [], "categories": {}}
-    
+
     today_str = datetime.datetime.now().date().isoformat()
     today_count = sum(1 for log in logs if log["timestamp"].startswith(today_str))
-    
+
     question_counts = {}
     category_counts = {}
-    
     for log in logs:
         q = log["question"].strip()
         question_counts[q] = question_counts.get(q, 0) + 1
         cat = log.get("category", "info")
         category_counts[cat] = category_counts.get(cat, 0) + 1
-    
+
     sorted_questions = sorted(question_counts.items(), key=lambda x: x[1], reverse=True)
     top_questions = [{"question": q, "count": c} for q, c in sorted_questions[:10]]
-    
+
     return {
         "total": len(logs),
         "today": today_count,
@@ -120,25 +112,30 @@ def get_stats():
 # 5. الذكاء الاصطناعي
 # ==========================================
 def ask_ai(question, category=None, chat_history=None):
-    """إرسال السؤال إلى Groq API مع سياق الفئة المناسبة"""
     if chat_history is None:
         chat_history = []
-    
+
     data = load_data()
-    context = data.get(category, data.get("info", "")) if category else data.get("info", "")
-    
+
+    if category == "majors" and any(w in question for w in ["رسوم", "سعر", "تكلفة", "تكاليف"]):
+        context = (data.get("majors", "") + "\n\n" + data.get("fees", "")).strip()
+    elif category and category in data and category != "last_updated" and data[category]:
+        context = data[category]
+    else:
+        context = build_full_context(data)
+
     log_question(question, category or "info")
-    
-    system_prompt = SYSTEM_PROMPT.format(context=context[:1000])
-    
+
+    system_prompt = SYSTEM_PROMPT.format(context=context[:1500])
+
     messages = [{"role": "system", "content": system_prompt}]
     if chat_history:
         messages.extend(chat_history[-4:])
     messages.append({"role": "user", "content": question})
-    
+
     if not client:
-        return "عذراً، لا يمكن الاتصال بالمساعد الذكي حالياً."
-    
+        return context[:500]
+
     try:
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
@@ -147,48 +144,55 @@ def ask_ai(question, category=None, chat_history=None):
             max_tokens=400
         )
         return response.choices[0].message.content
-    
-    except Exception as e:
-        return "عذراً، حدث خطأ أثناء الاتصال بالنظام. يرجى المحاولة مرة أخرى لاحقاً."
+    except Exception:
+        return context[:500]
+
+def build_full_context(data):
+    parts = []
+    if data.get("info"):
+        parts.append(data['info'])
+    if data.get("majors"):
+        parts.append(f"التخصصات: {data['majors']}")
+    if data.get("schedules"):
+        parts.append(f"الجداول: {data['schedules']}")
+    if data.get("exams"):
+        parts.append(f"الامتحانات: {data['exams']}")
+    if data.get("fees"):
+        parts.append(f"الرسوم: {data['fees']}")
+    if data.get("contacts"):
+        parts.append(f"التواصل: {data['contacts']}")
+    return "\n\n".join(parts) if parts else "لا توجد بيانات."
 
 # ==========================================
 # 6. التصنيف الذكي
 # ==========================================
 def smart_classify(question):
-    """تصنيف السؤال إلى فئة واحدة مناسبة"""
     q = question.lower()
-    
-    # التخصصات + الرسوم = majors (أولوية)
+
     if any(w in q for w in ["تخصص", "تخصصات", "قسم", "كلية"]) and any(w in q for w in ["رسوم", "سعر", "تكلفة", "تكاليف"]):
         return "majors"
-    
-    # الكلمات المالية فقط = fees
+
     if any(w in q for w in ["رسوم", "تكاليف", "مالية", "دفع", "قسط", "سداد", "منحة", "سعر"]):
         return "fees"
-    
-    # الامتحانات
+
     if any(w in q for w in ["امتحان", "اختبار", "نتيجة", "درجات", "معدل", "نجاح", "رسوب"]):
         return "exams"
-    
-    # الجداول
+
     if any(w in q for w in ["جدول", "جداول", "جدوال", "مواعيد", "محاضرة", "دوام", "حضور", "غياب", "مدرس"]):
         return "schedules"
-    
-    # التواصل
+
     if any(w in q for w in ["تواصل", "رقم", "اتصال", "ايميل", "بريد", "عنوان", "موقع", "هاتف", "جوال", "أين", "وين"]):
         return "contacts"
-    
-    # التخصصات فقط
+
     if any(w in q for w in ["تخصص", "قسم", "كلية", "بكالوريوس", "ماجستير", "دراسة"]):
         return "majors"
-    
+
     return "info"
 
 # ==========================================
 # 7. دوال الترحيب والمساعدة
 # ==========================================
 def get_greeting():
-    """رسالة ترحيبية حسب الوقت"""
     hour = datetime.datetime.now().hour
     if 5 <= hour < 12:
         return "صباح الخير"
@@ -198,6 +202,5 @@ def get_greeting():
         return "مساء الخير"
 
 def get_welcome_message():
-    """رسالة ترحيبية أولى فقط"""
     greeting = get_greeting()
     return f"{greeting}، أهلاً وسهلاً بك في المساعد الذكي لجامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير. كيف أقدر أخدمك؟"

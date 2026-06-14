@@ -34,6 +34,9 @@ st.set_page_config(
 ADMIN_SECRET_CODE = st.secrets.get("ADMIN_SECRET_CODE", "ادارة جامعة القران الكريم وعلومه")
 ADMIN_PASSWORD = st.secrets.get("ADMIN_PASSWORD", "admin123")
 
+# --- للتأكد من المفتاح ---
+# st.write(f"🔑 مفتاح Groq موجود: {bool(st.secrets.get('GROQ_API_KEY'))}")
+
 # ==========================================
 # 2. التصميم الرسمي (CSS)
 # ==========================================

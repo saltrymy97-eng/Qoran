@@ -47,10 +47,10 @@ html, body, [data-testid="stAppViewContainer"], .main {
     scroll-behavior: smooth;
 }
 
-/* --- خلفية الصفحة مع نقشة إسلامية شفافة --- */
+/* --- خلفية الصفحة مع نقشة إسلامية شفافة (مثلثات فقط) --- */
 .stApp {
     background-color: #fbfcfb !important;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" opacity="0.03"><path d="M50 10 L90 90 L10 90 Z" fill="%230f5132"/><circle cx="50" cy="55" r="15" fill="%23bfa15f"/></svg>');
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" opacity="0.03"><path d="M50 10 L90 90 L10 90 Z" fill="%230f5132"/></svg>');
     background-size: 200px 200px;
     color: #2b3a30 !important;
     font-family: 'Tajawal', sans-serif !important;
@@ -490,4 +490,4 @@ if user_input:
         st.warning("أنت في لوحة الإدارة. استخدم الخيارات أعلاه أو اضغط خروج.")
 
 # --- تذييل الصفحة الرسمي ---
-st.markdown('<div class="official-footer">المطور: سالم التريمي</div>', unsafe_allow_html=True)
+st.markdown('<div class="official-footer">المطور: سالم التريمي</div>', unsafe_allow_html=True).

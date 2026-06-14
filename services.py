@@ -202,20 +202,18 @@ def get_stats():
     }
 
 # ==========================================
-# 5. الذكاء الاصطناعي (مطور)
+# 5. الذكاء الاصطناعي (الآن يقرأ كل شيء دائمًا)
 # ==========================================
 def ask_ai(question, category=None, chat_history=None):
-    """إرسال سؤال إلى Groq مع تاريخ المحادثة"""
+    """إرسال سؤال إلى Groq مع كامل قاعدة المعرفة دائمًا"""
     data = load_data()
     
-    if category and category in data and category != "last_updated":
-        context = data[category]
-    else:
-        context = build_full_context(data)
+    # نرسل كل البيانات في كل مرة لضمان عدم ضياع أي معلومة
+    context = build_full_context(data)
     
     last_updated = data.get("last_updated", "غير محدد")
     system_prompt = SYSTEM_PROMPT.format(
-        context=context[:3500],
+        context=context[:6000],  # نزيد الحد للسماح بمعلومات أكثر
         last_updated=last_updated
     )
     
@@ -236,7 +234,7 @@ def ask_ai(question, category=None, chat_history=None):
             model="llama-3.3-70b-versatile",
             messages=messages,
             temperature=0.5,
-            max_tokens=800
+            max_tokens=1000  # مساحة أكبر للرد
         )
         ai_response = response.choices[0].message.content
         
@@ -290,14 +288,13 @@ def generate_fallback_response(question, category, data):
     return "عذراً، الخدمة متوقفة مؤقتاً. يرجى التواصل مع إدارة الفرع."
 
 # ==========================================
-# 6. التصنيف الذكي (معدل - أي سؤال عن المال يذهب للرسوم فوراً)
+# 6. التصنيف الذكي (يبقى للإحصائيات فقط)
 # ==========================================
 def smart_classify(question):
-    """تصنيف السؤال إلى فئة مناسبة"""
+    """تصنيف السؤال إلى فئة مناسبة (لأغراض إحصائية)"""
     q = question.strip()
     q_lower = q.lower()
 
-    # 🎯 أي سؤال يحتوي على كلمات متعلقة بالمال أو الرسوم يذهب مباشرة إلى fees
     if any(w in q_lower for w in [
         "رسوم", "رسومات", "فلوس", "مبلغ", "دفع", "تسديد", "قسط",
         "أقساط", "مالية", "مصاريف", "حوالة", "بنك", "فاتورة", "سعر",
@@ -306,7 +303,6 @@ def smart_classify(question):
     ]):
         return "fees"
 
-    # باقي التصنيفات كما هي
     keywords = {
         "schedules": [
             "جدول", "جداول", "محاضرات", "محاضره", "مواد", "ماده", "مستوى",

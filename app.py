@@ -39,12 +39,6 @@ st.set_page_config(
 ADMIN_SECRET_CODE = st.secrets.get("ADMIN_SECRET_CODE", "ادارة جامعة القران الكريم وعلومه")
 ADMIN_PASSWORD = st.secrets.get("ADMIN_PASSWORD", "admin123")
 
-# --- تشخيص الاستيراد ---
-st.write(f"🔍 تشخيص الاستيراد:")
-st.write(f"  - generate_training_data = {generate_training_data}")
-st.write(f"  - load_data = {load_data}")
-st.write(f"  - save_data = {save_data}")
-
 # ==========================================
 # 2. التصميم الرسمي (CSS)
 # ==========================================
@@ -435,13 +429,13 @@ else:
         with tab3:
             st.subheader("🧠 إدارة ذاكرة المساعد الذكي")
             st.markdown("""
-            هنا يمكنك بناء ذاكرة المساعد الذكي. عند الضغط على الزر، سيقوم النظام بتوليد 10,000 سؤال وإجابة تلقائياً من بيانات الجامعة.
+            هنا يمكنك بناء ذاكرة المساعد الذكي. عند الضغط على الزر، سيقوم النظام بتوليد ما يصل إلى 50,000 سؤال وإجابة تلقائياً من بيانات الجامعة باستخدام القوالب والذكاء الاصطناعي.
             
-            - **الوقت المتوقع:** 15-20 دقيقة
-            - **الرصيد المستهلك:** حوالي 200 طلب من Groq
-            - **النتيجة:** المساعد يصبح أسرع وأذكى
+            - **الوقت المتوقع:** 5-10 دقائق
+            - **النتيجة:** المساعد يصبح أسرع وأذكى ويغطي معظم الأسئلة المحتملة
             """)
             
+            # عرض حجم الذاكرة الحالي
             if os.path.exists("training_data.json"):
                 try:
                     with open("training_data.json", "r", encoding="utf-8") as f:
@@ -456,9 +450,9 @@ else:
             
             col_btn1, col_btn2, col_btn3 = st.columns(3)
             with col_btn1:
-                if st.button("🚀 توليد 10,000 سؤال", use_container_width=True):
+                if st.button("🚀 توليد 50,000 سؤال", use_container_width=True):
                     if generate_training_data:
-                        with st.spinner("🧠 جاري بناء الذاكرة..."):
+                        with st.spinner("🧠 جاري بناء الذاكرة... قد يستغرق 5-10 دقائق"):
                             try:
                                 progress_bar = st.progress(0)
                                 status_text = st.empty()
@@ -467,7 +461,7 @@ else:
                                     progress_bar.progress(progress)
                                     status_text.text(f"تقدم العمل: {int(progress * 100)}%")
                                 
-                                generate_training_data(num_questions=10000, progress_callback=update_progress)
+                                generate_training_data(num_questions=50000, progress_callback=update_progress)
                                 
                                 progress_bar.progress(1.0)
                                 status_text.text("✅ تم الانتهاء!")

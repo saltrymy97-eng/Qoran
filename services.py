@@ -21,17 +21,15 @@ client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
 DATA_FILE = "data.json"
 LOGS_FILE = "logs.json"
-MEMORY_FILE = "training_data.json"  # ملف الذاكرة (الأسئلة والأجوبة)
+MEMORY_FILE = "training_data.json"
 
-# إعدادات الذاكرة
-MEMORY_MATCH_THRESHOLD = 0.8  # نسبة التشابه المطلوبة لاستخدام الذاكرة (80%)
-MAX_MEMORY_SIZE = 15000       # الحد الأقصى لعدد الأسئلة في الذاكرة (أكبر من 10000)
+MEMORY_MATCH_THRESHOLD = 0.8
+MAX_MEMORY_SIZE = 15000
 
 # ==========================================
 # 2. إدارة البيانات الأساسية
 # ==========================================
 def load_data():
-    """تحميل بيانات الجامعة من الملف"""
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -48,7 +46,6 @@ def load_data():
     }
 
 def convert_majors_to_dict(majors_text):
-    """تحويل نص التخصصات إلى قاموس منظم"""
     majors_dict = {}
     text = majors_text.strip()
     if not text:
@@ -93,7 +90,6 @@ def convert_majors_to_dict(majors_text):
     return majors_dict if majors_dict else {"تخصصات": text}
 
 def save_data(data):
-    """حفظ بيانات الجامعة"""
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
@@ -101,7 +97,6 @@ def save_data(data):
 # 3. نظام الذاكرة (الأسئلة والأجوبة)
 # ==========================================
 def load_memory():
-    """تحميل الذاكرة من ملف training_data.json"""
     if os.path.exists(MEMORY_FILE):
         try:
             with open(MEMORY_FILE, "r", encoding="utf-8") as f:
@@ -111,14 +106,12 @@ def load_memory():
     return []
 
 def save_memory(memory):
-    """حفظ الذاكرة إلى الملف"""
     if len(memory) > MAX_MEMORY_SIZE:
         memory = memory[-MAX_MEMORY_SIZE:]
     with open(MEMORY_FILE, "w", encoding="utf-8") as f:
         json.dump(memory, f, ensure_ascii=False, indent=2)
 
 def add_to_memory(question, answer):
-    """إضافة سؤال وجواب جديد إلى الذاكرة"""
     memory = load_memory()
     for item in memory:
         if item["question"].strip() == question.strip():
@@ -134,7 +127,6 @@ def add_to_memory(question, answer):
     save_memory(memory)
 
 def find_best_match_memory(question, memory):
-    """البحث عن أفضل تطابق لسؤال في الذاكرة باستخدام تشابه النص"""
     if not memory:
         return None, 0.0
     
@@ -154,7 +146,6 @@ def find_best_match_memory(question, memory):
     return None, best_score
 
 def get_memory_stats():
-    """إحصائيات الذاكرة"""
     memory = load_memory()
     logs = load_logs()
     memory_responses = sum(1 for log in logs if log.get("source") == "memory")
@@ -167,10 +158,10 @@ def get_memory_stats():
     }
 
 # ==========================================
-# 4. توليد بيانات التدريب (10000 سؤال)
+# 4. توليد بيانات التدريب (10000 سؤال - مع حفظ تدريجي)
 # ==========================================
 def generate_training_data(num_questions=10000, progress_callback=None):
-    """توليد أسئلة وأجوبة تدريبية من بيانات الجامعة باستخدام Groq"""
+    """توليد أسئلة وأجوبة تدريبية وحفظها تدريجياً"""
     data = load_data()
     if not data:
         return []
@@ -179,11 +170,13 @@ def generate_training_data(num_questions=10000, progress_callback=None):
     if not context or context == "لا توجد بيانات.":
         return []
     
-    memory = []
+    # تحميل الذاكرة الحالية (إذا وجدت)
+    memory = load_memory()
     batch_size = 50
     batches = num_questions // batch_size
     
     for i in range(batches):
+        # تحديث شريط التقدم
         if progress_callback:
             progress_callback(i / batches)
         
@@ -224,10 +217,17 @@ def generate_training_data(num_questions=10000, progress_callback=None):
             if json_match:
                 batch_data = json.loads(json_match.group())
                 memory.extend(batch_data)
+                
+                # 🎯 حفظ تدريجي بعد كل دفعة
+                save_memory(memory)
         except Exception as e:
-            print(f"خطأ في توليد الدفعة {i}: {e}")
+            # حتى لو فشلت دفعة، نستمر
+            pass
     
-    save_memory(memory)
+    # تحديث شريط التقدم إلى 100%
+    if progress_callback:
+        progress_callback(1.0)
+    
     return memory
 
 # ==========================================

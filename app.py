@@ -17,9 +17,10 @@ except ImportError:
     PdfReader = None
 
 try:
-    from services import ask_ai, smart_classify, get_stats
+    from services import ask_ai, smart_classify, get_stats, load_data, save_data
 except ImportError:
     ask_ai = smart_classify = get_stats = None
+    load_data = save_data = None
 
 # ==========================================
 # 1. التكوين الأساسي للصفحة
@@ -288,33 +289,13 @@ def smart_distribute_text(text):
             
     return {field: '\n'.join(content) for field, content in sections.items()}
 
-# --- إدارة البيانات ---
-DATA_FILE = "data.json"
-
-def load_data():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {
-        "info": "جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير، مؤسسة تعليمية رائدة تجمع بين العلوم الشرعية والحديثة. نحن هنا لخدمتك.",
-        "schedules": "الجداول الدراسية تُحدث بداية كل فصل دراسي. يرجى مراجعة شؤون الطلاب.",
-        "exams": "تبدأ الامتحانات النصفية في الأسبوع الثامن من الفصل الدراسي.",
-        "fees": "",
-        "contacts": "للتواصل: 053XXXXX أو زيارة مبنى الفرع بغيل باوزير.",
-        "majors": "التخصصات: القرآن وعلومه، الشريعة، والدراسات الإسلامية."
-    }
-
-def save_data(data):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-
 # ==========================================
 # 4. تهيئة الحالات
 # ==========================================
 if "admin_mode" not in st.session_state:
     st.session_state.admin_mode = False
 if "db" not in st.session_state:
-    st.session_state.db = load_data()
+    st.session_state.db = load_data() if load_data else {}
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "auto_question" not in st.session_state:
@@ -380,7 +361,8 @@ else:
                 extracted_text = extract_text_from_file(uploaded_file)
                 if extracted_text:
                     st.session_state.db = smart_distribute_text(extracted_text)
-                    save_data(st.session_state.db)
+                    if save_data:
+                        save_data(st.session_state.db)
                     st.success("تم استخراج البيانات وحفظها بنجاح!")
                     st.rerun()
 
@@ -397,7 +379,8 @@ else:
                         "info": e_info, "schedules": e_sched, "exams": e_exams,
                         "fees": "", "contacts": e_contacts, "majors": e_majors
                     }
-                    save_data(st.session_state.db)
+                    if save_data:
+                        save_data(st.session_state.db)
                     st.success("تم تحديث قاعدة البيانات بنجاح!")
         
         with tab2:

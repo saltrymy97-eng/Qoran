@@ -50,7 +50,7 @@ def save_data(data):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 # ==========================================
-# 3. شخصية المساعد الذكي (مطورة)
+# 3. شخصية المساعد الذكي (مطورة لمنع الهلوسة)
 # ==========================================
 SYSTEM_PROMPT = (
     "أنت مساعد رسمي لجامعة القرآن الكريم والعلوم الإسلامية فرع غيل باوزير - حضرموت.\n"
@@ -111,7 +111,7 @@ def get_stats():
     }
 
 # ==========================================
-# 5. الذكاء الاصطناعي (مطور)
+# 5. الذكاء الاصطناعي (يدمج التخصصات والرسوم تلقائياً)
 # ==========================================
 def ask_ai(question, category=None, chat_history=None):
     if chat_history is None:
@@ -119,11 +119,14 @@ def ask_ai(question, category=None, chat_history=None):
 
     data = load_data()
 
-    # اختيار السياق حسب الفئة
-    if category and category in data and category != "last_updated" and data[category]:
+    # بناء السياق المناسب
+    if category == "majors" and any(w in question for w in ["رسوم", "سعر", "تكلفة", "تكاليف"]):
+        # دمج بيانات التخصصات مع الرسوم لأسئلة "تخصصات + رسوم"
+        context = (data.get("majors", "") + "\n\n" + data.get("fees", "")).strip()
+    elif category and category in data and category != "last_updated" and data[category]:
         context = data[category]
     else:
-        # لم يتم التعرف على فئة محددة -> نرسل كل البيانات
+        # لا توجد فئة محددة أو البيانات فارغة: استخدم كل البيانات
         context = build_full_context(data)
 
     log_question(question, category or "info")
@@ -172,7 +175,7 @@ def build_full_context(data):
 def smart_classify(question):
     q = question.lower()
 
-    # تخصصات + رسوم -> majors
+    # تخصصات + رسوم -> majors (لدمج البيانات لاحقاً)
     if any(w in q for w in ["تخصص", "تخصصات", "قسم", "كلية"]) and any(w in q for w in ["رسوم", "سعر", "تكلفة", "تكاليف"]):
         return "majors"
 
@@ -196,7 +199,7 @@ def smart_classify(question):
     if any(w in q for w in ["تخصص", "قسم", "كلية", "بكالوريوس", "ماجستير", "دراسة"]):
         return "majors"
 
-    # لا توجد كلمات مفتاحية -> info (سيتم إرسال كل البيانات)
+    # لا توجد كلمات مفتاحية -> info (يؤدي إلى إرسال كل البيانات)
     return "info"
 
 # ==========================================

@@ -30,6 +30,7 @@ MAX_MEMORY_SIZE = 15000
 # 2. إدارة البيانات الأساسية
 # ==========================================
 def load_data():
+    """تحميل بيانات الجامعة من الملف"""
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -46,6 +47,7 @@ def load_data():
     }
 
 def convert_majors_to_dict(majors_text):
+    """تحويل نص التخصصات إلى قاموس منظم"""
     majors_dict = {}
     text = majors_text.strip()
     if not text:
@@ -90,6 +92,7 @@ def convert_majors_to_dict(majors_text):
     return majors_dict if majors_dict else {"تخصصات": text}
 
 def save_data(data):
+    """حفظ بيانات الجامعة"""
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
@@ -97,6 +100,7 @@ def save_data(data):
 # 3. نظام الذاكرة (الأسئلة والأجوبة)
 # ==========================================
 def load_memory():
+    """تحميل الذاكرة من ملف training_data.json"""
     if os.path.exists(MEMORY_FILE):
         try:
             with open(MEMORY_FILE, "r", encoding="utf-8") as f:
@@ -106,12 +110,14 @@ def load_memory():
     return []
 
 def save_memory(memory):
+    """حفظ الذاكرة إلى الملف"""
     if len(memory) > MAX_MEMORY_SIZE:
         memory = memory[-MAX_MEMORY_SIZE:]
     with open(MEMORY_FILE, "w", encoding="utf-8") as f:
         json.dump(memory, f, ensure_ascii=False, indent=2)
 
 def add_to_memory(question, answer):
+    """إضافة سؤال وجواب جديد إلى الذاكرة"""
     memory = load_memory()
     for item in memory:
         if item["question"].strip() == question.strip():
@@ -127,6 +133,7 @@ def add_to_memory(question, answer):
     save_memory(memory)
 
 def find_best_match_memory(question, memory):
+    """البحث عن أفضل تطابق لسؤال في الذاكرة باستخدام تشابه النص"""
     if not memory:
         return None, 0.0
     
@@ -146,6 +153,7 @@ def find_best_match_memory(question, memory):
     return None, best_score
 
 def get_memory_stats():
+    """إحصائيات الذاكرة"""
     memory = load_memory()
     logs = load_logs()
     memory_responses = sum(1 for log in logs if log.get("source") == "memory")
@@ -158,26 +166,40 @@ def get_memory_stats():
     }
 
 # ==========================================
-# 4. توليد بيانات التدريب (مرن - يقبل أي صيغة)
+# 4. توليد بيانات التدريب (يقرأ data.json مباشرة)
 # ==========================================
 def generate_training_data(num_questions=10000, progress_callback=None):
-    """توليد أسئلة وأجوبة تدريبية وحفظها تدريجياً"""
+    """
+    توليد أسئلة وأجوبة تدريبية من بيانات الجامعة.
+    تقرأ البيانات مباشرة من data.json الذي تم تحديثه عند رفع ملف الوورد.
+    """
+    # 🎯 قراءة البيانات مباشرة من الملف
     data = load_data()
-    if not data:
-        return []
     
+    # 🎯 التحقق من وجود بيانات
+    if not data:
+        if progress_callback:
+            progress_callback(1.0)
+        raise Exception("❌ لا توجد بيانات في data.json. يرجى رفع ملف وورد أولاً من تبويب تحرير البيانات.")
+    
+    # 🎯 بناء السياق من البيانات
     context = build_full_context(data)
     if not context or context == "لا توجد بيانات.":
-        return []
+        if progress_callback:
+            progress_callback(1.0)
+        raise Exception("❌ بيانات الجامعة فارغة. يرجى رفع ملف وورد يحتوي على معلومات الجامعة.")
     
+    # 🎯 تحميل الذاكرة الحالية (إذا وجدت)
     memory = load_memory()
     batch_size = 50
     batches = num_questions // batch_size
     
     for i in range(batches):
+        # تحديث شريط التقدم
         if progress_callback:
             progress_callback(i / batches)
         
+        # 🎯 بناء الطلب إلى Groq مع البيانات الحقيقية
         prompt = f"""أنت مساعد ذكي لجامعة القرآن الكريم والعلوم الإسلامية.
 
         بناءً على المعلومات التالية عن الجامعة:
@@ -233,10 +255,8 @@ def generate_training_data(num_questions=10000, progress_callback=None):
             current_q = None
             for line in lines:
                 line = line.strip()
-                # البحث عن سطر يبدأ بـ "س" أو "سؤال"
                 if re.match(r'^[سس][:.\s]', line) or re.match(r'^سؤال\s*[:.\s]', line):
                     current_q = re.sub(r'^(?:سؤال|س)[:.\s]*', '', line).strip()
-                # البحث عن سطر يبدأ بـ "ج" أو "جواب"
                 elif re.match(r'^[جج][:.\s]', line) or re.match(r'^جواب\s*[:.\s]', line):
                     if current_q:
                         answer = re.sub(r'^(?:جواب|ج)[:.\s]*', '', line).strip()
@@ -257,7 +277,7 @@ def generate_training_data(num_questions=10000, progress_callback=None):
                     unique_pairs.append((q_clean, a_clean))
                     seen.add(q_clean)
 
-            # إضافة الأسئلة المستخرجة إلى الذاكرة
+            # 🎯 إضافة الأسئلة المستخرجة إلى الذاكرة
             for question, answer in unique_pairs:
                 memory.append({
                     "question": question,
@@ -265,12 +285,14 @@ def generate_training_data(num_questions=10000, progress_callback=None):
                     "created": datetime.datetime.now().isoformat()
                 })
             
-            # حفظ تدريجي بعد كل دفعة
+            # 🎯 حفظ تدريجي بعد كل دفعة
             save_memory(memory)
             
         except Exception as e:
+            # الاستمرار حتى لو فشلت دفعة واحدة
             pass
     
+    # تحديث شريط التقدم إلى 100%
     if progress_callback:
         progress_callback(1.0)
     

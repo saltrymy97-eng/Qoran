@@ -340,8 +340,8 @@ st.markdown('<div class="branch-title">✦ فرع غيل باوزير - حضرم
 
 # --- وضع الطالب ---
 if not st.session_state.admin_mode:
-    # أزرار الخدمات
-    col1, col2, col3, col4, col5 = st.columns(5)
+    # أزرار الخدمات (تم حذف أيقونة الرسوم)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         if st.button("الجداول", icon=":material/calendar_month:"):
             st.session_state.auto_question = "أريد الاستفسار عن جداول المحاضرات"
@@ -351,16 +351,12 @@ if not st.session_state.admin_mode:
             st.session_state.auto_question = "ما هي مواعيد وترتيبات الامتحانات؟"
             st.rerun()
     with col3:
-        if st.button("الرسوم", icon=":material/payments:"):
-            st.session_state.auto_question = "أريد معرفة تفاصيل الرسوم الدراسية وطرق السداد"
-            st.rerun()
-    with col4:
         if st.button("التواصل", icon=":material/call:"):
             st.session_state.auto_question = "كيف يمكنني التواصل مع إدارة الفرع؟"
             st.rerun()
-    with col5:
+    with col4:
         if st.button("التخصصات", icon=":material/school:"):
-            st.session_state.auto_question = "ما هي التخصصات الأكاديمية المتاحة؟"
+            st.session_state.auto_question = "ما هي التخصصات الأكاديمية المتاحة ورسومها؟"
             st.rerun()
 
     # --- الآية القرآنية ---

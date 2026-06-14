@@ -1,30 +1,15 @@
 import streamlit as st
 import json
 import os
-import re
-import base64
-import requests
 import datetime
 
 # --- استيراد المكتبات الإضافية ---
 try:
-    from docx import Document
-except ImportError:
-    Document = None
-
-try:
-    from PyPDF2 import PdfReader
-except ImportError:
-    PdfReader = None
-
-try:
     from services import (
-        ask_ai, smart_classify, get_stats, load_data, save_data,
-        generate_training_data, get_memory_stats
+        ask_ai, smart_classify, get_stats, load_data, save_data
     )
 except ImportError:
     ask_ai = smart_classify = get_stats = load_data = save_data = None
-    generate_training_data = get_memory_stats = None
 
 # ==========================================
 # 1. التكوين الأساسي للصفحة
@@ -38,8 +23,6 @@ st.set_page_config(
 # --- تحميل الأسرار ---
 ADMIN_SECRET_CODE = st.secrets.get("ADMIN_SECRET_CODE", "ادارة جامعة القران الكريم وعلومه")
 ADMIN_PASSWORD = st.secrets.get("ADMIN_PASSWORD", "admin123")
-GITHUB_TOKEN = st.secrets.get("GITHUB_TOKEN")
-GITHUB_REPO = st.secrets.get("GITHUB_REPO")
 
 # ==========================================
 # 2. التصميم الرسمي (CSS)
@@ -217,114 +200,7 @@ footer {visibility: hidden !important;}
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. الدوال المساعدة
-# ==========================================
-def clean_arabic_text(text):
-    if not text:
-        return ""
-    tashkeel = re.compile(r'[\u0617-\u061A\u064B-\u0652\u06D6-\u06ED]')
-    text = tashkeel.sub('', text)
-    text = text.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا').replace('ة', 'ه')
-    lines = [line.strip() for line in text.split('\n') if line.strip()]
-    return '\n'.join(lines)
-
-def extract_text_from_file(uploaded_file):
-    if not uploaded_file:
-        return None
-    file_type = uploaded_file.type
-    text_parts = []
-    
-    if "wordprocessingml" in file_type or uploaded_file.name.endswith('.docx'):
-        if Document is None:
-            st.error("مكتبة python-docx غير مثبتة.")
-            return None
-        doc = Document(uploaded_file)
-        text_parts = [para.text.strip() for para in doc.paragraphs if para.text.strip()]
-        
-    elif "pdf" in file_type or uploaded_file.name.endswith('.pdf'):
-        if PdfReader is None:
-            st.error("مكتبة PyPDF2 غير مثبتة.")
-            return None
-        reader = PdfReader(uploaded_file)
-        for page in reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text_parts.append(page_text)
-    else:
-        st.error("نوع الملف غير مدعوم. الرجاء رفع ملف Word (.docx) أو PDF.")
-        return None
-        
-    return clean_arabic_text('\n'.join(text_parts))
-
-def smart_distribute_text(text):
-    fields = {"info": "", "schedules": "", "exams": "", "fees": "", "contacts": "", "majors": ""}
-    if not text:
-        return fields
-        
-    patterns = {
-        "info": ["معلومات عامة", "معلومات اساسية", "عن الجامعة", "نبذة", "تعريف", "المعلومات العامة"],
-        "schedules": ["الجداول", "جداول المحاضرات", "الجداول الدراسية", "جدول", "المحاضرات", "المواعيد"],
-        "exams": ["الامتحانات", "الاختبارات", "مواعيد الامتحانات", "نظام الامتحانات", "التقويم"],
-        "fees": ["الرسوم", "الرسوم الدراسية", "المصاريف", "التكاليف", "الدفع", "السداد", "الاقساط"],
-        "contacts": ["جهات الاتصال", "التواصل", "اتصل بنا", "الهاتف", "العنوان", "الموقع", "البريد"],
-        "majors": ["التخصصات", "التخصص", "الاقسام", "الشعب", "البرامج", "المسارات"]
-    }
-    
-    current_field = "info"
-    sections = {field: [] for field in fields}
-    
-    for line in text.split('\n'):
-        line = line.strip()
-        if not line:
-            continue
-        
-        matched = False
-        for field, field_patterns in patterns.items():
-            for pattern in field_patterns:
-                if line.startswith(pattern):
-                    current_field = field
-                    content = line[len(pattern):].strip().lstrip(':').strip()
-                    if content:
-                        sections[field].append(content)
-                    matched = True
-                    break
-            if matched:
-                break
-        if not matched:
-            sections[current_field].append(line)
-            
-    return {field: '\n'.join(content) for field, content in sections.items()}
-
-def save_data_to_github(data_json, token, repo):
-    """حفظ ملف data.json مباشرة إلى مستودع GitHub"""
-    if not token or not repo:
-        return False
-    
-    url = f"https://api.github.com/repos/{repo}/contents/data.json"
-    headers = {
-        "Authorization": f"token {token}",
-        "Accept": "application/vnd.github.v3+json"
-    }
-    
-    response = requests.get(url, headers=headers)
-    sha = None
-    if response.status_code == 200:
-        sha = response.json().get("sha")
-    
-    content = json.dumps(data_json, ensure_ascii=False, indent=4)
-    data = {
-        "message": "تحديث بيانات الجامعة",
-        "content": base64.b64encode(content.encode("utf-8")).decode("utf-8"),
-        "branch": "main"
-    }
-    if sha:
-        data["sha"] = sha
-    
-    response = requests.put(url, headers=headers, json=data)
-    return response.status_code in [200, 201]
-
-# ==========================================
-# 4. تهيئة الحالات
+# 3. تهيئة الحالات
 # ==========================================
 if "admin_mode" not in st.session_state:
     st.session_state.admin_mode = False
@@ -336,7 +212,7 @@ if "auto_question" not in st.session_state:
     st.session_state.auto_question = None
 
 # ==========================================
-# 5. عرض الواجهة
+# 4. عرض الواجهة
 # ==========================================
 st.markdown('<div class="basmala">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>', unsafe_allow_html=True)
 st.markdown('<div class="uni-title">جامعة القرآن الكريم<br>والعلوم الإسلامية</div>', unsafe_allow_html=True)
@@ -387,97 +263,31 @@ else:
     
     if admin_password == ADMIN_PASSWORD:
         st.success("✅ تم التحقق بنجاح")
-        tab1, tab2, tab3 = st.tabs(["📝 تحرير البيانات", "📊 الإحصائيات", "🧠 الذاكرة"])
         
-        with tab1:
-            uploaded_file = st.file_uploader("📂 رفع ملف Word أو PDF لتحديث البيانات", type=["docx", "pdf"])
+        if get_stats:
+            stats = get_stats()
+            col1, col2, col3 = st.columns(3)
+            col1.metric("📊 إجمالي الأسئلة", stats.get("total", 0))
+            col2.metric("📅 أسئلة اليوم", stats.get("today", 0))
+            col3.metric("📂 عدد الفئات", len(stats.get("categories", {})))
             
-            col1, col2 = st.columns(2)
-            with col1:
-                if uploaded_file and st.button("🚀 معالجة الملف", use_container_width=True):
-                    extracted_text = extract_text_from_file(uploaded_file)
-                    if extracted_text:
-                        st.session_state.db = smart_distribute_text(extracted_text)
-                        save_data(st.session_state.db)
-                        st.success("تم استخراج البيانات وحفظها محلياً بنجاح!")
-                        st.rerun()
-            
-            with col2:
-                if st.button("☁️ حفظ البيانات إلى GitHub", use_container_width=True):
-                    if GITHUB_TOKEN and GITHUB_REPO:
-                        if save_data_to_github(st.session_state.db, GITHUB_TOKEN, GITHUB_REPO):
-                            st.success("✅ تم تحديث بيانات الجامعة بنجاح في المستودع!")
-                        else:
-                            st.error("❌ فشل في تحديث المستودع. تأكد من إعدادات GitHub.")
-                    else:
-                        st.error("❌ معلومات GitHub غير مكتملة في الإعدادات (Secrets).")
-
             st.markdown("---")
-            
-            with st.form("data_form"):
-                e_info = st.text_area("📋 معلومات عامة", st.session_state.db.get("info", ""), height=100)
-                e_sched = st.text_area("📚 الجداول", st.session_state.db.get("schedules", ""), height=100)
-                e_exams = st.text_area("📝 الامتحانات", st.session_state.db.get("exams", ""), height=100)
-                e_fees = st.text_area("💰 الرسوم", st.session_state.db.get("fees", ""), height=100)
-                e_contacts = st.text_area("📞 جهات الاتصال", st.session_state.db.get("contacts", ""), height=100)
-                e_majors = st.text_area("🎓 التخصصات", st.session_state.db.get("majors", ""), height=150)
+            st.subheader("🔍 أكثر الأسئلة شيوعاً")
+            top_q = stats.get("top_questions", [])
+            for i, q in enumerate(top_q[:10], 1):
+                st.markdown(f"**{i}.** {q['question']}  `({q['count']} مرة)`")
+            if not top_q:
+                st.info("لا توجد أسئلة مسجلة بعد")
                 
-                if st.form_submit_button("💾 حفظ التعديلات محلياً", use_container_width=True):
-                    st.session_state.db = {
-                        "info": e_info, "schedules": e_sched, "exams": e_exams,
-                        "fees": e_fees, "contacts": e_contacts, "majors": e_majors
-                    }
-                    save_data(st.session_state.db)
-                    st.success("تم تحديث قاعدة البيانات محلياً بنجاح!")
-        
-        with tab2:
-            if get_stats:
-                stats = get_stats()
-                col1, col2, col3 = st.columns(3)
-                col1.metric("📊 إجمالي الأسئلة", stats.get("total", 0))
-                col2.metric("📅 أسئلة اليوم", stats.get("today", 0))
-                col3.metric("🧠 أسئلة الذاكرة", stats.get("memory_size", 0))
-                
-                st.markdown("---")
-                st.subheader("🔍 أكثر الأسئلة شيوعاً")
-                top_q = stats.get("top_questions", [])
-                for i, q in enumerate(top_q[:5], 1):
-                    st.markdown(f"**{i}.** {q['question']}  `({q['count']} مرة)`")
-                if not top_q:
-                    st.info("لا توجد أسئلة مسجلة بعد")
-            else:
-                st.info("الإحصائيات ستظهر بعد أول سؤال من الطلاب.")
-        
-        with tab3:
-            st.subheader("🧠 إدارة ذاكرة المساعد الذكي")
-            
-            if os.path.exists("training_data.json"):
-                try:
-                    with open("training_data.json", "r", encoding="utf-8") as f:
-                        memory = json.load(f)
-                    st.metric("🧠 حجم الذاكرة الحالي", f"{len(memory)} سؤال")
-                except:
-                    st.warning("تعذر قراءة ملف الذاكرة.")
-            
-            col_btn1, col_btn2 = st.columns(2)
-            with col_btn1:
-                if st.button("🚀 توليد الأسئلة الأساسية", use_container_width=True):
-                    if generate_training_data:
-                        with st.spinner("🧠 جاري بناء الذاكرة..."):
-                            generate_training_data(num_questions=50000)
-                            st.success("تم بناء الذاكرة بنجاح!")
-                            st.rerun()
-                    else:
-                        st.info("ميزة التوليد غير متاحة حالياً.")
-            
-            with col_btn2:
-                if st.button("🗑️ مسح الذاكرة", use_container_width=True):
-                    if os.path.exists("training_data.json"):
-                        os.remove("training_data.json")
-                        st.success("تم مسح الذاكرة بنجاح.")
-                        st.rerun()
-                    else:
-                        st.info("الذاكرة فارغة بالفعل.")
+            st.markdown("---")
+            st.subheader("📂 توزيع الفئات")
+            cats = stats.get("categories", {})
+            for cat, count in cats.items():
+                st.markdown(f"- **{cat}**: {count} سؤال")
+            if not cats:
+                st.info("لا توجد بيانات فئات")
+        else:
+            st.info("الإحصائيات ستظهر بعد أول سؤال من الطلاب.")
 
     elif admin_password != "":
         st.error("❌ كلمة المرور غير صحيحة")
@@ -488,7 +298,7 @@ else:
         st.rerun()
 
 # ==========================================
-# 6. حقل الدردشة الدائم
+# 5. حقل الدردشة الدائم
 # ==========================================
 user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
 

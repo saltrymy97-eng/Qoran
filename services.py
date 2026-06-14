@@ -41,38 +41,49 @@ def load_data():
     }
 
 def convert_majors_to_dict(majors_text):
+    """تحويل النص الطويل إلى كائن منظم - طريقة جديدة للتقطيع الصحيح"""
     majors_dict = {}
     text = majors_text.strip()
     if not text:
         return majors_dict
 
-    parts = re.split(r'\n(?=تخصص|\bقسم\b|\bكلية\b)', text)
+    lines = text.split('\n')
+    current_major = None
+    current_details = []
 
-    for part in parts:
-        part = part.strip()
-        if not part:
+    for line in lines:
+        line = line.strip()
+        if not line:
             continue
 
-        first_line = part.split('\n')[0].strip()
-        name = re.sub(r'^(تخصص|قسم|كلية)\s*', '', first_line).strip()
-        name = name.rstrip(':').strip()
+        is_new_major = False
+        for prefix in ['تخصص ', 'قسم ', 'كلية ']:
+            if prefix in line:
+                if current_major:
+                    majors_dict[current_major] = ' '.join(current_details)
 
-        if name:
-            detail_lines = part.split('\n')[1:]
-            details = ' '.join([line.strip() for line in detail_lines if line.strip()])
+                idx = line.find(prefix) + len(prefix)
+                name_part = line[idx:].strip()
 
-            if not details:
-                details_match = re.match(r'^(?:تخصص|قسم|كلية)\s*.+?:\s*(.*)', first_line)
-                if details_match:
-                    details = details_match.group(1).strip()
+                if ':' in name_part:
+                    name = name_part.split(':')[0].strip()
+                    detail = name_part.split(':', 1)[-1].strip()
+                else:
+                    name = name_part
+                    detail = ''
 
-            if name not in majors_dict:
-                majors_dict[name] = details if details else first_line
-            else:
-                if details:
-                    majors_dict[name] += " " + details
+                current_major = name
+                current_details = [detail] if detail else []
+                is_new_major = True
+                break
 
-    return majors_dict
+        if not is_new_major and current_major:
+            current_details.append(line)
+
+    if current_major:
+        majors_dict[current_major] = ' '.join(current_details)
+
+    return majors_dict if majors_dict else {"تخصصات": text}
 
 def save_data(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:

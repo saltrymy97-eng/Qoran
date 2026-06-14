@@ -30,30 +30,22 @@ def load_data():
             with open(DATA_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 # إذا كانت majors نصاً طويلاً، حولها إلى كائن منظم تلقائياً
-                if isinstance(data.get("majors"), str):
+                if isinstance(data.get("majors"), str) and data["majors"]:
                     data["majors"] = convert_majors_to_dict(data["majors"])
                 return data
         except json.JSONDecodeError:
             pass
 
-    default_data = {
-        "info": "جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير، مؤسسة تعليمية رائدة تجمع بين العلوم الشرعية والإدارية والتقنية.",
-        "schedules": "الجداول الدراسية تُحدث بداية كل فصل دراسي. يرجى مراجعة شؤون الطلاب للاطلاع على جدول المحاضرات والمواعيد.",
-        "exams": "تبدأ الامتحانات النصفية في الأسبوع الثامن من الفصل الدراسي، والامتحانات النهائية في نهاية الفصل. تعلن النتائج بعد أسبوعين من آخر امتحان.",
-        "fees": "يمكن تسديد الرسوم الدراسية عبر البنك أو الدفع المباشر في الإدارة المالية. تتوفر خيارات التقسيط للطلاب المستحقين.",
-        "contacts": "للتواصل: هاتف الفرع أو زيارة مبنى الفرع بغيل باوزير - حضرموت. أوقات الدوام الرسمي من الأحد إلى الخميس.",
-        "majors": {
-            "القرآن وعلومه": "يدرس الطالب علوم القرآن، التفسير، التجويد، القراءات. رسوم التخصص: 5000 ريال يمني للفصل. مدة الدراسة 4 سنوات.",
-            "الشريعة الإسلامية": "يدرس الطالب الفقه وأصوله، القواعد الفقهية، فقه المعاملات. رسوم التخصص: 5000 ريال يمني للفصل. مدة الدراسة 4 سنوات.",
-            "الدراسات الإسلامية": "يدرس الطالب التاريخ الإسلامي، الحضارة الإسلامية، الدعوة. رسوم التخصص: 5000 ريال يمني للفصل. مدة الدراسة 4 سنوات.",
-            "إدارة أعمال": "يدرس الطالب مبادئ الإدارة، التسويق، الموارد البشرية. رسوم التخصص: 7000 ريال يمني للفصل. مدة الدراسة 4 سنوات.",
-            "محاسبة": "يدرس الطالب المحاسبة المالية، محاسبة التكاليف، المراجعة. رسوم التخصص: 7000 ريال يمني للفصل. مدة الدراسة 4 سنوات.",
-            "تقنية معلومات": "يدرس الطالب البرمجة، قواعد البيانات، الشبكات. رسوم التخصص: 7000 ريال يمني للفصل. مدة الدراسة 4 سنوات."
-        },
+    # بيانات افتراضية فارغة - بدون أي بيانات وهمية
+    return {
+        "info": "",
+        "schedules": "",
+        "exams": "",
+        "fees": "",
+        "contacts": "",
+        "majors": {},
         "last_updated": datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     }
-    save_data(default_data)
-    return default_data
 
 def convert_majors_to_dict(majors_text):
     """تحويل النص الطويل إلى كائن منظم (يستخرج أي اسم تخصص تلقائياً)"""
@@ -75,11 +67,10 @@ def convert_majors_to_dict(majors_text):
             else:
                 majors_dict[current_major] += " " + content
         else:
-            # إذا لم يجد اسم تخصص، أضف السطر للتخصص الحالي
             if current_major:
                 majors_dict[current_major] += " " + line
     
-    return majors_dict if majors_dict else {"تقنية معلومات": "يدرس الطالب البرمجة والشبكات."}
+    return majors_dict
 
 def save_data(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
@@ -91,7 +82,7 @@ def save_data(data):
 SYSTEM_PROMPT = (
     "أنت مساعد رسمي لجامعة القرآن الكريم والعلوم الإسلامية فرع غيل باوزير - حضرموت.\n"
     "أعد صياغة المعلومات التالية للإجابة على سؤال الطالب بأسلوب مهذب ومختصر.\n"
-    "إذا كانت المعلومات لا تحتوي على إجابة السؤال، قل بالضبط: 'عذراً، هذه المعلومة غير متوفرة لدي حالياً، يرجى التواصل مع شؤون الطلاب.'\n"
+    "إذا كانت المعلومات فارغة أو لا تحتوي على إجابة السؤال، قل بالضبط: 'عذراً، هذه المعلومة غير متوفرة لدي حالياً، يرجى التواصل مع شؤون الطلاب.'\n"
     "لا تختلق أي معلومات. لا تخمن. لا تضف شيئاً من عندك.\n\n"
     "المعلومات:\n{context}"
 )
@@ -156,12 +147,10 @@ def find_best_match(question, majors_dict):
     
     question_lower = question.lower()
     
-    # نفحص كل مفتاح في القاموس
     for major_name, major_data in majors_dict.items():
         if major_name.lower() in question_lower:
             return major_name, major_data
     
-    # إذا لم نجد تطابقاً، نبحث عن جزء من الاسم
     for major_name, major_data in majors_dict.items():
         name_parts = major_name.split()
         if any(part.lower() in question_lower for part in name_parts):
@@ -170,7 +159,7 @@ def find_best_match(question, majors_dict):
     return None, None
 
 # ==========================================
-# 6. الذكاء الاصطناعي (معدل للاستفادة من البحث المباشر)
+# 6. الذكاء الاصطناعي
 # ==========================================
 def ask_ai(question, category=None, chat_history=None):
     if chat_history is None:
@@ -178,23 +167,18 @@ def ask_ai(question, category=None, chat_history=None):
 
     data = load_data()
 
-    # التعامل مع فئة majors بشكل خاص
     if category == "majors":
         majors_dict = data.get("majors", {})
-        # البحث عن تخصص محدد
         major_name, major_data = find_best_match(question, majors_dict)
         
         if major_name and major_data:
-            # وجدنا تخصصاً محدداً
             context = f"تخصص {major_name}: {major_data}"
         else:
-            # لم نجد تخصصاً محدداً، نعرض كل التخصصات
             all_majors = []
             for name, desc in majors_dict.items():
                 all_majors.append(f"تخصص {name}: {desc}")
-            context = "\n".join(all_majors)
+            context = "\n".join(all_majors) if all_majors else "لا توجد تخصصات مسجلة بعد."
         
-        # دمج الرسوم إذا لزم الأمر
         if any(w in question for w in ["رسوم", "سعر", "تكلفة", "تكاليف"]):
             fees_data = data.get("fees", "")
             if fees_data:
@@ -203,6 +187,10 @@ def ask_ai(question, category=None, chat_history=None):
         context = data[category]
     else:
         context = build_full_context(data)
+
+    # إذا كان السياق فارغاً
+    if not context or not context.strip():
+        context = "لا توجد بيانات متاحة بعد. يرجى رفع ملف البيانات من لوحة الإدارة."
 
     log_question(question, category or "info")
 
@@ -232,12 +220,12 @@ def build_full_context(data):
     if data.get("info"):
         parts.append(data['info'])
     if data.get("majors"):
-        if isinstance(data['majors'], dict):
+        if isinstance(data['majors'], dict) and data['majors']:
             all_majors = []
             for name, desc in data['majors'].items():
                 all_majors.append(f"تخصص {name}: {desc}")
             parts.append("التخصصات:\n" + "\n".join(all_majors))
-        else:
+        elif data['majors']:
             parts.append(f"التخصصات: {data['majors']}")
     if data.get("schedules"):
         parts.append(f"الجداول: {data['schedules']}")
@@ -250,7 +238,7 @@ def build_full_context(data):
     return "\n\n".join(parts) if parts else "لا توجد بيانات."
 
 # ==========================================
-# 7. التصنيف الذكي (مبسط)
+# 7. التصنيف الذكي
 # ==========================================
 def smart_classify(question):
     q = question.lower()

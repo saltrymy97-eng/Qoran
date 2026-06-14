@@ -492,7 +492,7 @@ if user_input:
         st.rerun()
 
     else:
-        st.warning("أنت في لوحة الإدارة. استخدم الخيارات أعلاه أو اضغط "خروج'.")
+        st.warning("أنت في لوحة الإدارة. استخدم الخيارات أعلاه أو اضغط خروج.")
 
 # --- تذييل الصفحة الرسمي ---
 st.markdown('<div class="official-footer">المطور: سالم التريمي</div>', unsafe_allow_html=True)

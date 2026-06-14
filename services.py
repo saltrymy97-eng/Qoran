@@ -49,7 +49,7 @@ def save_data(data):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 # ==========================================
-# 3. شخصية المساعد الذكي (احترافية وذكية)
+# 3. شخصية المساعد الذكي (محسنة للأسئلة المختصرة)
 # ==========================================
 SYSTEM_PROMPT = """أنت المساعد الذكي الرسمي لفرع جامعة القرآن الكريم والعلوم الإسلامية في غيل باوزير - حضرموت.
 
@@ -63,8 +63,17 @@ SYSTEM_PROMPT = """أنت المساعد الذكي الرسمي لفرع جام
 - لا تبدأ أي رد بتحية إذا سبق لك الرد في هذه المحادثة
 - لا تكرر عبارات مثل "أهلاً بك" أو "كيف أقدر أساعدك" بعد الرد الأول
 
-قاعدة المعرفة (آخر تحديث: {last_updated}):
+قاعدة المعرفة الكاملة للجامعة:
 {context}
+
+تعليمات مهمة جداً:
+- اقرأ قاعدة المعرفة كاملة قبل الإجابة
+- أي سؤال عن الجداول أو المحاضرات: أجب من قسم "الجداول"
+- أي سؤال عن الامتحانات أو الاختبارات: أجب من قسم "الامتحانات"
+- أي سؤال عن التخصصات أو الأقسام: أجب من قسم "التخصصات"
+- أي سؤال عن الرسوم أو التكاليف: أجب من قسم "الرسوم"
+- أي سؤال عن التواصل أو الهاتف أو العنوان: أجب من قسم "التواصل"
+- أي سؤال عام عن الجامعة: أجب من قسم "المعلومات العامة"
 
 أسلوب إجابتك:
 - إذا كان السؤال عن معلومات محددة: قدمها مباشرة بنقاط واضحة
@@ -202,18 +211,18 @@ def get_stats():
     }
 
 # ==========================================
-# 5. الذكاء الاصطناعي (الآن يقرأ كل شيء دائمًا)
+# 5. الذكاء الاصطناعي (يقرأ كل شيء دائمًا)
 # ==========================================
 def ask_ai(question, category=None, chat_history=None):
-    """إرسال سؤال إلى Groq مع كامل قاعدة المعرفة دائمًا"""
+    """إرسال سؤال إلى Groq مع كامل قاعدة المعرفة"""
     data = load_data()
     
-    # نرسل كل البيانات في كل مرة لضمان عدم ضياع أي معلومة
+    # بناء سياق كامل من جميع الأيقونات
     context = build_full_context(data)
     
     last_updated = data.get("last_updated", "غير محدد")
     system_prompt = SYSTEM_PROMPT.format(
-        context=context[:6000],  # نزيد الحد للسماح بمعلومات أكثر
+        context=context,
         last_updated=last_updated
     )
     
@@ -234,7 +243,7 @@ def ask_ai(question, category=None, chat_history=None):
             model="llama-3.3-70b-versatile",
             messages=messages,
             temperature=0.5,
-            max_tokens=1000  # مساحة أكبر للرد
+            max_tokens=1000
         )
         ai_response = response.choices[0].message.content
         
@@ -250,20 +259,20 @@ def ask_ai(question, category=None, chat_history=None):
         return generate_fallback_response(question, category, data)
 
 def build_full_context(data):
-    """بناء سياق كامل ومنظم"""
+    """بناء سياق كامل ومنظم (مبسط لضمان الفهم)"""
     parts = []
     if data.get('info'):
-        parts.append(f"معلومات عامة عن الفرع:\n{data['info']}")
+        parts.append(data['info'])
     if data.get('majors'):
-        parts.append(f"التخصصات والبرامج الأكاديمية:\n{data['majors']}")
+        parts.append(f"التخصصات: {data['majors']}")
     if data.get('schedules'):
-        parts.append(f"الجداول الدراسية والمحاضرات:\n{data['schedules']}")
+        parts.append(f"الجداول: {data['schedules']}")
     if data.get('exams'):
-        parts.append(f"الامتحانات والتقييم:\n{data['exams']}")
+        parts.append(f"الامتحانات: {data['exams']}")
     if data.get('fees'):
-        parts.append(f"الرسوم الدراسية والمالية:\n{data['fees']}")
+        parts.append(f"الرسوم: {data['fees']}")
     if data.get('contacts'):
-        parts.append(f"جهات الاتصال والتواصل:\n{data['contacts']}")
+        parts.append(f"التواصل: {data['contacts']}")
     return "\n\n".join(parts) if parts else "لا توجد بيانات محددة بعد."
 
 def generate_fallback_response(question, category, data):
@@ -288,7 +297,7 @@ def generate_fallback_response(question, category, data):
     return "عذراً، الخدمة متوقفة مؤقتاً. يرجى التواصل مع إدارة الفرع."
 
 # ==========================================
-# 6. التصنيف الذكي (يبقى للإحصائيات فقط)
+# 6. التصنيف الذكي (للإحصائيات فقط)
 # ==========================================
 def smart_classify(question):
     """تصنيف السؤال إلى فئة مناسبة (لأغراض إحصائية)"""

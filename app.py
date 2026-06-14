@@ -436,6 +436,19 @@ else:
             - **النتيجة:** المساعد يصبح أسرع وأذكى
             """)
             
+            # 🎯 عرض حجم الذاكرة الحالي قبل الزر
+            if os.path.exists("training_data.json"):
+                try:
+                    with open("training_data.json", "r", encoding="utf-8") as f:
+                        memory = json.load(f)
+                    st.metric("🧠 حجم الذاكرة الحالي", f"{len(memory)} سؤال")
+                except:
+                    st.warning("تعذر قراءة ملف الذاكرة.")
+            else:
+                st.info("الذاكرة فارغة. اضغط على زر التوليد لإنشائها.")
+
+            st.markdown("---")
+            
             col_btn1, col_btn2 = st.columns(2)
             with col_btn1:
                 if st.button("🚀 توليد 10,000 سؤال", use_container_width=True):
@@ -465,17 +478,6 @@ else:
                         st.rerun()
                     else:
                         st.info("الذاكرة فارغة بالفعل.")
-            
-            # عرض إحصائيات الذاكرة الحالية
-            if os.path.exists("training_data.json"):
-                try:
-                    with open("training_data.json", "r", encoding="utf-8") as f:
-                        memory = json.load(f)
-                    st.metric("🧠 حجم الذاكرة الحالي", f"{len(memory)} سؤال")
-                except:
-                    pass
-            else:
-                st.info("الذاكرة فارغة. اضغط على زر التوليد لإنشائها.")
 
     elif admin_password != "":
         st.error("❌ كلمة المرور غير صحيحة")

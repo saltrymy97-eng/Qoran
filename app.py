@@ -1,496 +1,525 @@
-"""
-╔══════════════════════════════════════════════════════════════╗
-║  جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير   ║
-║  services.py - نظام الذاكرة الهجين للمساعد الذكي           ║
-║  المطور: سالم التريمي                                       ║
-╚══════════════════════════════════════════════════════════════╝
-"""
-
-import os
+import streamlit as st
 import json
+import os
+import time
 import re
+import traceback
 import datetime
-import difflib
-from groq import Groq
+
+# --- استيراد المكتبات الإضافية ---
+try:
+    from docx import Document
+except ImportError:
+    Document = None
+
+try:
+    from PyPDF2 import PdfReader
+except ImportError:
+    PdfReader = None
+
+try:
+    from services import (
+        ask_ai, smart_classify, get_stats, load_data, save_data,
+        convert_majors_to_dict, generate_training_data, get_memory_stats
+    )
+except ImportError:
+    ask_ai = smart_classify = get_stats = load_data = save_data = None
+    convert_majors_to_dict = generate_training_data = get_memory_stats = None
 
 # ==========================================
-# 1. الإعدادات الأساسية
+# 1. التكوين الأساسي للصفحة
 # ==========================================
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+st.set_page_config(
+    page_title="جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-DATA_FILE = "data.json"
-LOGS_FILE = "logs.json"
-MEMORY_FILE = "training_data.json"
-
-MEMORY_MATCH_THRESHOLD = 0.8
-MAX_MEMORY_SIZE = 15000
+# --- تحميل الأسرار ---
+ADMIN_SECRET_CODE = st.secrets.get("ADMIN_SECRET_CODE", "ادارة جامعة القران الكريم وعلومه")
+ADMIN_PASSWORD = st.secrets.get("ADMIN_PASSWORD", "admin123")
 
 # ==========================================
-# 2. إدارة البيانات الأساسية
+# 2. التصميم الرسمي (CSS)
 # ==========================================
-def load_data():
-    if os.path.exists(DATA_FILE):
-        try:
-            with open(DATA_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                if isinstance(data.get("majors"), str) and data["majors"]:
-                    data["majors"] = convert_majors_to_dict(data["majors"])
-                return data
-        except json.JSONDecodeError:
-            pass
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Tajawal:wght@400;500;700;800;900&display=swap');
 
-    return {
-        "info": "", "schedules": "", "exams": "", "fees": "", "contacts": "",
-        "majors": {}, "last_updated": datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+html, body, [data-testid="stAppViewContainer"], .main {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+    scroll-behavior: smooth;
+}
+
+.stApp {
+    background-color: #fbfcfb !important;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" opacity="0.03"><path d="M50 10 L90 90 L10 90 Z" fill="%230f5132"/></svg>');
+    background-size: 200px 200px;
+    color: #2b3a30 !important;
+    font-family: 'Tajawal', sans-serif !important;
+}
+
+.basmala {
+    font-family: 'Amiri', serif !important;
+    font-size: 3.5rem !important;
+    text-align: center;
+    color: #0f5132 !important;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    font-weight: 700;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+    line-height: 1.6;
+    letter-spacing: 1px;
+}
+
+.uni-title {
+    font-family: 'Tajawal', sans-serif !important;
+    font-size: 2.4rem !important;
+    text-align: center;
+    font-weight: 800;
+    color: #0f5132 !important;
+    margin-top: 0px;
+    margin-bottom: 5px;
+    line-height: 1.3;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.03);
+}
+
+.branch-title {
+    font-family: 'Tajawal', sans-serif !important;
+    font-size: 1.1rem !important;
+    text-align: center;
+    color: #6c757d !important;
+    letter-spacing: 2px;
+    margin-bottom: 25px;
+    font-weight: 500;
+}
+
+.quran-verse {
+    font-family: 'Amiri', serif !important;
+    font-size: 1.5rem !important;
+    text-align: center;
+    color: #bfa15f !important;
+    margin: 20px 0 15px 0;
+    font-weight: 600;
+    border-top: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 14px 0;
+    direction: rtl;
+    unicode-bidi: embed;
+}
+
+hr {
+    border: 0 !important;
+    height: 1px !important;
+    background: linear-gradient(to right, transparent, #bfa15f, transparent) !important;
+    margin: 25px 0 !important;
+    opacity: 0.4;
+}
+
+div.stButton > button {
+    font-family: 'Tajawal', sans-serif !important;
+    background-color: #ffffff !important;
+    color: #0f5132 !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    padding: 12px 8px !important;
+    width: 100% !important;
+    transition: all 0.25s ease !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+}
+div.stButton > button:hover, div.stButton > button:active {
+    background-color: #0f5132 !important;
+    color: #ffffff !important;
+    border-color: #0f5132 !important;
+    box-shadow: 0 4px 12px rgba(15,81,50,0.15) !important;
+    transform: translateY(-1px);
+}
+
+[data-testid="stChatMessage"] {
+    background-color: #ffffff !important;
+    border: 1px solid #edf2f7 !important;
+    border-right: 4px solid #0f5132 !important;
+    border-radius: 16px !important;
+    padding: 1.2rem !important;
+    margin-bottom: 1.2rem !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;
+    color: #2d3748 !important;
+    font-family: 'Tajawal', sans-serif !important;
+    font-size: 1.05rem !important;
+    line-height: 1.7 !important;
+    animation: fadeIn 0.6s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+[data-testid="stChatInput"] {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 20px !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important;
+    padding: 8px 16px !important;
+}
+[data-testid="stChatInput"]:focus-within {
+    border-color: #0f5132 !important;
+    box-shadow: 0 10px 25px rgba(15,81,50,0.08) !important;
+}
+[data-testid="stChatInput"] textarea {
+    color: #1e293b !important;
+    font-family: 'Tajawal', sans-serif !important;
+}
+
+.official-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    padding: 8px;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.8rem;
+    color: #6c757d;
+    background: rgba(251, 252, 251, 0.9);
+    border-top: 1px solid #e2e8f0;
+    z-index: 999;
+}
+
+footer {visibility: hidden !important;}
+.stDeployButton {display: none !important;}
+[data-testid="stMainMenu"] {display: none !important;}
+[data-testid="stToolbar"] {display: none !important;}
+[data-testid="stHeader"] {display: none !important;}
+[data-testid="collapsedControl"] {display: none !important;}
+
+@media (max-width: 768px) {
+    [data-testid="stHorizontalBlock"] {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        padding-bottom: 15px !important;
     }
+    [data-testid="column"] {
+        min-width: 140px !important;
+        flex: 0 0 auto !important;
+    }
+    .basmala {
+        font-size: 2.4rem !important;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
 
-def convert_majors_to_dict(majors_text):
-    majors_dict = {}
-    text = majors_text.strip()
+# ==========================================
+# 3. الدوال المساعدة
+# ==========================================
+def clean_arabic_text(text):
     if not text:
-        return majors_dict
+        return ""
+    tashkeel = re.compile(r'[\u0617-\u061A\u064B-\u0652\u06D6-\u06ED]')
+    text = tashkeel.sub('', text)
+    text = text.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا').replace('ة', 'ه')
+    lines = [line.strip() for line in text.split('\n') if line.strip()]
+    return '\n'.join(lines)
 
-    lines = text.split('\n')
-    current_major = None
-    current_details = []
+def extract_text_from_file(uploaded_file):
+    if not uploaded_file:
+        return None
+    file_type = uploaded_file.type
+    text_parts = []
+    
+    if "wordprocessingml" in file_type or uploaded_file.name.endswith('.docx'):
+        if Document is None:
+            st.error("مكتبة python-docx غير مثبتة.")
+            return None
+        doc = Document(uploaded_file)
+        text_parts = [para.text.strip() for para in doc.paragraphs if para.text.strip()]
+        
+    elif "pdf" in file_type or uploaded_file.name.endswith('.pdf'):
+        if PdfReader is None:
+            st.error("مكتبة PyPDF2 غير مثبتة.")
+            return None
+        reader = PdfReader(uploaded_file)
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text_parts.append(page_text)
+    else:
+        st.error("نوع الملف غير مدعوم. الرجاء رفع ملف Word (.docx) أو PDF.")
+        return None
+        
+    return clean_arabic_text('\n'.join(text_parts))
 
-    for line in lines:
+def smart_distribute_text(text):
+    fields = {"info": "", "schedules": "", "exams": "", "fees": "", "contacts": "", "majors": ""}
+    if not text:
+        return fields
+        
+    patterns = {
+        "info": ["معلومات عامة", "معلومات اساسية", "عن الجامعة", "نبذة", "تعريف", "المعلومات العامة"],
+        "schedules": ["الجداول", "جداول المحاضرات", "الجداول الدراسية", "جدول", "المحاضرات", "المواعيد"],
+        "exams": ["الامتحانات", "الاختبارات", "مواعيد الامتحانات", "نظام الامتحانات", "التقويم"],
+        "fees": ["الرسوم", "الرسوم الدراسية", "المصاريف", "التكاليف", "الدفع", "السداد", "الاقساط"],
+        "contacts": ["جهات الاتصال", "التواصل", "اتصل بنا", "الهاتف", "العنوان", "الموقع", "البريد"],
+        "majors": ["التخصصات", "التخصص", "الاقسام", "الشعب", "البرامج", "المسارات"]
+    }
+    
+    current_field = "info"
+    sections = {field: [] for field in fields}
+    
+    for line in text.split('\n'):
         line = line.strip()
         if not line:
             continue
-
-        is_new_major = False
-        for prefix in ['تخصص ', 'قسم ', 'كلية ']:
-            if prefix in line:
-                if current_major:
-                    majors_dict[current_major] = ' '.join(current_details)
-
-                idx = line.find(prefix) + len(prefix)
-                name_part = line[idx:].strip()
-
-                if ':' in name_part:
-                    name = name_part.split(':')[0].strip()
-                    detail = name_part.split(':', 1)[-1].strip()
-                else:
-                    name = name_part
-                    detail = ''
-
-                current_major = name
-                current_details = [detail] if detail else []
-                is_new_major = True
+        
+        matched = False
+        for field, field_patterns in patterns.items():
+            for pattern in field_patterns:
+                if line.startswith(pattern):
+                    current_field = field
+                    content = line[len(pattern):].strip().lstrip(':').strip()
+                    if content:
+                        sections[field].append(content)
+                    matched = True
+                    break
+            if matched:
                 break
-
-        if not is_new_major and current_major:
-            current_details.append(line)
-
-    if current_major:
-        majors_dict[current_major] = ' '.join(current_details)
-
-    return majors_dict if majors_dict else {"تخصصات": text}
-
-def save_data(data):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-
-# ==========================================
-# 3. نظام الذاكرة (الأسئلة والأجوبة)
-# ==========================================
-def load_memory():
-    if os.path.exists(MEMORY_FILE):
-        try:
-            with open(MEMORY_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except json.JSONDecodeError:
-            pass
-    return []
-
-def save_memory(memory):
-    if len(memory) > MAX_MEMORY_SIZE:
-        memory = memory[-MAX_MEMORY_SIZE:]
-    with open(MEMORY_FILE, "w", encoding="utf-8") as f:
-        json.dump(memory, f, ensure_ascii=False, indent=2)
-
-def add_to_memory(question, answer):
-    memory = load_memory()
-    for item in memory:
-        if item["question"].strip() == question.strip():
-            item["answer"] = answer
-            item["updated"] = datetime.datetime.now().isoformat()
-            save_memory(memory)
-            return
-    memory.append({
-        "question": question.strip(),
-        "answer": answer,
-        "created": datetime.datetime.now().isoformat()
-    })
-    save_memory(memory)
-
-def find_best_match_memory(question, memory):
-    if not memory:
-        return None, 0.0
-    
-    q_clean = question.strip().lower()
-    best_match = None
-    best_score = 0.0
-    
-    for item in memory:
-        item_q = item["question"].strip().lower()
-        score = difflib.SequenceMatcher(None, q_clean, item_q).ratio()
-        if score > best_score:
-            best_score = score
-            best_match = item
-    
-    if best_score >= MEMORY_MATCH_THRESHOLD:
-        return best_match, best_score
-    return None, best_score
-
-def get_memory_stats():
-    memory = load_memory()
-    logs = load_logs()
-    memory_responses = sum(1 for log in logs if log.get("source") == "memory")
-    groq_responses = sum(1 for log in logs if log.get("source") == "groq")
-    
-    return {
-        "total_questions": len(memory),
-        "memory_responses": memory_responses,
-        "groq_responses": groq_responses
-    }
-
-# ==========================================
-# 4. توليد بيانات التدريب (10000 سؤال - مع حفظ تدريجي)
-# ==========================================
-def generate_training_data(num_questions=10000, progress_callback=None):
-    """توليد أسئلة وأجوبة تدريبية وحفظها تدريجياً"""
-    data = load_data()
-    if not data:
-        return []
-    
-    context = build_full_context(data)
-    if not context or context == "لا توجد بيانات.":
-        return []
-    
-    # تحميل الذاكرة الحالية (إذا وجدت)
-    memory = load_memory()
-    batch_size = 50
-    batches = num_questions // batch_size
-    
-    for i in range(batches):
-        # تحديث شريط التقدم
-        if progress_callback:
-            progress_callback(i / batches)
-        
-        prompt = f"""أنت مساعد ذكي لجامعة القرآن الكريم والعلوم الإسلامية.
-
-        بناءً على المعلومات التالية عن الجامعة:
-        {context[:3000]}
-
-        قم بتوليد {batch_size} سؤالاً وإجابة متنوعة باللغة العربية. يجب أن تغطي الأسئلة:
-        - التخصصات (تفاصيل كل تخصص، رسومه، مواده، فرص عمله)
-        - الرسوم الدراسية (طرق الدفع، التقسيط، المنح)
-        - الامتحانات (مواعيدها، نظام التقييم)
-        - الجداول الدراسية (مواعيد المحاضرات، نظام الحضور)
-        - التواصل (أرقام الهاتف، العنوان، ساعات العمل)
-        - معلومات عامة عن الجامعة (التأسيس، الرؤية، الأهداف)
-
-        أعد الرد بصيغة JSON فقط، كمصفوفة من الكائنات، كل كائن يحتوي على "question" و "answer":
-        [
-          {{"question": "سؤال 1", "answer": "إجابة 1"}},
-          {{"question": "سؤال 2", "answer": "إجابة 2"}}
-        ]
-
-        لا تضف أي نص آخر، فقط JSON."""
-
-        try:
-            response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[
-                    {"role": "system", "content": "أنت مولد بيانات تدريب. أعد JSON فقط."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=2000
-            )
-            result = response.choices[0].message.content
+        if not matched:
+            sections[current_field].append(line)
             
-            json_match = re.search(r'\[.*\]', result, re.DOTALL)
-            if json_match:
-                batch_data = json.loads(json_match.group())
-                memory.extend(batch_data)
-                
-                # 🎯 حفظ تدريجي بعد كل دفعة
-                save_memory(memory)
-        except Exception as e:
-            # حتى لو فشلت دفعة، نستمر
-            pass
-    
-    # تحديث شريط التقدم إلى 100%
-    if progress_callback:
-        progress_callback(1.0)
-    
-    return memory
+    return {field: '\n'.join(content) for field, content in sections.items()}
 
 # ==========================================
-# 5. نظام الذكاء الاصطناعي الهجين
+# 4. تهيئة الحالات
 # ==========================================
-def ask_ai(question, category=None, chat_history=None):
-    if chat_history is None:
-        chat_history = []
+if "admin_mode" not in st.session_state:
+    st.session_state.admin_mode = False
+if "db" not in st.session_state:
+    st.session_state.db = load_data() if load_data else {}
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "auto_question" not in st.session_state:
+    st.session_state.auto_question = None
 
-    # 1. البحث في الذاكرة
-    memory = load_memory()
-    best_match, score = find_best_match_memory(question, memory)
-    
-    if best_match:
-        log_question(question, category or "info", source="memory")
-        return best_match["answer"]
-    
-    # 2. لم نجد في الذاكرة - نستخدم Groq
-    data = load_data()
+# ==========================================
+# 5. عرض الواجهة
+# ==========================================
+st.markdown('<div class="basmala">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>', unsafe_allow_html=True)
+st.markdown('<div class="uni-title">جامعة القرآن الكريم<br>والعلوم الإسلامية</div>', unsafe_allow_html=True)
+st.markdown('<div class="branch-title">✦ فرع غيل باوزير - حضرموت ✦</div>', unsafe_allow_html=True)
 
-    if category == "majors":
-        majors_dict = data.get("majors", {})
-        major_name, major_data = find_best_match_major(question, majors_dict)
-        if major_name and major_data:
-            context = f"تخصص {major_name}: {major_data}"
-        else:
-            all_majors = []
-            for name, desc in majors_dict.items():
-                all_majors.append(f"تخصص {name}: {desc}")
-            context = "\n".join(all_majors) if all_majors else "لا توجد تخصصات."
+# --- وضع الطالب ---
+if not st.session_state.admin_mode:
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        if st.button("الجداول", icon=":material/calendar_month:"):
+            st.session_state.auto_question = "أريد الاستفسار عن جداول المحاضرات"
+            st.rerun()
+    with col2:
+        if st.button("الامتحانات", icon=":material/edit_document:"):
+            st.session_state.auto_question = "ما هي مواعيد وترتيبات الامتحانات؟"
+            st.rerun()
+    with col3:
+        if st.button("التواصل", icon=":material/call:"):
+            st.session_state.auto_question = "كيف يمكنني التواصل مع إدارة الفرع؟"
+            st.rerun()
+    with col4:
+        if st.button("التخصصات", icon=":material/school:"):
+            st.session_state.auto_question = "ما هي التخصصات الأكاديمية المتاحة ورسومها؟"
+            st.rerun()
+
+    st.markdown('<div class="quran-verse">﴿وَقُل رَّبِّ زِدْنِي عِلْمًا﴾</div>', unsafe_allow_html=True)
+
+    if not st.session_state.messages:
+        welcome_msg = "مرحباً بك في المساعد الذكي لجامعة القرآن الكريم - فرع غيل باوزير. تفضل بطرح استفسارك أو اختر من الخدمات المتاحة أعلاه."
+        st.session_state.messages.append({"role": "assistant", "content": welcome_msg})
+
+    for msg in st.session_state.messages:
+        avatar = ":material/school:" if msg["role"] == "assistant" else ":material/person:"
+        with st.chat_message(msg["role"], avatar=avatar):
+            st.markdown(msg["content"])
+
+# --- وضع الإدارة ---
+else:
+    st.markdown('<hr>', unsafe_allow_html=True)
+    st.markdown("""
+    <div style="text-align: center; padding: 10px 0 20px 0;">
+        <h2 style="color: #0f5132; font-family: 'Tajawal', sans-serif; font-weight: 800; font-size: 2rem;">🔐 لوحة الإدارة</h2>
+        <p style="color: #6c757d; font-family: 'Tajawal', sans-serif;">جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    admin_password = st.text_input("🔑 كلمة مرور المشرف", type="password", key="admin_pwd")
+    
+    if admin_password == ADMIN_PASSWORD:
+        st.success("✅ تم التحقق بنجاح")
+        tab1, tab2, tab3 = st.tabs(["📝 تحرير البيانات", "📊 الإحصائيات", "🧠 الذاكرة"])
         
-        if any(w in question for w in ["رسوم", "سعر", "تكلفة", "تكاليف"]):
-            fees_data = data.get("fees", "")
-            if fees_data:
-                context += f"\n\nالرسوم: {fees_data}"
-    elif category and category in data and category != "last_updated" and data[category]:
-        context = data[category]
-    else:
-        context = build_full_context(data)
+        with tab1:
+            uploaded_file = st.file_uploader("📂 رفع ملف Word أو PDF لتحديث البيانات", type=["docx", "pdf"])
+            if uploaded_file and st.button("🚀 معالجة الملف", use_container_width=True):
+                extracted_text = extract_text_from_file(uploaded_file)
+                if extracted_text:
+                    distributed = smart_distribute_text(extracted_text)
+                    if isinstance(distributed.get("majors"), str) and distributed["majors"] and convert_majors_to_dict:
+                        distributed["majors"] = convert_majors_to_dict(distributed["majors"])
+                    st.session_state.db = distributed
+                    if save_data:
+                        save_data(st.session_state.db)
+                    st.success("تم استخراج البيانات وحفظها بنجاح!")
+                    st.rerun()
 
-    if not context or not context.strip():
-        context = "لا توجد بيانات متاحة."
+            st.markdown("---")
+            with st.form("data_form"):
+                e_info = st.text_area("📋 معلومات عامة", st.session_state.db.get("info", ""), height=100)
+                e_sched = st.text_area("📚 الجداول", st.session_state.db.get("schedules", ""), height=100)
+                e_exams = st.text_area("📝 الامتحانات", st.session_state.db.get("exams", ""), height=100)
+                e_contacts = st.text_area("📞 جهات الاتصال", st.session_state.db.get("contacts", ""), height=100)
+                current_majors = st.session_state.db.get("majors", "")
+                if isinstance(current_majors, dict):
+                    current_majors = "\n".join([f"تخصص {k}: {v}" for k, v in current_majors.items()])
+                e_majors = st.text_area("🎓 التخصصات", current_majors, height=100)
+                
+                if st.form_submit_button("💾 حفظ التعديلات", use_container_width=True):
+                    st.session_state.db = {
+                        "info": e_info, "schedules": e_sched, "exams": e_exams,
+                        "fees": "", "contacts": e_contacts, "majors": e_majors
+                    }
+                    if save_data:
+                        save_data(st.session_state.db)
+                    st.success("تم تحديث قاعدة البيانات بنجاح!")
+        
+        with tab2:
+            if get_stats:
+                try:
+                    stats = get_stats()
+                    col1, col2, col3 = st.columns(3)
+                    col1.metric("📊 إجمالي الأسئلة", stats.get("total", 0))
+                    col2.metric("📅 أسئلة اليوم", stats.get("today", 0))
+                    col3.metric("🧠 أسئلة الذاكرة", stats.get("memory_size", 0))
+                    
+                    col4, col5 = st.columns(2)
+                    col4.metric("⚡ ردود من الذاكرة", stats.get("memory_responses", 0))
+                    col5.metric("🤖 ردود من Groq", stats.get("groq_responses", 0))
+                    
+                    st.markdown("---")
+                    st.subheader("🔍 أكثر 5 أسئلة شيوعاً")
+                    top_q = stats.get("top_questions", [])
+                    for i, q in enumerate(top_q[:5], 1):
+                        st.markdown(f"**{i}.** {q['question']}  `({q['count']} مرة)`")
+                    if not top_q:
+                        st.info("لا توجد أسئلة مسجلة بعد")
+                        
+                    st.markdown("---")
+                    st.subheader("📂 توزيع الفئات")
+                    cats = stats.get("categories", {})
+                    for cat, count in cats.items():
+                        st.markdown(f"- **{cat}**: {count} سؤال")
+                    if not cats:
+                        st.info("لا توجد بيانات فئات")
+                except Exception:
+                    pass
+            else:
+                st.info("الإحصائيات ستظهر بعد أول سؤال من الطلاب.")
+        
+        with tab3:
+            st.subheader("🧠 إدارة ذاكرة المساعد الذكي")
+            st.markdown("""
+            هنا يمكنك بناء ذاكرة المساعد الذكي. عند الضغط على الزر، سيقوم النظام بتوليد 10,000 سؤال وإجابة تلقائياً من بيانات الجامعة.
+            
+            - **الوقت المتوقع:** 15-20 دقيقة
+            - **الرصيد المستهلك:** حوالي 200 طلب من Groq
+            - **النتيجة:** المساعد يصبح أسرع وأذكى
+            """)
+            
+            col_btn1, col_btn2 = st.columns(2)
+            with col_btn1:
+                if st.button("🚀 توليد 10,000 سؤال", use_container_width=True):
+                    if generate_training_data:
+                        with st.spinner("🧠 جاري بناء الذاكرة... قد يستغرق 15-20 دقيقة"):
+                            progress_bar = st.progress(0)
+                            status_text = st.empty()
+                            
+                            def update_progress(progress):
+                                progress_bar.progress(progress)
+                                status_text.text(f"تقدم العمل: {int(progress * 100)}%")
+                            
+                            generate_training_data(num_questions=10000, progress_callback=update_progress)
+                            
+                            progress_bar.progress(1.0)
+                            status_text.text("✅ تم الانتهاء!")
+                            st.success("تم بناء الذاكرة بنجاح! 10,000 سؤال وإجابة أصبحت جاهزة.")
+                            st.rerun()
+                    else:
+                        st.error("دالة توليد البيانات غير متاحة.")
+            
+            with col_btn2:
+                if st.button("🗑️ مسح الذاكرة", use_container_width=True):
+                    if os.path.exists("training_data.json"):
+                        os.remove("training_data.json")
+                        st.success("تم مسح الذاكرة بنجاح.")
+                        st.rerun()
+                    else:
+                        st.info("الذاكرة فارغة بالفعل.")
+            
+            # عرض إحصائيات الذاكرة الحالية
+            if os.path.exists("training_data.json"):
+                try:
+                    with open("training_data.json", "r", encoding="utf-8") as f:
+                        memory = json.load(f)
+                    st.metric("🧠 حجم الذاكرة الحالي", f"{len(memory)} سؤال")
+                except:
+                    pass
+            else:
+                st.info("الذاكرة فارغة. اضغط على زر التوليد لإنشائها.")
 
-    system_prompt = SYSTEM_PROMPT.format(context=context[:1500])
-    messages = [{"role": "system", "content": system_prompt}]
-    if chat_history:
-        messages.extend(chat_history[-4:])
-    messages.append({"role": "user", "content": question})
-
-    if not client:
-        answer = context[:500]
-    else:
-        try:
-            response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=messages,
-                temperature=0.3,
-                max_tokens=400
-            )
-            answer = response.choices[0].message.content
-        except Exception:
-            answer = context[:500]
-
-    # 3. التعلم الذاتي
-    if answer and "عذراً" not in answer:
-        add_to_memory(question, answer)
-
-    log_question(question, category or "info", source="groq")
-    return answer
-
-def find_best_match_major(question, majors_dict):
-    if not majors_dict or not isinstance(majors_dict, dict):
-        return None, None
-
-    question_lower = question.lower()
-    for major_name, major_data in majors_dict.items():
-        if major_name.lower() in question_lower:
-            return major_name, major_data
-    for major_name, major_data in majors_dict.items():
-        name_parts = major_name.split()
-        if any(part.lower() in question_lower for part in name_parts):
-            return major_name, major_data
-    return None, None
-
-# ==========================================
-# 6. شخصية المساعد الذكي
-# ==========================================
-SYSTEM_PROMPT = """أنت موظف استقبال محترف في جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير بحضرموت.
-
-[هويتك وأخلاقياتك]
-- أنت خبير في شؤون الجامعة، تجيب بدقة ووضوح.
-- تتحدث العربية الفصحى الميسرة بلمسة حضرمية لطيفة.
-- لا تستخدم الإيموجي. لا تكرر التحية بعد الرد الأول.
-- لا تبدأ إجابتك بعبارة "بناءً على المعلومات المتاحة". أجب مباشرة.
-
-[قاعدة المعرفة الحالية]
-{context}
-
-[آلية التفكير والسيناريوهات]
-
-*** السيناريو 1: سؤال عن تخصص واحد محدد ***
-مثال: "اشرح تخصص المحاسبة"، "هل يوجد تخصص تقنية معلومات"، "كم رسوم تخصص القرآن"، "تفاصيل تخصص الشريعة"
-- ابحث عن اسم التخصص في [قاعدة المعرفة].
-- إذا وجدته: قدم تفاصيله كاملة. لا تذكر أي تخصص آخر.
-- إذا لم تجده: قل "هذا التخصص غير موجود في سجلاتي. يرجى التواصل مع شؤون الطلاب."
-
-*** السيناريو 2: سؤال عام عن جميع التخصصات ***
-مثال: "ما هي التخصصات"، "التخصصات المتاحة"
-- قدم قائمة بأسماء التخصصات فقط، بدون تفاصيل.
-- ثم اسأل: "هل تريد شرحاً مفصلاً عن أي منها؟"
-
-*** السيناريو 3: سؤال عن الرسوم ***
-- ابحث في قسم "الرسوم". إذا لم تجد: قل "تفاصيل الرسوم غير متوفرة لدي."
-
-*** السيناريو 4: سؤال عن الامتحانات ***
-- ابحث في قسم "الامتحانات".
-
-*** السيناريو 5: سؤال عن الجداول ***
-- ابحث في قسم "الجداول".
-
-*** السيناريو 6: سؤال عن التواصل ***
-- ابحث في قسم "التواصل".
-
-*** السيناريو 7: سؤال عام عن الجامعة ***
-- ابحث في قسم "المعلومات العامة".
-
-*** السيناريو 8: قاعدة المعرفة فارغة ***
-- قل: "لا تتوفر لدي بيانات حالياً. يرجى التواصل مع إدارة الجامعة مباشرة."
-
-[محظورات]
-- لا تخترع تخصصاً غير موجود. لا تخمن.
-- لا تقدم إجابة إذا لم تكن متأكداً منها 100%.
-- لا تخلط بين الأقسام.
-- لا تبدأ الرد بتحية إذا سبق لك الرد.
-"""
-
-# ==========================================
-# 7. السجل والإحصائيات
-# ==========================================
-def load_logs():
-    if os.path.exists(LOGS_FILE):
-        with open(LOGS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return []
-
-def save_logs(logs):
-    with open(LOGS_FILE, "w", encoding="utf-8") as f:
-        json.dump(logs, f, ensure_ascii=False, indent=2)
-
-def log_question(question, category, source="groq"):
-    logs = load_logs()
-    logs.append({
-        "question": question.strip(),
-        "category": category,
-        "source": source,
-        "timestamp": datetime.datetime.now().isoformat()
-    })
-    if len(logs) > 1000:
-        logs = logs[-1000:]
-    save_logs(logs)
-
-def get_stats():
-    logs = load_logs()
-    memory = load_memory()
+    elif admin_password != "":
+        st.error("❌ كلمة المرور غير صحيحة")
     
-    if not logs:
-        return {
-            "total": 0, "today": 0, "top_questions": [], "categories": {},
-            "memory_size": len(memory),
-            "memory_responses": 0,
-            "groq_responses": 0
-        }
-
-    today_str = datetime.datetime.now().date().isoformat()
-    today_count = sum(1 for log in logs if log["timestamp"].startswith(today_str))
-
-    question_counts = {}
-    category_counts = {}
-    memory_responses = 0
-    groq_responses = 0
-    
-    for log in logs:
-        q = log["question"].strip()
-        question_counts[q] = question_counts.get(q, 0) + 1
-        cat = log.get("category", "info")
-        category_counts[cat] = category_counts.get(cat, 0) + 1
-        if log.get("source") == "memory":
-            memory_responses += 1
-        else:
-            groq_responses += 1
-
-    sorted_questions = sorted(question_counts.items(), key=lambda x: x[1], reverse=True)
-    top_questions = [{"question": q, "count": c} for q, c in sorted_questions[:10]]
-
-    return {
-        "total": len(logs),
-        "today": today_count,
-        "top_questions": top_questions,
-        "categories": category_counts,
-        "memory_size": len(memory),
-        "memory_responses": memory_responses,
-        "groq_responses": groq_responses
-    }
+    st.markdown("---")
+    if st.button("🔙 خروج من لوحة الإدارة والعودة للمساعد الذكي", use_container_width=True):
+        st.session_state.admin_mode = False
+        st.rerun()
 
 # ==========================================
-# 8. التصنيف الذكي
+# 6. حقل الدردشة الدائم
 # ==========================================
-def smart_classify(question):
-    q = question.lower()
+user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
 
-    if any(w in q for w in ["تخصص", "قسم", "كلية"]) and any(w in q for w in ["رسوم", "سعر", "تكلفة", "تكاليف"]):
-        return "majors"
+if st.session_state.auto_question:
+    user_input = st.session_state.auto_question
+    st.session_state.auto_question = None
 
-    if any(w in q for w in ["رسوم", "تكاليف", "مالية", "دفع", "قسط", "سداد", "منحة", "سعر"]):
-        return "fees"
-    if any(w in q for w in ["امتحان", "اختبار", "نتيجة", "درجات", "معدل", "نجاح", "رسوب"]):
-        return "exams"
-    if any(w in q for w in ["جدول", "جداول", "جدوال", "مواعيد", "محاضرة", "دوام", "حضور", "غياب", "مدرس"]):
-        return "schedules"
-    if any(w in q for w in ["تواصل", "رقم", "اتصال", "ايميل", "بريد", "عنوان", "موقع", "هاتف", "جوال", "أين", "وين"]):
-        return "contacts"
-    if any(w in q for w in ["تخصص", "قسم", "كلية", "بكالوريوس", "ماجستير", "دراسة"]):
-        return "majors"
+if user_input:
+    if user_input.strip() == ADMIN_SECRET_CODE:
+        st.session_state.admin_mode = True
+        st.rerun()
 
-    return "info"
+    elif not st.session_state.admin_mode:
+        st.session_state.messages.append({"role": "user", "content": user_input})
+        with st.chat_message("user", avatar=":material/person:"):
+            st.markdown(user_input)
+            
+        with st.chat_message("assistant", avatar=":material/school:"):
+            with st.spinner("جارٍ معالجة استفسارك..."):
+                if ask_ai and smart_classify:
+                    try:
+                        category = smart_classify(user_input)
+                        ai_response = ask_ai(user_input, category)
+                    except Exception as e:
+                        ai_response = f"⚠️ حدث خطأ تقني: {str(e)}"
+                else:
+                    ai_response = "⚠️ نظام المساعدة غير متصل حالياً. يرجى التواصل مع الإدارة مباشرة."
+                st.markdown(ai_response)
+                
+        st.session_state.messages.append({"role": "assistant", "content": ai_response})
+        st.rerun()
 
-# ==========================================
-# 9. بناء السياق الكامل (للوضع الاحتياطي)
-# ==========================================
-def build_full_context(data):
-    parts = []
-    if data.get("info"):
-        parts.append(data['info'])
-    if data.get("majors"):
-        if isinstance(data['majors'], dict) and data['majors']:
-            all_majors = []
-            for name, desc in data['majors'].items():
-                all_majors.append(f"تخصص {name}: {desc}")
-            parts.append("التخصصات:\n" + "\n".join(all_majors))
-        elif data['majors']:
-            parts.append(f"التخصصات: {data['majors']}")
-    if data.get("schedules"):
-        parts.append(f"الجداول: {data['schedules']}")
-    if data.get("exams"):
-        parts.append(f"الامتحانات: {data['exams']}")
-    if data.get("fees"):
-        parts.append(f"الرسوم: {data['fees']}")
-    if data.get("contacts"):
-        parts.append(f"التواصل: {data['contacts']}")
-    return "\n\n".join(parts) if parts else "لا توجد بيانات."
-
-# ==========================================
-# 10. دوال الترحيب والمساعدة
-# ==========================================
-def get_greeting():
-    hour = datetime.datetime.now().hour
-    if 5 <= hour < 12:
-        return "صباح الخير"
-    elif 12 <= hour < 17:
-        return "مساء الخير"
     else:
-        return "مساء الخير"
+        st.warning("أنت في لوحة الإدارة. استخدم الخيارات أعلاه أو اضغط خروج.")
 
-def get_welcome_message():
-    greeting = get_greeting()
-    return f"{greeting}، أهلاً وسهلاً بك في المساعد الذكي لجامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير. كيف أقدر أخدمك؟"
+st.markdown('<div class="official-footer">المطور: سالم التريمي</div>', unsafe_allow_html=True)

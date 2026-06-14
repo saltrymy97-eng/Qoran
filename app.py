@@ -39,6 +39,12 @@ st.set_page_config(
 ADMIN_SECRET_CODE = st.secrets.get("ADMIN_SECRET_CODE", "ادارة جامعة القران الكريم وعلومه")
 ADMIN_PASSWORD = st.secrets.get("ADMIN_PASSWORD", "admin123")
 
+# --- تشخيص الاستيراد ---
+st.write(f"🔍 تشخيص الاستيراد:")
+st.write(f"  - generate_training_data = {generate_training_data}")
+st.write(f"  - load_data = {load_data}")
+st.write(f"  - save_data = {save_data}")
+
 # ==========================================
 # 2. التصميم الرسمي (CSS)
 # ==========================================
@@ -436,7 +442,6 @@ else:
             - **النتيجة:** المساعد يصبح أسرع وأذكى
             """)
             
-            # عرض حجم الذاكرة الحالي
             if os.path.exists("training_data.json"):
                 try:
                     with open("training_data.json", "r", encoding="utf-8") as f:

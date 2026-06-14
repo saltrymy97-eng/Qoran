@@ -452,7 +452,7 @@ else:
         st.rerun()
 
 # ==========================================
-# 6. حقل الدردشة الدائم
+# 6. حقل الدردشة الدائم (الجزء المعدل)
 # ==========================================
 user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
 
@@ -475,7 +475,7 @@ if user_input:
                 if ask_ai and smart_classify:
                     try:
                         category = smart_classify(user_input)
-                        # 🔥 التعديل الجوهري: نرسل الفئة فقط، والخدمة هي من تبني السياق الكامل
+                        # 🔥 التعديل الجوهري: نرسل الفئة فقط، و services.py هو من يبني السياق الكامل
                         ai_response = ask_ai(user_input, category)
                     except Exception as e:
                         ai_response = f"⚠️ حدث خطأ تقني: {str(e)}"

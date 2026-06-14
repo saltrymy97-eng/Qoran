@@ -128,7 +128,7 @@ def ask_ai(question, category=None, chat_history=None):
     """إرسال سؤال إلى Groq مع بيانات الأيقونة المناسبة فقط"""
     data = load_data()
     
-    # 🔥 نأخذ بيانات الأيقونة المناسبة فقط
+    # نأخذ بيانات الأيقونة المناسبة فقط
     if category and category in data and category != "last_updated":
         context = data[category]
     else:
@@ -159,19 +159,26 @@ def ask_ai(question, category=None, chat_history=None):
         return context
 
 # ==========================================
-# 6. التصنيف الذكي
+# 6. التصنيف الذكي (معدل - التخصصات + الرسوم تذهب إلى majors)
 # ==========================================
 def smart_classify(question):
     """تصنيف السؤال إلى فئة مناسبة"""
     q = question.strip().lower()
 
-    if any(w in q for w in ["رسوم", "دفع", "تسديد", "قسط", "مالية", "تكلفة", "سعر"]):
+    # إذا كان السؤال فيه "تخصص" + "رسوم"، نرسله إلى majors
+    if any(w in q for w in ["تخصص", "تخصصات", "قسم", "كلية"]) and any(w in q for w in ["رسوم", "سعر", "تكلفة", "تكاليف"]):
+        return "majors"
+
+    # إذا كان السؤال فيه "رسوم" فقط، نرسله إلى fees
+    if any(w in q for w in ["رسوم", "دفع", "تسديد", "قسط", "مالية", "تكلفة", "سعر", "تكاليف"]):
         return "fees"
+    
+    # باقي التصنيفات
     if any(w in q for w in ["تواصل", "اتصال", "هاتف", "عنوان", "موقع", "بريد", "رقم", "جوال", "أين", "وين"]):
         return "contacts"
     if any(w in q for w in ["امتحان", "اختبار", "نتيجة", "نجاح", "رسوب", "معدل"]):
         return "exams"
-    if any(w in q for w in ["جدول", "محاضرات", "دوام", "حضور", "غياب", "مدرس"]):
+    if any(w in q for w in ["جدول", "جداول", "جدوال", "محاضرات", "دوام", "حضور", "غياب", "مدرس"]):
         return "schedules"
     if any(w in q for w in ["تخصص", "قسم", "كلية", "بكالوريوس", "دبلوم"]):
         return "majors"

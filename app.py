@@ -398,9 +398,6 @@ else:
                     extracted_text = extract_text_from_file(uploaded_file)
                     if extracted_text:
                         st.session_state.db = smart_distribute_text(extracted_text)
-                        # 🎯 تحويل majors إلى نص إذا كانت dict
-                        if isinstance(st.session_state.db.get("majors"), dict):
-                            st.session_state.db["majors"] = "\n".join([f"تخصص {k}: {v}" for k, v in st.session_state.db["majors"].items()])
                         save_data(st.session_state.db)
                         st.success("تم استخراج البيانات وحفظها محلياً بنجاح!")
                         st.rerun()

@@ -299,6 +299,7 @@ def smart_distribute_text(text):
 if "admin_mode" not in st.session_state:
     st.session_state.admin_mode = False
 if "db" not in st.session_state:
+    # 🎯 تحميل البيانات من GitHub تلقائياً عند بدء التشغيل
     st.session_state.db = load_data() if load_data else {}
 if "messages" not in st.session_state:
     st.session_state.messages = []

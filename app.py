@@ -3,6 +3,7 @@ import json
 import os
 import time
 import re
+import traceback
 
 # --- استيراد المكتبات الإضافية ---
 try:
@@ -328,7 +329,6 @@ st.markdown('<div class="branch-title">✦ فرع غيل باوزير - حضرم
 
 # --- وضع الطالب ---
 if not st.session_state.admin_mode:
-    # أزرار الخدمات (بدون أيقونة الرسوم)
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         if st.button("الجداول", icon=":material/calendar_month:"):
@@ -347,15 +347,12 @@ if not st.session_state.admin_mode:
             st.session_state.auto_question = "ما هي التخصصات الأكاديمية المتاحة ورسومها؟"
             st.rerun()
 
-    # --- الآية القرآنية ---
     st.markdown('<div class="quran-verse">﴿وَقُل رَّبِّ زِدْنِي عِلْمًا﴾</div>', unsafe_allow_html=True)
 
-    # --- رسالة ترحيب واحدة فقط ---
     if not st.session_state.messages:
         welcome_msg = "مرحباً بك في المساعد الذكي لجامعة القرآن الكريم - فرع غيل باوزير. تفضل بطرح استفسارك أو اختر من الخدمات المتاحة أعلاه."
         st.session_state.messages.append({"role": "assistant", "content": welcome_msg})
 
-    # --- عرض الدردشة ---
     for msg in st.session_state.messages:
         avatar = ":material/school:" if msg["role"] == "assistant" else ":material/person:"
         with st.chat_message(msg["role"], avatar=avatar):
@@ -466,6 +463,7 @@ if user_input:
                         ai_response = ask_ai(user_input, category)
                     except Exception as e:
                         ai_response = f"⚠️ حدث خطأ تقني: {str(e)}"
+                        st.error(traceback.format_exc())
                 else:
                     ai_response = "⚠️ نظام المساعدة غير متصل حالياً. يرجى التواصل مع الإدارة مباشرة."
                 st.markdown(ai_response)
@@ -476,5 +474,4 @@ if user_input:
     else:
         st.warning("أنت في لوحة الإدارة. استخدم الخيارات أعلاه أو اضغط خروج.")
 
-# --- تذييل الصفحة الرسمي ---
 st.markdown('<div class="official-footer">المطور: سالم التريمي</div>', unsafe_allow_html=True)

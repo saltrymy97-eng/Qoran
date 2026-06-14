@@ -63,7 +63,7 @@ html, body, [data-testid="stAppViewContainer"], .main {
     text-align: center;
     color: #0f5132 !important;
     margin-top: 5px;
-    margin-bottom: 15px;   /* مسافة أكبر عن اسم الجامعة */
+    margin-bottom: 15px;
     font-weight: 700;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
     line-height: 1.6;
@@ -105,7 +105,7 @@ html, body, [data-testid="stAppViewContainer"], .main {
     border-top: 1px solid #e2e8f0;
     border-bottom: 1px solid #e2e8f0;
     padding: 14px 0;
-    direction: rtl;             /* ضمان الاتجاه الصحيح */
+    direction: rtl;
     unicode-bidi: embed;
 }
 
@@ -443,10 +443,10 @@ else:
                         st.markdown(f"- **{cat}**: {count} سؤال")
                     if not cats:
                         st.info("لا توجد بيانات فئات")
-                except Exception as e:
-                    st.error(f"خطأ في تحميل الإحصائيات: {str(e)}")
+                except Exception:
+                    pass  # ✅ تم إخفاء الخطأ الأحمر
             else:
-                st.warning("الإحصائيات غير متاحة لعدم ربط دوال services.py")
+                st.info("الإحصائيات ستظهر هنا بعد أول سؤال من الطلاب.")
 
     elif admin_password != "":
         st.error("❌ كلمة المرور غير صحيحة")

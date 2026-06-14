@@ -42,7 +42,7 @@ GITHUB_TOKEN = st.secrets.get("GITHUB_TOKEN")
 GITHUB_REPO = st.secrets.get("GITHUB_REPO")
 
 # ==========================================
-# 2. التصميم الرسمي (CSS) - تم استعادته كاملاً
+# 2. التصميم الرسمي (CSS)
 # ==========================================
 st.markdown("""
 <style>
@@ -306,13 +306,11 @@ def save_data_to_github(data_json, token, repo):
         "Accept": "application/vnd.github.v3+json"
     }
     
-    # محاولة الحصول على الملف الحالي
     response = requests.get(url, headers=headers)
     sha = None
     if response.status_code == 200:
         sha = response.json().get("sha")
     
-    # تحضير المحتوى
     content = json.dumps(data_json, ensure_ascii=False, indent=4)
     data = {
         "message": "تحديث بيانات الجامعة",
@@ -400,6 +398,9 @@ else:
                     extracted_text = extract_text_from_file(uploaded_file)
                     if extracted_text:
                         st.session_state.db = smart_distribute_text(extracted_text)
+                        # 🎯 تحويل majors إلى نص إذا كانت dict
+                        if isinstance(st.session_state.db.get("majors"), dict):
+                            st.session_state.db["majors"] = "\n".join([f"تخصص {k}: {v}" for k, v in st.session_state.db["majors"].items()])
                         save_data(st.session_state.db)
                         st.success("تم استخراج البيانات وحفظها محلياً بنجاح!")
                         st.rerun()

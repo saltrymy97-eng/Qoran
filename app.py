@@ -1,9 +1,9 @@
 import streamlit as st
 import json
 import os
-import time
 import re
-import traceback
+import base64
+import requests
 import datetime
 
 # --- استيراد المكتبات الإضافية ---
@@ -20,11 +20,11 @@ except ImportError:
 try:
     from services import (
         ask_ai, smart_classify, get_stats, load_data, save_data,
-        convert_majors_to_dict, generate_training_data, get_memory_stats
+        generate_training_data, get_memory_stats
     )
 except ImportError:
     ask_ai = smart_classify = get_stats = load_data = save_data = None
-    convert_majors_to_dict = generate_training_data = get_memory_stats = None
+    generate_training_data = get_memory_stats = None
 
 # ==========================================
 # 1. التكوين الأساسي للصفحة
@@ -38,6 +38,8 @@ st.set_page_config(
 # --- تحميل الأسرار ---
 ADMIN_SECRET_CODE = st.secrets.get("ADMIN_SECRET_CODE", "ادارة جامعة القران الكريم وعلومه")
 ADMIN_PASSWORD = st.secrets.get("ADMIN_PASSWORD", "admin123")
+GITHUB_TOKEN = st.secrets.get("GITHUB_TOKEN")
+GITHUB_REPO = st.secrets.get("GITHUB_REPO")
 
 # ==========================================
 # 2. التصميم الرسمي (CSS)
@@ -68,9 +70,7 @@ html, body, [data-testid="stAppViewContainer"], .main {
     margin-top: 5px;
     margin-bottom: 15px;
     font-weight: 700;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
     line-height: 1.6;
-    letter-spacing: 1px;
 }
 
 .uni-title {
@@ -82,7 +82,6 @@ html, body, [data-testid="stAppViewContainer"], .main {
     margin-top: 0px;
     margin-bottom: 5px;
     line-height: 1.3;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.03);
 }
 
 .branch-title {
@@ -109,14 +108,6 @@ html, body, [data-testid="stAppViewContainer"], .main {
     unicode-bidi: embed;
 }
 
-hr {
-    border: 0 !important;
-    height: 1px !important;
-    background: linear-gradient(to right, transparent, #bfa15f, transparent) !important;
-    margin: 25px 0 !important;
-    opacity: 0.4;
-}
-
 div.stButton > button {
     font-family: 'Tajawal', sans-serif !important;
     background-color: #ffffff !important;
@@ -126,7 +117,6 @@ div.stButton > button {
     padding: 12px 8px !important;
     width: 100% !important;
     transition: all 0.25s ease !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
     font-size: 0.95rem !important;
     font-weight: 600 !important;
 }
@@ -134,7 +124,6 @@ div.stButton > button:hover, div.stButton > button:active {
     background-color: #0f5132 !important;
     color: #ffffff !important;
     border-color: #0f5132 !important;
-    box-shadow: 0 4px 12px rgba(15,81,50,0.15) !important;
     transform: translateY(-1px);
 }
 
@@ -145,7 +134,6 @@ div.stButton > button:hover, div.stButton > button:active {
     border-radius: 16px !important;
     padding: 1.2rem !important;
     margin-bottom: 1.2rem !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;
     color: #2d3748 !important;
     font-family: 'Tajawal', sans-serif !important;
     font-size: 1.05rem !important;
@@ -162,12 +150,7 @@ div.stButton > button:hover, div.stButton > button:active {
     background-color: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     border-radius: 20px !important;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important;
     padding: 8px 16px !important;
-}
-[data-testid="stChatInput"]:focus-within {
-    border-color: #0f5132 !important;
-    box-shadow: 0 10px 25px rgba(15,81,50,0.08) !important;
 }
 [data-testid="stChatInput"] textarea {
     color: #1e293b !important;
@@ -195,22 +178,6 @@ footer {visibility: hidden !important;}
 [data-testid="stToolbar"] {display: none !important;}
 [data-testid="stHeader"] {display: none !important;}
 [data-testid="collapsedControl"] {display: none !important;}
-
-@media (max-width: 768px) {
-    [data-testid="stHorizontalBlock"] {
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        overflow-x: auto !important;
-        padding-bottom: 15px !important;
-    }
-    [data-testid="column"] {
-        min-width: 140px !important;
-        flex: 0 0 auto !important;
-    }
-    .basmala {
-        font-size: 2.4rem !important;
-    }
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -293,6 +260,36 @@ def smart_distribute_text(text):
             
     return {field: '\n'.join(content) for field, content in sections.items()}
 
+def save_data_to_github(data_json, token, repo):
+    """حفظ ملف data.json مباشرة إلى مستودع GitHub"""
+    if not token or not repo:
+        return False
+    
+    url = f"https://api.github.com/repos/{repo}/contents/data.json"
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    
+    # محاولة الحصول على الملف الحالي
+    response = requests.get(url, headers=headers)
+    sha = None
+    if response.status_code == 200:
+        sha = response.json().get("sha")
+    
+    # تحضير المحتوى
+    content = json.dumps(data_json, ensure_ascii=False, indent=4)
+    data = {
+        "message": "تحديث بيانات الجامعة",
+        "content": base64.b64encode(content.encode("utf-8")).decode("utf-8"),
+        "branch": "main"
+    }
+    if sha:
+        data["sha"] = sha
+    
+    response = requests.put(url, headers=headers, json=data)
+    return response.status_code in [200, 201]
+
 # ==========================================
 # 4. تهيئة الحالات
 # ==========================================
@@ -361,81 +358,66 @@ else:
         
         with tab1:
             uploaded_file = st.file_uploader("📂 رفع ملف Word أو PDF لتحديث البيانات", type=["docx", "pdf"])
-            if uploaded_file and st.button("🚀 معالجة الملف", use_container_width=True):
-                extracted_text = extract_text_from_file(uploaded_file)
-                if extracted_text:
-                    distributed = smart_distribute_text(extracted_text)
-                    if isinstance(distributed.get("majors"), str) and distributed["majors"] and convert_majors_to_dict:
-                        distributed["majors"] = convert_majors_to_dict(distributed["majors"])
-                    st.session_state.db = distributed
-                    if save_data:
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                if uploaded_file and st.button("🚀 معالجة الملف", use_container_width=True):
+                    extracted_text = extract_text_from_file(uploaded_file)
+                    if extracted_text:
+                        st.session_state.db = smart_distribute_text(extracted_text)
                         save_data(st.session_state.db)
-                    st.success("تم استخراج البيانات وحفظها بنجاح!")
-                    st.rerun()
+                        st.success("تم استخراج البيانات وحفظها محلياً بنجاح!")
+                        st.rerun()
+            
+            with col2:
+                if st.button("☁️ حفظ البيانات إلى GitHub", use_container_width=True):
+                    if GITHUB_TOKEN and GITHUB_REPO:
+                        if save_data_to_github(st.session_state.db, GITHUB_TOKEN, GITHUB_REPO):
+                            st.success("✅ تم تحديث بيانات الجامعة بنجاح في المستودع!")
+                        else:
+                            st.error("❌ فشل في تحديث المستودع. تأكد من إعدادات GitHub.")
+                    else:
+                        st.error("❌ معلومات GitHub غير مكتملة في الإعدادات (Secrets).")
 
             st.markdown("---")
+            
             with st.form("data_form"):
                 e_info = st.text_area("📋 معلومات عامة", st.session_state.db.get("info", ""), height=100)
                 e_sched = st.text_area("📚 الجداول", st.session_state.db.get("schedules", ""), height=100)
                 e_exams = st.text_area("📝 الامتحانات", st.session_state.db.get("exams", ""), height=100)
+                e_fees = st.text_area("💰 الرسوم", st.session_state.db.get("fees", ""), height=100)
                 e_contacts = st.text_area("📞 جهات الاتصال", st.session_state.db.get("contacts", ""), height=100)
-                current_majors = st.session_state.db.get("majors", "")
-                if isinstance(current_majors, dict):
-                    current_majors = "\n".join([f"تخصص {k}: {v}" for k, v in current_majors.items()])
-                e_majors = st.text_area("🎓 التخصصات", current_majors, height=100)
+                e_majors = st.text_area("🎓 التخصصات", st.session_state.db.get("majors", ""), height=150)
                 
-                if st.form_submit_button("💾 حفظ التعديلات", use_container_width=True):
+                if st.form_submit_button("💾 حفظ التعديلات محلياً", use_container_width=True):
                     st.session_state.db = {
                         "info": e_info, "schedules": e_sched, "exams": e_exams,
-                        "fees": "", "contacts": e_contacts, "majors": e_majors
+                        "fees": e_fees, "contacts": e_contacts, "majors": e_majors
                     }
-                    if save_data:
-                        save_data(st.session_state.db)
-                    st.success("تم تحديث قاعدة البيانات بنجاح!")
+                    save_data(st.session_state.db)
+                    st.success("تم تحديث قاعدة البيانات محلياً بنجاح!")
         
         with tab2:
             if get_stats:
-                try:
-                    stats = get_stats()
-                    col1, col2, col3 = st.columns(3)
-                    col1.metric("📊 إجمالي الأسئلة", stats.get("total", 0))
-                    col2.metric("📅 أسئلة اليوم", stats.get("today", 0))
-                    col3.metric("🧠 أسئلة الذاكرة", stats.get("memory_size", 0))
-                    
-                    col4, col5 = st.columns(2)
-                    col4.metric("⚡ ردود من الذاكرة", stats.get("memory_responses", 0))
-                    col5.metric("🤖 ردود من Groq", stats.get("groq_responses", 0))
-                    
-                    st.markdown("---")
-                    st.subheader("🔍 أكثر 5 أسئلة شيوعاً")
-                    top_q = stats.get("top_questions", [])
-                    for i, q in enumerate(top_q[:5], 1):
-                        st.markdown(f"**{i}.** {q['question']}  `({q['count']} مرة)`")
-                    if not top_q:
-                        st.info("لا توجد أسئلة مسجلة بعد")
-                        
-                    st.markdown("---")
-                    st.subheader("📂 توزيع الفئات")
-                    cats = stats.get("categories", {})
-                    for cat, count in cats.items():
-                        st.markdown(f"- **{cat}**: {count} سؤال")
-                    if not cats:
-                        st.info("لا توجد بيانات فئات")
-                except Exception:
-                    pass
+                stats = get_stats()
+                col1, col2, col3 = st.columns(3)
+                col1.metric("📊 إجمالي الأسئلة", stats.get("total", 0))
+                col2.metric("📅 أسئلة اليوم", stats.get("today", 0))
+                col3.metric("🧠 أسئلة الذاكرة", stats.get("memory_size", 0))
+                
+                st.markdown("---")
+                st.subheader("🔍 أكثر الأسئلة شيوعاً")
+                top_q = stats.get("top_questions", [])
+                for i, q in enumerate(top_q[:5], 1):
+                    st.markdown(f"**{i}.** {q['question']}  `({q['count']} مرة)`")
+                if not top_q:
+                    st.info("لا توجد أسئلة مسجلة بعد")
             else:
                 st.info("الإحصائيات ستظهر بعد أول سؤال من الطلاب.")
         
         with tab3:
             st.subheader("🧠 إدارة ذاكرة المساعد الذكي")
-            st.markdown("""
-            هنا يمكنك بناء ذاكرة المساعد الذكي. عند الضغط على الزر، سيقوم النظام بتوليد ما يصل إلى 50,000 سؤال وإجابة تلقائياً من بيانات الجامعة باستخدام القوالب والذكاء الاصطناعي.
             
-            - **الوقت المتوقع:** 5-10 دقائق
-            - **النتيجة:** المساعد يصبح أسرع وأذكى ويغطي معظم الأسئلة المحتملة
-            """)
-            
-            # عرض حجم الذاكرة الحالي
             if os.path.exists("training_data.json"):
                 try:
                     with open("training_data.json", "r", encoding="utf-8") as f:
@@ -443,34 +425,17 @@ else:
                     st.metric("🧠 حجم الذاكرة الحالي", f"{len(memory)} سؤال")
                 except:
                     st.warning("تعذر قراءة ملف الذاكرة.")
-            else:
-                st.info("الذاكرة فارغة. اضغط على زر التوليد لإنشائها.")
-
-            st.markdown("---")
             
-            col_btn1, col_btn2, col_btn3 = st.columns(3)
+            col_btn1, col_btn2 = st.columns(2)
             with col_btn1:
-                if st.button("🚀 توليد 50,000 سؤال", use_container_width=True):
+                if st.button("🚀 توليد الأسئلة الأساسية", use_container_width=True):
                     if generate_training_data:
-                        with st.spinner("🧠 جاري بناء الذاكرة... قد يستغرق 5-10 دقائق"):
-                            try:
-                                progress_bar = st.progress(0)
-                                status_text = st.empty()
-                                
-                                def update_progress(progress):
-                                    progress_bar.progress(progress)
-                                    status_text.text(f"تقدم العمل: {int(progress * 100)}%")
-                                
-                                generate_training_data(num_questions=50000, progress_callback=update_progress)
-                                
-                                progress_bar.progress(1.0)
-                                status_text.text("✅ تم الانتهاء!")
-                                st.success("تم بناء الذاكرة بنجاح!")
-                                st.rerun()
-                            except Exception as e:
-                                st.error(f"❌ {str(e)}")
+                        with st.spinner("🧠 جاري بناء الذاكرة..."):
+                            generate_training_data(num_questions=50000)
+                            st.success("تم بناء الذاكرة بنجاح!")
+                            st.rerun()
                     else:
-                        st.error("❌ دالة توليد البيانات غير متاحة. تأكد من رفع ملف وورد أولاً من تبويب تحرير البيانات.")
+                        st.info("ميزة التوليد غير متاحة حالياً.")
             
             with col_btn2:
                 if st.button("🗑️ مسح الذاكرة", use_container_width=True):
@@ -480,56 +445,6 @@ else:
                         st.rerun()
                     else:
                         st.info("الذاكرة فارغة بالفعل.")
-            
-            with col_btn3:
-                if st.button("🩺 تشخيص النظام", use_container_width=True):
-                    with st.spinner("جارٍ فحص النظام..."):
-                        results = {}
-                        
-                        data_file = "data.json"
-                        if os.path.exists(data_file):
-                            try:
-                                with open(data_file, "r", encoding="utf-8") as f:
-                                    data = json.load(f)
-                                results["📄 data.json"] = "✅ موجود"
-                                for key in ["info", "schedules", "exams", "fees", "contacts", "majors"]:
-                                    val = data.get(key, "")
-                                    if val:
-                                        if isinstance(val, dict):
-                                            results[f"  └─ {key}"] = f"✅ موجود ({len(val)} عنصر)"
-                                        else:
-                                            results[f"  └─ {key}"] = f"✅ موجود ({len(val)} حرف)"
-                                    else:
-                                        results[f"  └─ {key}"] = "⚠️ فارغ"
-                            except Exception as e:
-                                results["📄 data.json"] = f"❌ خطأ: {str(e)}"
-                        else:
-                            results["📄 data.json"] = "❌ الملف غير موجود"
-                        
-                        groq_key = st.secrets.get("GROQ_API_KEY", "")
-                        if groq_key:
-                            results["🔑 مفتاح Groq"] = f"✅ موجود (...{groq_key[-4:]})"
-                        else:
-                            results["🔑 مفتاح Groq"] = "❌ غير موجود"
-                        
-                        if os.path.exists("training_data.json"):
-                            try:
-                                with open("training_data.json", "r", encoding="utf-8") as f:
-                                    memory = json.load(f)
-                                results["🧠 training_data.json"] = f"✅ موجود ({len(memory)} سؤال)"
-                            except:
-                                results["🧠 training_data.json"] = "❌ تالف"
-                        else:
-                            results["🧠 training_data.json"] = "⚠️ غير موجود"
-                        
-                        st.markdown("### 📋 نتائج التشخيص")
-                        for key, value in results.items():
-                            if "❌" in value:
-                                st.error(f"{key}: {value}")
-                            elif "⚠️" in value:
-                                st.warning(f"{key}: {value}")
-                            else:
-                                st.success(f"{key}: {value}")
 
     elif admin_password != "":
         st.error("❌ كلمة المرور غير صحيحة")
@@ -561,13 +476,10 @@ if user_input:
         with st.chat_message("assistant", avatar=":material/school:"):
             with st.spinner("جارٍ معالجة استفسارك..."):
                 if ask_ai and smart_classify:
-                    try:
-                        category = smart_classify(user_input)
-                        ai_response = ask_ai(user_input, category)
-                    except Exception as e:
-                        ai_response = f"⚠️ حدث خطأ تقني: {str(e)}"
+                    category = smart_classify(user_input)
+                    ai_response = ask_ai(user_input, category)
                 else:
-                    ai_response = "⚠️ نظام المساعدة غير متصل حالياً. يرجى التواصل مع الإدارة مباشرة."
+                    ai_response = "⚠️ نظام المساعدة غير متصل حالياً."
                 st.markdown(ai_response)
                 
         st.session_state.messages.append({"role": "assistant", "content": ai_response})

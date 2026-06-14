@@ -159,6 +159,19 @@ def find_best_match_memory(question, memory):
         return best_match, best_score
     return None, best_score
 
+def get_memory_stats():
+    """إرجاع إحصائيات الذاكرة فقط"""
+    memory = load_memory()
+    logs = load_logs()
+    memory_responses = sum(1 for log in logs if log.get("source") == "memory")
+    groq_responses = sum(1 for log in logs if log.get("source") == "groq")
+    
+    return {
+        "total_questions": len(memory),
+        "memory_responses": memory_responses,
+        "groq_responses": groq_responses
+    }
+
 # ==========================================
 # 4. توليد الأسئلة بالقوالب (بدون Groq)
 # ==========================================

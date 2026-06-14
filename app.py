@@ -4,6 +4,7 @@ import os
 import time
 import re
 import traceback
+import datetime
 
 # --- استيراد المكتبات الإضافية ---
 try:
@@ -18,12 +19,12 @@ except ImportError:
 
 try:
     from services import (
-        ask_ai, smart_classify, get_stats,
-        load_data, save_data, convert_majors_to_dict
+        ask_ai, smart_classify, get_stats, load_data, save_data,
+        convert_majors_to_dict, generate_training_data, get_memory_stats
     )
 except ImportError:
-    ask_ai = smart_classify = get_stats = None
-    load_data = save_data = convert_majors_to_dict = None
+    ask_ai = smart_classify = get_stats = load_data = save_data = None
+    convert_majors_to_dict = generate_training_data = get_memory_stats = None
 
 # ==========================================
 # 1. التكوين الأساسي للصفحة
@@ -356,7 +357,7 @@ else:
     
     if admin_password == ADMIN_PASSWORD:
         st.success("✅ تم التحقق بنجاح")
-        tab1, tab2 = st.tabs(["📝 تحرير البيانات", "📊 الإحصائيات"])
+        tab1, tab2, tab3 = st.tabs(["📝 تحرير البيانات", "📊 الإحصائيات", "🧠 الذاكرة"])
         
         with tab1:
             uploaded_file = st.file_uploader("📂 رفع ملف Word أو PDF لتحديث البيانات", type=["docx", "pdf"])
@@ -364,7 +365,6 @@ else:
                 extracted_text = extract_text_from_file(uploaded_file)
                 if extracted_text:
                     distributed = smart_distribute_text(extracted_text)
-                    # تحويل majors إلى dict إذا كانت نصاً
                     if isinstance(distributed.get("majors"), str) and distributed["majors"] and convert_majors_to_dict:
                         distributed["majors"] = convert_majors_to_dict(distributed["majors"])
                     st.session_state.db = distributed
@@ -379,7 +379,6 @@ else:
                 e_sched = st.text_area("📚 الجداول", st.session_state.db.get("schedules", ""), height=100)
                 e_exams = st.text_area("📝 الامتحانات", st.session_state.db.get("exams", ""), height=100)
                 e_contacts = st.text_area("📞 جهات الاتصال", st.session_state.db.get("contacts", ""), height=100)
-                # عرض majors كنص إذا كان دكت
                 current_majors = st.session_state.db.get("majors", "")
                 if isinstance(current_majors, dict):
                     current_majors = "\n".join([f"تخصص {k}: {v}" for k, v in current_majors.items()])
@@ -398,9 +397,14 @@ else:
             if get_stats:
                 try:
                     stats = get_stats()
-                    col1, col2 = st.columns(2)
+                    col1, col2, col3 = st.columns(3)
                     col1.metric("📊 إجمالي الأسئلة", stats.get("total", 0))
                     col2.metric("📅 أسئلة اليوم", stats.get("today", 0))
+                    col3.metric("🧠 أسئلة الذاكرة", stats.get("memory_size", 0))
+                    
+                    col4, col5 = st.columns(2)
+                    col4.metric("⚡ ردود من الذاكرة", stats.get("memory_responses", 0))
+                    col5.metric("🤖 ردود من Groq", stats.get("groq_responses", 0))
                     
                     st.markdown("---")
                     st.subheader("🔍 أكثر 5 أسئلة شيوعاً")
@@ -421,6 +425,57 @@ else:
                     pass
             else:
                 st.info("الإحصائيات ستظهر بعد أول سؤال من الطلاب.")
+        
+        with tab3:
+            st.subheader("🧠 إدارة ذاكرة المساعد الذكي")
+            st.markdown("""
+            هنا يمكنك بناء ذاكرة المساعد الذكي. عند الضغط على الزر، سيقوم النظام بتوليد 10,000 سؤال وإجابة تلقائياً من بيانات الجامعة.
+            
+            - **الوقت المتوقع:** 15-20 دقيقة
+            - **الرصيد المستهلك:** حوالي 200 طلب من Groq
+            - **النتيجة:** المساعد يصبح أسرع وأذكى
+            """)
+            
+            col_btn1, col_btn2 = st.columns(2)
+            with col_btn1:
+                if st.button("🚀 توليد 10,000 سؤال", use_container_width=True):
+                    if generate_training_data:
+                        with st.spinner("🧠 جاري بناء الذاكرة... قد يستغرق 15-20 دقيقة"):
+                            progress_bar = st.progress(0)
+                            status_text = st.empty()
+                            
+                            def update_progress(progress):
+                                progress_bar.progress(progress)
+                                status_text.text(f"تقدم العمل: {int(progress * 100)}%")
+                            
+                            generate_training_data(num_questions=10000, progress_callback=update_progress)
+                            
+                            progress_bar.progress(1.0)
+                            status_text.text("✅ تم الانتهاء!")
+                            st.success("تم بناء الذاكرة بنجاح! 10,000 سؤال وإجابة أصبحت جاهزة.")
+                            st.rerun()
+                    else:
+                        st.error("دالة توليد البيانات غير متاحة.")
+            
+            with col_btn2:
+                if st.button("🗑️ مسح الذاكرة", use_container_width=True):
+                    if os.path.exists("training_data.json"):
+                        os.remove("training_data.json")
+                        st.success("تم مسح الذاكرة بنجاح.")
+                        st.rerun()
+                    else:
+                        st.info("الذاكرة فارغة بالفعل.")
+            
+            # عرض إحصائيات الذاكرة الحالية
+            if os.path.exists("training_data.json"):
+                try:
+                    with open("training_data.json", "r", encoding="utf-8") as f:
+                        memory = json.load(f)
+                    st.metric("🧠 حجم الذاكرة الحالي", f"{len(memory)} سؤال")
+                except:
+                    pass
+            else:
+                st.info("الذاكرة فارغة. اضغط على زر التوليد لإنشائها.")
 
     elif admin_password != "":
         st.error("❌ كلمة المرور غير صحيحة")
@@ -457,7 +512,6 @@ if user_input:
                         ai_response = ask_ai(user_input, category)
                     except Exception as e:
                         ai_response = f"⚠️ حدث خطأ تقني: {str(e)}"
-                        st.error(traceback.format_exc())
                 else:
                     ai_response = "⚠️ نظام المساعدة غير متصل حالياً. يرجى التواصل مع الإدارة مباشرة."
                 st.markdown(ai_response)

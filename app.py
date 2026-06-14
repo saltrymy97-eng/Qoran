@@ -63,7 +63,7 @@ html, body, [data-testid="stAppViewContainer"], .main {
     text-align: center;
     color: #0f5132 !important;
     margin-top: 5px;
-    margin-bottom: 15px;   /* مسافة أكبر عن اسم الجامعة */
+    margin-bottom: 15px;
     font-weight: 700;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
     line-height: 1.6;
@@ -105,7 +105,7 @@ html, body, [data-testid="stAppViewContainer"], .main {
     border-top: 1px solid #e2e8f0;
     border-bottom: 1px solid #e2e8f0;
     padding: 14px 0;
-    direction: rtl;             /* ضمان الاتجاه الصحيح */
+    direction: rtl;
     unicode-bidi: embed;
 }
 
@@ -404,14 +404,13 @@ else:
                 e_info = st.text_area("📋 معلومات عامة", st.session_state.db.get("info", ""), height=100)
                 e_sched = st.text_area("📚 الجداول", st.session_state.db.get("schedules", ""), height=100)
                 e_exams = st.text_area("📝 الامتحانات", st.session_state.db.get("exams", ""), height=100)
-                e_fees = st.text_area("💰 الرسوم", st.session_state.db.get("fees", ""), height=100)
                 e_contacts = st.text_area("📞 جهات الاتصال", st.session_state.db.get("contacts", ""), height=100)
                 e_majors = st.text_area("🎓 التخصصات", st.session_state.db.get("majors", ""), height=100)
                 
                 if st.form_submit_button("💾 حفظ التعديلات", use_container_width=True):
                     st.session_state.db = {
                         "info": e_info, "schedules": e_sched, "exams": e_exams,
-                        "fees": e_fees, "contacts": e_contacts, "majors": e_majors
+                        "fees": "", "contacts": e_contacts, "majors": e_majors
                     }
                     save_data(st.session_state.db)
                     st.success("تم تحديث قاعدة البيانات بنجاح!")

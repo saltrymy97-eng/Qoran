@@ -310,7 +310,7 @@ def load_data():
         "info": "جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير، مؤسسة تعليمية رائدة تجمع بين العلوم الشرعية والحديثة. نحن هنا لخدمتك.",
         "schedules": "الجداول الدراسية تُحدث بداية كل فصل دراسي. يرجى مراجعة شؤون الطلاب.",
         "exams": "تبدأ الامتحانات النصفية في الأسبوع الثامن من الفصل الدراسي.",
-        "fees": "يمكن تسديد الرسوم عبر البنك أو الدفع المباشر في الإدارة المالية.",
+        "fees": "",
         "contacts": "للتواصل: 053XXXXX أو زيارة مبنى الفرع بغيل باوزير.",
         "majors": "التخصصات: القرآن وعلومه، الشريعة، والدراسات الإسلامية."
     }
@@ -340,7 +340,7 @@ st.markdown('<div class="branch-title">✦ فرع غيل باوزير - حضرم
 
 # --- وضع الطالب ---
 if not st.session_state.admin_mode:
-    # أزرار الخدمات (تم حذف أيقونة الرسوم)
+    # أزرار الخدمات (بدون أيقونة الرسوم)
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         if st.button("الجداول", icon=":material/calendar_month:"):
@@ -438,10 +438,10 @@ else:
                         st.markdown(f"- **{cat}**: {count} سؤال")
                     if not cats:
                         st.info("لا توجد بيانات فئات")
-                except Exception as e:
-                    st.error(f"خطأ في تحميل الإحصائيات: {str(e)}")
+                except Exception:
+                    pass  # إخفاء أي خطأ في الإحصائيات
             else:
-                st.warning("الإحصائيات غير متاحة لعدم ربط دوال services.py")
+                st.info("الإحصائيات ستظهر بعد أول سؤال من الطلاب.")
 
     elif admin_password != "":
         st.error("❌ كلمة المرور غير صحيحة")
@@ -452,7 +452,7 @@ else:
         st.rerun()
 
 # ==========================================
-# 6. حقل الدردشة الدائم (الجزء المعدل)
+# 6. حقل الدردشة الدائم
 # ==========================================
 user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
 
@@ -475,7 +475,7 @@ if user_input:
                 if ask_ai and smart_classify:
                     try:
                         category = smart_classify(user_input)
-                        # 🔥 التعديل الجوهري: نرسل الفئة فقط، و services.py هو من يبني السياق الكامل
+                        # نرسل السؤال والفئة فقط، services.py يبني السياق الكامل
                         ai_response = ask_ai(user_input, category)
                     except Exception as e:
                         ai_response = f"⚠️ حدث خطأ تقني: {str(e)}"

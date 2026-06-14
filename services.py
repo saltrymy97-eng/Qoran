@@ -14,7 +14,13 @@ from groq import Groq
 # ==========================================
 # 1. الإعدادات الأساسية
 # ==========================================
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+# محاولة قراءة المفتاح من Streamlit Secrets أولاً، وإذا فشل نقرأ من متغيرات البيئة
+try:
+    import streamlit as st
+    GROQ_API_KEY = st.secrets.get("GROQ_API_KEY")
+except:
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
 client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
 DATA_FILE = "data.json"

@@ -8,6 +8,7 @@
 
 import os
 import json
+import re
 import datetime
 from groq import Groq
 
@@ -55,25 +56,29 @@ def load_data():
     return default_data
 
 def convert_majors_to_dict(majors_text):
-    """تحويل النص الطويل إلى كائن منظم (يُستخدم مرة واحدة عند التحديث)"""
+    """تحويل النص الطويل إلى كائن منظم (يستخرج أي اسم تخصص تلقائياً)"""
     majors_dict = {}
     current_major = None
+    
     for line in majors_text.split('\n'):
         line = line.strip()
         if not line:
             continue
-        # البحث عن اسم تخصص في بداية السطر
-        for major_name in ["القرآن وعلومه", "الشريعة الإسلامية", "الدراسات الإسلامية", "إدارة أعمال", "محاسبة", "تقنية معلومات"]:
-            if major_name in line:
-                current_major = major_name
-                # إزالة اسم التخصص من السطر
-                content = line.replace(major_name, "").strip().lstrip(":").strip()
+        
+        # استخراج اسم التخصص تلقائياً: أي جملة تبدأ بـ "تخصص" أو "قسم" أو "كلية"
+        match = re.match(r'(?:تخصص|قسم|كلية)\s*(.+?)\s*[:.]?\s*(.*)', line)
+        if match:
+            current_major = match.group(1).strip()
+            content = match.group(2).strip()
+            if current_major not in majors_dict:
                 majors_dict[current_major] = content
-                break
+            else:
+                majors_dict[current_major] += " " + content
         else:
             # إذا لم يجد اسم تخصص، أضف السطر للتخصص الحالي
             if current_major:
                 majors_dict[current_major] += " " + line
+    
     return majors_dict if majors_dict else {"تقنية معلومات": "يدرس الطالب البرمجة والشبكات."}
 
 def save_data(data):
@@ -147,9 +152,10 @@ def get_stats():
 def find_best_match(question, majors_dict):
     """البحث عن اسم تخصص داخل السؤال وإرجاع بياناته"""
     if not majors_dict or not isinstance(majors_dict, dict):
-        return None
+        return None, None
     
     question_lower = question.lower()
+    
     # نفحص كل مفتاح في القاموس
     for major_name, major_data in majors_dict.items():
         if major_name.lower() in question_lower:
@@ -157,7 +163,6 @@ def find_best_match(question, majors_dict):
     
     # إذا لم نجد تطابقاً، نبحث عن جزء من الاسم
     for major_name, major_data in majors_dict.items():
-        # تقسيم الاسم إلى كلمات والبحث عن أي منها
         name_parts = major_name.split()
         if any(part.lower() in question_lower for part in name_parts):
             return major_name, major_data
@@ -227,7 +232,6 @@ def build_full_context(data):
     if data.get("info"):
         parts.append(data['info'])
     if data.get("majors"):
-        # إذا كانت majors كائن، نحوله إلى نص
         if isinstance(data['majors'], dict):
             all_majors = []
             for name, desc in data['majors'].items():

@@ -158,7 +158,7 @@ def get_memory_stats():
     }
 
 # ==========================================
-# 4. توليد بيانات التدريب (10000 سؤال - مع حفظ تدريجي)
+# 4. توليد بيانات التدريب (مرن - يقبل أي صيغة)
 # ==========================================
 def generate_training_data(num_questions=10000, progress_callback=None):
     """توليد أسئلة وأجوبة تدريبية وحفظها تدريجياً"""
@@ -170,13 +170,11 @@ def generate_training_data(num_questions=10000, progress_callback=None):
     if not context or context == "لا توجد بيانات.":
         return []
     
-    # تحميل الذاكرة الحالية (إذا وجدت)
     memory = load_memory()
     batch_size = 50
     batches = num_questions // batch_size
     
     for i in range(batches):
-        # تحديث شريط التقدم
         if progress_callback:
             progress_callback(i / batches)
         
@@ -193,19 +191,21 @@ def generate_training_data(num_questions=10000, progress_callback=None):
         - التواصل (أرقام الهاتف، العنوان، ساعات العمل)
         - معلومات عامة عن الجامعة (التأسيس، الرؤية، الأهداف)
 
-        أعد الرد بصيغة JSON فقط، كمصفوفة من الكائنات، كل كائن يحتوي على "question" و "answer":
-        [
-          {{"question": "سؤال 1", "answer": "إجابة 1"}},
-          {{"question": "سؤال 2", "answer": "إجابة 2"}}
-        ]
+        استخدم هذه الصيغة بالضبط لكل سؤال وجواب:
 
-        لا تضف أي نص آخر، فقط JSON."""
+        س: نص السؤال هنا
+        ج: نص الجواب هنا
+
+        س: سؤال آخر
+        ج: جواب آخر
+
+        لا تضف أي نص آخر. فقط أسئلة وأجوبة بهذه الصيغة."""
 
         try:
             response = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
-                    {"role": "system", "content": "أنت مولد بيانات تدريب. أعد JSON فقط."},
+                    {"role": "system", "content": "أنت مولد بيانات تدريب. استخدم صيغة س: وج: فقط."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
@@ -213,18 +213,64 @@ def generate_training_data(num_questions=10000, progress_callback=None):
             )
             result = response.choices[0].message.content
             
-            json_match = re.search(r'\[.*\]', result, re.DOTALL)
-            if json_match:
-                batch_data = json.loads(json_match.group())
-                memory.extend(batch_data)
-                
-                # 🎯 حفظ تدريجي بعد كل دفعة
-                save_memory(memory)
+            # ===== 🎯 استخراج الأسئلة والأجوبة بطرق متعددة ومرنة =====
+            qa_pairs = []
+
+            # الطريقة 1: س: ... ج: ... (الأساسية)
+            pairs1 = re.findall(r'س:\s*(.+?)\s*\n\s*ج:\s*(.+?)(?=\n\s*س:|\Z)', result, re.DOTALL)
+            qa_pairs.extend(pairs1)
+
+            # الطريقة 2: *س: ... *ج: ... أو - س: ... - ج: ...
+            pairs2 = re.findall(r'[*\-]\s*س[:.]?\s*(.+?)\s*\n\s*[*\-]\s*ج[:.]?\s*(.+?)(?=\n\s*[*\-]|\Z)', result, re.DOTALL)
+            qa_pairs.extend(pairs2)
+
+            # الطريقة 3: سؤال: ... جواب: ...
+            pairs3 = re.findall(r'(?:سؤال|س)[:.]\s*(.+?)\s*\n\s*(?:جواب|ج)[:.]\s*(.+?)(?=\n\s*(?:سؤال|س)[:.]|\Z)', result, re.DOTALL)
+            qa_pairs.extend(pairs3)
+
+            # الطريقة 4: أي سطر يبدأ بـ س أو ج (مرونة قصوى)
+            lines = result.split('\n')
+            current_q = None
+            for line in lines:
+                line = line.strip()
+                # البحث عن سطر يبدأ بـ "س" أو "سؤال"
+                if re.match(r'^[سس][:.\s]', line) or re.match(r'^سؤال\s*[:.\s]', line):
+                    current_q = re.sub(r'^(?:سؤال|س)[:.\s]*', '', line).strip()
+                # البحث عن سطر يبدأ بـ "ج" أو "جواب"
+                elif re.match(r'^[جج][:.\s]', line) or re.match(r'^جواب\s*[:.\s]', line):
+                    if current_q:
+                        answer = re.sub(r'^(?:جواب|ج)[:.\s]*', '', line).strip()
+                        qa_pairs.append((current_q, answer))
+                        current_q = None
+
+            # الطريقة 5: البحث عن أي نمط Q&A باستخدام المسافات
+            pairs5 = re.findall(r'(?:^|\n)\s*(?:سؤال|س)\s*[:.]?\s*(.+?)\s*\n\s*(?:جواب|ج)\s*[:.]?\s*(.+?)\s*(?=\n\s*(?:سؤال|س)\s*[:.]?|\Z)', result, re.DOTALL)
+            qa_pairs.extend(pairs5)
+
+            # إزالة التكرارات
+            seen = set()
+            unique_pairs = []
+            for q, a in qa_pairs:
+                q_clean = q.strip()
+                a_clean = a.strip()
+                if q_clean and a_clean and q_clean not in seen:
+                    unique_pairs.append((q_clean, a_clean))
+                    seen.add(q_clean)
+
+            # إضافة الأسئلة المستخرجة إلى الذاكرة
+            for question, answer in unique_pairs:
+                memory.append({
+                    "question": question,
+                    "answer": answer,
+                    "created": datetime.datetime.now().isoformat()
+                })
+            
+            # حفظ تدريجي بعد كل دفعة
+            save_memory(memory)
+            
         except Exception as e:
-            # حتى لو فشلت دفعة، نستمر
             pass
     
-    # تحديث شريط التقدم إلى 100%
     if progress_callback:
         progress_callback(1.0)
     

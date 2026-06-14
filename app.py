@@ -42,7 +42,7 @@ GITHUB_TOKEN = st.secrets.get("GITHUB_TOKEN")
 GITHUB_REPO = st.secrets.get("GITHUB_REPO")
 
 # ==========================================
-# 2. التصميم الرسمي (CSS)
+# 2. التصميم الرسمي (CSS) - تم استعادته كاملاً
 # ==========================================
 st.markdown("""
 <style>
@@ -70,7 +70,9 @@ html, body, [data-testid="stAppViewContainer"], .main {
     margin-top: 5px;
     margin-bottom: 15px;
     font-weight: 700;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
     line-height: 1.6;
+    letter-spacing: 1px;
 }
 
 .uni-title {
@@ -82,6 +84,7 @@ html, body, [data-testid="stAppViewContainer"], .main {
     margin-top: 0px;
     margin-bottom: 5px;
     line-height: 1.3;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.03);
 }
 
 .branch-title {
@@ -108,6 +111,14 @@ html, body, [data-testid="stAppViewContainer"], .main {
     unicode-bidi: embed;
 }
 
+hr {
+    border: 0 !important;
+    height: 1px !important;
+    background: linear-gradient(to right, transparent, #bfa15f, transparent) !important;
+    margin: 25px 0 !important;
+    opacity: 0.4;
+}
+
 div.stButton > button {
     font-family: 'Tajawal', sans-serif !important;
     background-color: #ffffff !important;
@@ -117,6 +128,7 @@ div.stButton > button {
     padding: 12px 8px !important;
     width: 100% !important;
     transition: all 0.25s ease !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
     font-size: 0.95rem !important;
     font-weight: 600 !important;
 }
@@ -124,6 +136,7 @@ div.stButton > button:hover, div.stButton > button:active {
     background-color: #0f5132 !important;
     color: #ffffff !important;
     border-color: #0f5132 !important;
+    box-shadow: 0 4px 12px rgba(15,81,50,0.15) !important;
     transform: translateY(-1px);
 }
 
@@ -134,6 +147,7 @@ div.stButton > button:hover, div.stButton > button:active {
     border-radius: 16px !important;
     padding: 1.2rem !important;
     margin-bottom: 1.2rem !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;
     color: #2d3748 !important;
     font-family: 'Tajawal', sans-serif !important;
     font-size: 1.05rem !important;
@@ -150,7 +164,12 @@ div.stButton > button:hover, div.stButton > button:active {
     background-color: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     border-radius: 20px !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important;
     padding: 8px 16px !important;
+}
+[data-testid="stChatInput"]:focus-within {
+    border-color: #0f5132 !important;
+    box-shadow: 0 10px 25px rgba(15,81,50,0.08) !important;
 }
 [data-testid="stChatInput"] textarea {
     color: #1e293b !important;
@@ -178,6 +197,22 @@ footer {visibility: hidden !important;}
 [data-testid="stToolbar"] {display: none !important;}
 [data-testid="stHeader"] {display: none !important;}
 [data-testid="collapsedControl"] {display: none !important;}
+
+@media (max-width: 768px) {
+    [data-testid="stHorizontalBlock"] {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        padding-bottom: 15px !important;
+    }
+    [data-testid="column"] {
+        min-width: 140px !important;
+        flex: 0 0 auto !important;
+    }
+    .basmala {
+        font-size: 2.4rem !important;
+    }
+}
 </style>
 """, unsafe_allow_html=True)
 

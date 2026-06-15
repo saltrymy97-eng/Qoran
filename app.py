@@ -7,12 +7,10 @@ import datetime
 # --- استيراد خدمات الذكاء الاصطناعي ---
 try:
     from services import (
-        ask_ai, smart_classify, get_stats, load_data, save_data,
-        parse_majors_template
+        ask_ai, smart_classify, get_stats, load_data, save_data
     )
 except ImportError:
     ask_ai = smart_classify = get_stats = load_data = save_data = None
-    parse_majors_template = None
 
 # ==========================================
 # 1. التكوين الأساسي للصفحة
@@ -255,7 +253,6 @@ if not st.session_state.admin_mode:
 # --- وضع الإدارة ---
 else:
     st.markdown('<hr>', unsafe_allow_html=True)
-    # عنوان بسيط بدون تكرار اسم الجامعة
     st.markdown("""
     <div style="text-align: center; padding: 10px 0 20px 0;">
         <h2 style="color: #0f5132; font-family: 'Tajawal', sans-serif; font-weight: 800; font-size: 2rem;">🔐 لوحة الإدارة</h2>
@@ -329,7 +326,6 @@ else:
             if get_stats:
                 stats = get_stats()
                 
-                # صف الإحصائيات الرئيسية
                 col1, col2, col3, col4 = st.columns(4)
                 with col1:
                     st.metric("📊 إجمالي الأسئلة", stats.get("total", 0))
@@ -344,19 +340,15 @@ else:
                 
                 st.markdown("---")
                 
-                # قسم الأسئلة الشائعة مع رسم بياني شريطي بسيط
                 st.subheader("🔍 أكثر الأسئلة شيوعاً")
                 top_q = stats.get("top_questions", [])
                 if top_q:
-                    # تحضير بيانات الرسم البياني
                     q_labels = [q["question"][:40] + "..." if len(q["question"]) > 40 else q["question"] for q in top_q[:8]]
                     q_counts = [q["count"] for q in top_q[:8]]
                     
-                    # رسم بياني شريطي
                     chart_data = {"السؤال": q_labels, "عدد المرات": q_counts}
                     st.bar_chart(chart_data, x="السؤال", y="عدد المرات", use_container_width=True)
                     
-                    # الجدول التفصيلي
                     with st.expander("📋 عرض القائمة التفصيلية"):
                         for i, q in enumerate(top_q[:15], 1):
                             st.markdown(f"**{i}.** {q['question']}  `({q['count']} مرة)`")
@@ -365,7 +357,6 @@ else:
                 
                 st.markdown("---")
                 
-                # توزيع الفئات مع رسم بياني دائري بسيط
                 st.subheader("📂 توزيع الفئات")
                 cats = stats.get("categories", {})
                 if cats:
@@ -374,7 +365,6 @@ else:
                     with col1:
                         st.dataframe(cat_df, use_container_width=True, hide_index=True)
                     with col2:
-                        # رسم بياني شريطي للفئات
                         st.bar_chart(cat_df, x="الفئة", y="عدد الأسئلة", use_container_width=True)
                 else:
                     st.info("لا توجد بيانات فئات")

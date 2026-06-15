@@ -4,17 +4,7 @@ import os
 import re
 import datetime
 
-# --- استيراد المكتبات الإضافية ---
-try:
-    from docx import Document
-except ImportError:
-    Document = None
-
-try:
-    from PyPDF2 import PdfReader
-except ImportError:
-    PdfReader = None
-
+# --- استيراد خدمات الذكاء الاصطناعي ---
 try:
     from services import (
         ask_ai, smart_classify, get_stats, load_data, save_data,
@@ -213,67 +203,7 @@ footer {visibility: hidden !important;}
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. الدوال المساعدة
-# ==========================================
-def clean_arabic_text(text):
-    if not text:
-        return ""
-    tashkeel = re.compile(r'[\u0617-\u061A\u064B-\u0652\u06D6-\u06ED]')
-    text = tashkeel.sub('', text)
-    text = text.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا').replace('ة', 'ه')
-    lines = [line.strip() for line in text.split('\n') if line.strip()]
-    return '\n'.join(lines)
-
-def extract_text_from_file(uploaded_file):
-    """استخراج النص من ملف Word أو PDF"""
-    if not uploaded_file:
-        return None
-    file_type = uploaded_file.type
-    text_parts = []
-    
-    if "wordprocessingml" in file_type or uploaded_file.name.endswith('.docx'):
-        if Document is None:
-            st.error("مكتبة python-docx غير مثبتة.")
-            return None
-        doc = Document(uploaded_file)
-        text_parts = [para.text.strip() for para in doc.paragraphs if para.text.strip()]
-        
-    elif "pdf" in file_type or uploaded_file.name.endswith('.pdf'):
-        if PdfReader is None:
-            st.error("مكتبة PyPDF2 غير مثبتة.")
-            return None
-        reader = PdfReader(uploaded_file)
-        for page in reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text_parts.append(page_text)
-    else:
-        st.error("نوع الملف غير مدعوم. الرجاء رفع ملف Word (.docx) أو PDF.")
-        return None
-        
-    return clean_arabic_text('\n'.join(text_parts))
-
-def smart_distribute_text(text):
-    """توزيع النص على الأيقونات باستخدام علامات القالب [INFO]، [SCHEDULES]..."""
-    fields = {"info": "", "schedules": "", "exams": "", "fees": "", "contacts": "", "majors": ""}
-    if not text:
-        return fields
-    
-    # تقسيم النص عند العلامات [SECTION]
-    sections = re.split(r'\n\[(INFO|SCHEDULES|EXAMS|FEES|CONTACTS|MAJORS)\]\n?', text)
-    
-    # sections سيكون شكلها: ['', 'INFO', 'معلومات عامة...', 'SCHEDULES', 'الجداول...', ...]
-    for i in range(1, len(sections), 2):
-        section_name = sections[i].lower()
-        section_content = sections[i + 1] if i + 1 < len(sections) else ""
-        
-        if section_name in fields:
-            fields[section_name] = section_content.strip()
-    
-    return fields
-
-# ==========================================
-# 4. تهيئة الحالات
+# 3. تهيئة الحالات
 # ==========================================
 if "admin_mode" not in st.session_state:
     st.session_state.admin_mode = False
@@ -285,7 +215,7 @@ if "auto_question" not in st.session_state:
     st.session_state.auto_question = None
 
 # ==========================================
-# 5. عرض الواجهة
+# 4. عرض الواجهة
 # ==========================================
 st.markdown('<div class="basmala">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>', unsafe_allow_html=True)
 st.markdown('<div class="uni-title">جامعة القرآن الكريم<br>والعلوم الإسلامية</div>', unsafe_allow_html=True)
@@ -325,10 +255,10 @@ if not st.session_state.admin_mode:
 # --- وضع الإدارة ---
 else:
     st.markdown('<hr>', unsafe_allow_html=True)
+    # عنوان بسيط بدون تكرار اسم الجامعة
     st.markdown("""
     <div style="text-align: center; padding: 10px 0 20px 0;">
         <h2 style="color: #0f5132; font-family: 'Tajawal', sans-serif; font-weight: 800; font-size: 2rem;">🔐 لوحة الإدارة</h2>
-        <p style="color: #6c757d; font-family: 'Tajawal', sans-serif;">جامعة القرآن الكريم والعلوم الإسلامية - فرع غيل باوزير</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -340,24 +270,8 @@ else:
         tab1, tab2 = st.tabs(["📝 تحرير البيانات", "📊 الإحصائيات"])
         
         with tab1:
-            st.markdown("### 📂 رفع ملف وورد (بالقالب الموحد)")
-            st.info("يجب أن يكون الملف مكتوباً بالقالب الموحد. يمكنك نسخ القالب أدناه وتعبئته.")
-            
-            uploaded_file = st.file_uploader("ارفع ملف Word أو PDF", type=["docx", "pdf"])
-            
-            if uploaded_file and st.button("🚀 معالجة الملف", use_container_width=True):
-                extracted_text = extract_text_from_file(uploaded_file)
-                if extracted_text:
-                    st.session_state.db = smart_distribute_text(extracted_text)
-                    if isinstance(st.session_state.db.get("majors"), str) and parse_majors_template:
-                        st.session_state.db["majors"] = parse_majors_template(st.session_state.db["majors"])
-                    save_data(st.session_state.db)
-                    st.success("تم استخراج البيانات وحفظها بنجاح!")
-                    st.rerun()
-            
-            st.markdown("---")
-            
             st.markdown("### 📝 تحرير البيانات مباشرة")
+            st.info("يمكنك تعديل جميع بيانات الجامعة من خلال الحقول أدناه. استخدم القالب الموحد للتخصصات.")
             
             with st.form("data_form"):
                 e_info = st.text_area("معلومات عامة", st.session_state.db.get("info", ""), height=100)
@@ -414,25 +328,55 @@ else:
         with tab2:
             if get_stats:
                 stats = get_stats()
-                col1, col2, col3 = st.columns(3)
-                col1.metric("📊 إجمالي الأسئلة", stats.get("total", 0))
-                col2.metric("📅 أسئلة اليوم", stats.get("today", 0))
-                col3.metric("📂 عدد الفئات", len(stats.get("categories", {})))
+                
+                # صف الإحصائيات الرئيسية
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("📊 إجمالي الأسئلة", stats.get("total", 0))
+                with col2:
+                    st.metric("📅 أسئلة اليوم", stats.get("today", 0))
+                with col3:
+                    st.metric("📂 عدد الفئات", len(stats.get("categories", {})))
+                with col4:
+                    top_q = stats.get("top_questions", [])
+                    top_count = top_q[0]["count"] if top_q else 0
+                    st.metric("🔥 أعلى تكرار", top_count)
                 
                 st.markdown("---")
+                
+                # قسم الأسئلة الشائعة مع رسم بياني شريطي بسيط
                 st.subheader("🔍 أكثر الأسئلة شيوعاً")
                 top_q = stats.get("top_questions", [])
-                for i, q in enumerate(top_q[:10], 1):
-                    st.markdown(f"**{i}.** {q['question']}  `({q['count']} مرة)`")
-                if not top_q:
-                    st.info("لا توجد أسئلة مسجلة بعد")
+                if top_q:
+                    # تحضير بيانات الرسم البياني
+                    q_labels = [q["question"][:40] + "..." if len(q["question"]) > 40 else q["question"] for q in top_q[:8]]
+                    q_counts = [q["count"] for q in top_q[:8]]
                     
+                    # رسم بياني شريطي
+                    chart_data = {"السؤال": q_labels, "عدد المرات": q_counts}
+                    st.bar_chart(chart_data, x="السؤال", y="عدد المرات", use_container_width=True)
+                    
+                    # الجدول التفصيلي
+                    with st.expander("📋 عرض القائمة التفصيلية"):
+                        for i, q in enumerate(top_q[:15], 1):
+                            st.markdown(f"**{i}.** {q['question']}  `({q['count']} مرة)`")
+                else:
+                    st.info("لا توجد أسئلة مسجلة بعد")
+                
                 st.markdown("---")
+                
+                # توزيع الفئات مع رسم بياني دائري بسيط
                 st.subheader("📂 توزيع الفئات")
                 cats = stats.get("categories", {})
-                for cat, count in cats.items():
-                    st.markdown(f"- **{cat}**: {count} سؤال")
-                if not cats:
+                if cats:
+                    cat_df = {"الفئة": list(cats.keys()), "عدد الأسئلة": list(cats.values())}
+                    col1, col2 = st.columns([1, 1])
+                    with col1:
+                        st.dataframe(cat_df, use_container_width=True, hide_index=True)
+                    with col2:
+                        # رسم بياني شريطي للفئات
+                        st.bar_chart(cat_df, x="الفئة", y="عدد الأسئلة", use_container_width=True)
+                else:
                     st.info("لا توجد بيانات فئات")
             else:
                 st.info("الإحصائيات ستظهر بعد أول سؤال من الطلاب.")

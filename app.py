@@ -6,10 +6,12 @@ import datetime
 # --- استيراد المكتبات الإضافية ---
 try:
     from services import (
-        ask_ai, smart_classify, get_stats, load_data, save_data
+        ask_ai, smart_classify, get_stats, load_data, save_data,
+        parse_majors_template
     )
 except ImportError:
     ask_ai = smart_classify = get_stats = load_data = save_data = None
+    parse_majors_template = None
 
 # ==========================================
 # 1. التكوين الأساسي للصفحة
@@ -264,30 +266,105 @@ else:
     if admin_password == ADMIN_PASSWORD:
         st.success("✅ تم التحقق بنجاح")
         
-        if get_stats:
-            stats = get_stats()
-            col1, col2, col3 = st.columns(3)
-            col1.metric("📊 إجمالي الأسئلة", stats.get("total", 0))
-            col2.metric("📅 أسئلة اليوم", stats.get("today", 0))
-            col3.metric("📂 عدد الفئات", len(stats.get("categories", {})))
+        tab1, tab2 = st.tabs(["📝 تحرير البيانات", "📊 الإحصائيات"])
+        
+        with tab1:
+            st.markdown("### 📂 رفع ملف وورد (بالقالب الموحد)")
+            st.info("يجب أن يكون الملف مكتوباً بالقالب الموحد. يمكنك نسخ القالب أدناه وتعبئته.")
+            
+            uploaded_file = st.file_uploader("ارفع ملف Word أو PDF", type=["docx", "pdf"])
+            
+            if uploaded_file and st.button("🚀 معالجة الملف", use_container_width=True):
+                extracted_text = extract_text_from_file(uploaded_file)
+                if extracted_text:
+                    st.session_state.db = smart_distribute_text(extracted_text)
+                    if isinstance(st.session_state.db.get("majors"), str) and parse_majors_template:
+                        st.session_state.db["majors"] = parse_majors_template(st.session_state.db["majors"])
+                    save_data(st.session_state.db)
+                    st.success("تم استخراج البيانات وحفظها بنجاح!")
+                    st.rerun()
             
             st.markdown("---")
-            st.subheader("🔍 أكثر الأسئلة شيوعاً")
-            top_q = stats.get("top_questions", [])
-            for i, q in enumerate(top_q[:10], 1):
-                st.markdown(f"**{i}.** {q['question']}  `({q['count']} مرة)`")
-            if not top_q:
-                st.info("لا توجد أسئلة مسجلة بعد")
+            
+            st.markdown("### 📝 تحرير البيانات مباشرة")
+            
+            with st.form("data_form"):
+                e_info = st.text_area("معلومات عامة", st.session_state.db.get("info", ""), height=100)
+                e_sched = st.text_area("الجداول الدراسية", st.session_state.db.get("schedules", ""), height=100)
+                e_exams = st.text_area("الامتحانات", st.session_state.db.get("exams", ""), height=100)
+                e_fees = st.text_area("الرسوم الدراسية", st.session_state.db.get("fees", ""), height=100)
+                e_contacts = st.text_area("جهات الاتصال", st.session_state.db.get("contacts", ""), height=100)
+                e_majors = st.text_area("التخصصات (بالقالب الموحد)", st.session_state.db.get("majors", ""), height=200)
                 
+                if st.form_submit_button("💾 حفظ التعديلات", use_container_width=True):
+                    st.session_state.db = {
+                        "info": e_info, "schedules": e_sched, "exams": e_exams,
+                        "fees": e_fees, "contacts": e_contacts, "majors": e_majors
+                    }
+                    save_data(st.session_state.db)
+                    st.success("تم تحديث قاعدة البيانات بنجاح!")
+            
             st.markdown("---")
-            st.subheader("📂 توزيع الفئات")
-            cats = stats.get("categories", {})
-            for cat, count in cats.items():
-                st.markdown(f"- **{cat}**: {count} سؤال")
-            if not cats:
-                st.info("لا توجد بيانات فئات")
-        else:
-            st.info("الإحصائيات ستظهر بعد أول سؤال من الطلاب.")
+            st.markdown("### 📋 القالب الموحد (انسخه واملأه)")
+            st.code("""
+[INFO]
+معلومات عامة:
+(اكتب هنا معلومات عن الجامعة، الرؤية، الرسالة، الأهداف)
+
+[SCHEDULES]
+الجداول الدراسية:
+(اكتب هنا مواعيد المحاضرات، أيام الدراسة، نظام الحضور)
+
+[EXAMS]
+الامتحانات:
+(اكتب هنا مواعيد الامتحانات، نظام التقييم، المعدلات)
+
+[FEES]
+الرسوم الدراسية:
+(اكتب هنا رسوم التخصصات، طرق الدفع، التقسيط، المنح)
+
+[CONTACTS]
+جهات الاتصال:
+(اكتب هنا أرقام الهواتف، العنوان، الإيميل، ساعات العمل)
+
+[MAJORS]
+التخصصات:
+تخصص: [اسم التخصص]
+الوصف: [وصف التخصص]
+الرسوم: [المبلغ]
+المدة: [عدد السنوات]
+فرص العمل: [فرص العمل]
+---
+تخصص: [اسم التخصص الثاني]
+الوصف: ...
+---
+""", language="text")
+        
+        with tab2:
+            if get_stats:
+                stats = get_stats()
+                col1, col2, col3 = st.columns(3)
+                col1.metric("📊 إجمالي الأسئلة", stats.get("total", 0))
+                col2.metric("📅 أسئلة اليوم", stats.get("today", 0))
+                col3.metric("📂 عدد الفئات", len(stats.get("categories", {})))
+                
+                st.markdown("---")
+                st.subheader("🔍 أكثر الأسئلة شيوعاً")
+                top_q = stats.get("top_questions", [])
+                for i, q in enumerate(top_q[:10], 1):
+                    st.markdown(f"**{i}.** {q['question']}  `({q['count']} مرة)`")
+                if not top_q:
+                    st.info("لا توجد أسئلة مسجلة بعد")
+                    
+                st.markdown("---")
+                st.subheader("📂 توزيع الفئات")
+                cats = stats.get("categories", {})
+                for cat, count in cats.items():
+                    st.markdown(f"- **{cat}**: {count} سؤال")
+                if not cats:
+                    st.info("لا توجد بيانات فئات")
+            else:
+                st.info("الإحصائيات ستظهر بعد أول سؤال من الطلاب.")
 
     elif admin_password != "":
         st.error("❌ كلمة المرور غير صحيحة")

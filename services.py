@@ -206,12 +206,20 @@ def ask_ai(question, category=None, chat_history=None):
     data = load_data()
     
     # بناء السياق حسب الفئة
+    raw_context = None
     if category and category in data and data[category]:
-        context = data[category]
-    else:
-        context = "\n\n".join([f"{k}: {v}" for k, v in data.items() if v])
+        raw_context = data[category]
     
-    if not context.strip():
+    # تحويل السياق إلى نص دائماً
+    if raw_context is None:
+        context = "\n\n".join([f"{k}: {v}" for k, v in data.items() if v])
+    elif isinstance(raw_context, dict):
+        # تحويل قاموس التخصصات إلى نص
+        context = "\n".join([f"{name}: {desc}" for name, desc in raw_context.items()])
+    else:
+        context = str(raw_context)
+    
+    if not context or not context.strip():
         return "عذراً، لا تتوفر لدي بيانات حالياً. يرجى التواصل مع إدارة الجامعة."
 
     system_prompt = SYSTEM_PROMPT.format(context=context[:2000])

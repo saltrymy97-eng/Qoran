@@ -236,7 +236,7 @@ def ask_ai(question, category=None, chat_history=None):
 
     try:
         response = client.chat.completions.create(
-            model="llama-3.2-3b-preview",
+            model="llama-3.1-8b-instant",
             messages=messages,
             temperature=0.3,
             max_tokens=400

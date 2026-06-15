@@ -1,9 +1,20 @@
 import streamlit as st
 import json
 import os
+import re
 import datetime
 
 # --- استيراد المكتبات الإضافية ---
+try:
+    from docx import Document
+except ImportError:
+    Document = None
+
+try:
+    from PyPDF2 import PdfReader
+except ImportError:
+    PdfReader = None
+
 try:
     from services import (
         ask_ai, smart_classify, get_stats, load_data, save_data,
@@ -202,7 +213,67 @@ footer {visibility: hidden !important;}
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. تهيئة الحالات
+# 3. الدوال المساعدة
+# ==========================================
+def clean_arabic_text(text):
+    if not text:
+        return ""
+    tashkeel = re.compile(r'[\u0617-\u061A\u064B-\u0652\u06D6-\u06ED]')
+    text = tashkeel.sub('', text)
+    text = text.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا').replace('ة', 'ه')
+    lines = [line.strip() for line in text.split('\n') if line.strip()]
+    return '\n'.join(lines)
+
+def extract_text_from_file(uploaded_file):
+    """استخراج النص من ملف Word أو PDF"""
+    if not uploaded_file:
+        return None
+    file_type = uploaded_file.type
+    text_parts = []
+    
+    if "wordprocessingml" in file_type or uploaded_file.name.endswith('.docx'):
+        if Document is None:
+            st.error("مكتبة python-docx غير مثبتة.")
+            return None
+        doc = Document(uploaded_file)
+        text_parts = [para.text.strip() for para in doc.paragraphs if para.text.strip()]
+        
+    elif "pdf" in file_type or uploaded_file.name.endswith('.pdf'):
+        if PdfReader is None:
+            st.error("مكتبة PyPDF2 غير مثبتة.")
+            return None
+        reader = PdfReader(uploaded_file)
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text_parts.append(page_text)
+    else:
+        st.error("نوع الملف غير مدعوم. الرجاء رفع ملف Word (.docx) أو PDF.")
+        return None
+        
+    return clean_arabic_text('\n'.join(text_parts))
+
+def smart_distribute_text(text):
+    """توزيع النص على الأيقونات باستخدام علامات القالب [INFO]، [SCHEDULES]..."""
+    fields = {"info": "", "schedules": "", "exams": "", "fees": "", "contacts": "", "majors": ""}
+    if not text:
+        return fields
+    
+    # تقسيم النص عند العلامات [SECTION]
+    sections = re.split(r'\n\[(INFO|SCHEDULES|EXAMS|FEES|CONTACTS|MAJORS)\]\n?', text)
+    
+    # sections سيكون شكلها: ['', 'INFO', 'معلومات عامة...', 'SCHEDULES', 'الجداول...', ...]
+    for i in range(1, len(sections), 2):
+        section_name = sections[i].lower()
+        section_content = sections[i + 1] if i + 1 < len(sections) else ""
+        
+        if section_name in fields:
+            fields[section_name] = section_content.strip()
+    
+    return fields
+
+# ==========================================
+# 4. تهيئة الحالات
 # ==========================================
 if "admin_mode" not in st.session_state:
     st.session_state.admin_mode = False
@@ -214,7 +285,7 @@ if "auto_question" not in st.session_state:
     st.session_state.auto_question = None
 
 # ==========================================
-# 4. عرض الواجهة
+# 5. عرض الواجهة
 # ==========================================
 st.markdown('<div class="basmala">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>', unsafe_allow_html=True)
 st.markdown('<div class="uni-title">جامعة القرآن الكريم<br>والعلوم الإسلامية</div>', unsafe_allow_html=True)
@@ -375,7 +446,7 @@ else:
         st.rerun()
 
 # ==========================================
-# 5. حقل الدردشة الدائم
+# 6. حقل الدردشة الدائم
 # ==========================================
 user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
 

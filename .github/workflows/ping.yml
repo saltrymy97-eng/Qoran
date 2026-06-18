@@ -1,13 +1,12 @@
-name: Keep Alive
+name: ping
 on:
   schedule:
-    - cron: '*/4 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Visit app
+      - name: Visit Streamlit app
         run: |
-          curl -s -L -H "User-Agent: Mozilla/5.0" "https://ldqdgjrfdhzsmbgj3p22gn.streamlit.app/" > /dev/null
-          echo "✅ Done at $(date)"
+          curl -s -o /dev/null -w "%{http_code}" "https://ldqdgjrfdhzsmbgj3p22gn.streamlit.app/"

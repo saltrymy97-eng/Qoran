@@ -8,5 +8,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Visit Streamlit app
-        run: |
-          curl -s -o /dev/null -w "%{http_code}" "https://ldqdgjrfdhzsmbgj3p22gn.streamlit.app/"
+        run: curl -s https://ldqdgjrfdhzsmbgj3p22gn.streamlit.app/ > /dev/null

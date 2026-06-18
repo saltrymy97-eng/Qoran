@@ -3,6 +3,9 @@ import json
 import os
 import re
 import datetime
+import threading
+import time
+import requests
 
 # --- استيراد خدمات الذكاء الاصطناعي ---
 try:
@@ -11,6 +14,35 @@ try:
     )
 except ImportError:
     ask_ai = smart_classify = get_stats = load_data = save_data = None
+
+# ==========================================
+# 0. الحل النهائي: منع النوم + الحفظ التلقائي (في الخلفية)
+# ==========================================
+APP_URL = "https://ldqdgjrfdhzsmbgj3p22gn.streamlit.app/"
+
+def background_worker():
+    while True:
+        # 1. منع السيرفر من النوم (إرسال نبضة كل 5 دقائق)
+        try:
+            requests.get(APP_URL)
+            print("👋 [Keep-Alive] تم إرسال نبضة لإبقاء السيرفر حياً.")
+        except:
+            pass
+        
+        # 2. حفظ البيانات تلقائياً كل ساعة
+        try:
+            data = load_data()
+            save_data(data)
+            print("✅ [Auto-Save] تم حفظ البيانات تلقائياً في الخلفية.")
+        except Exception as e:
+            print(f"⚠️ [Auto-Save] فشل الحفظ التلقائي: {e}")
+            
+        # الانتظار لمدة ساعة قبل تكرار العملية
+        time.sleep(3600)
+
+# تشغيل الخلفية (Daemon Thread) بمجرد بدء التطبيق
+thread = threading.Thread(target=background_worker, daemon=True)
+thread.start()
 
 # ==========================================
 # 1. التكوين الأساسي للصفحة

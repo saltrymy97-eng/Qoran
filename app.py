@@ -3,6 +3,10 @@ import json
 import os
 import re
 import datetime
+import time
+import base64
+from groq import Groq
+from gtts import gTTS
 
 # --- استيراد خدمات الذكاء الاصطناعي ---
 try:
@@ -160,6 +164,27 @@ div.stButton > button:hover, div.stButton > button:active {
     font-family: 'Tajawal', sans-serif !important;
 }
 
+/* زر الميكروفون */
+.audio-btn {
+    background: #0f5132;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s;
+    margin-right: 10px;
+}
+.audio-btn:hover {
+    background: #0a3a22;
+    transform: scale(1.1);
+}
+
 .official-footer {
     position: fixed;
     bottom: 0;
@@ -201,7 +226,52 @@ footer {visibility: hidden !important;}
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. تهيئة الحالات
+# 3. دوال الصوت
+# ==========================================
+
+def audio_to_text(audio_file):
+    """تحويل الصوت إلى نص باستخدام Groq Whisper"""
+    if audio_file is None:
+        return ""
+    try:
+        client = Groq(api_key=st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY", "")))
+        # حفظ الملف مؤقتاً
+        with open("temp_audio.wav", "wb") as f:
+            f.write(audio_file.getbuffer())
+        with open("temp_audio.wav", "rb") as f:
+            transcription = client.audio.transcriptions.create(
+                model="whisper-large-v3",
+                file=("temp_audio.wav", f.read()),
+                language="ar"
+            )
+        os.remove("temp_audio.wav")
+        return transcription.text
+    except Exception as e:
+        return f"❌ خطأ في التعرف على الصوت: {str(e)}"
+
+def text_to_speech(text):
+    """تحويل النص إلى صوت وإرجاع مسار الملف"""
+    try:
+        tts = gTTS(text=text, lang='ar', slow=False)
+        tts.save("response.mp3")
+        return "response.mp3"
+    except Exception as e:
+        return None
+
+def autoplay_audio(file_path):
+    """تشغيل ملف صوتي تلقائياً في المتصفح"""
+    with open(file_path, "rb") as f:
+        audio_bytes = f.read()
+    audio_base64 = base64.b64encode(audio_bytes).decode()
+    md = f"""
+        <audio autoplay>
+            <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+        </audio>
+    """
+    st.markdown(md, unsafe_allow_html=True)
+
+# ==========================================
+# 4. تهيئة الحالات
 # ==========================================
 if "admin_mode" not in st.session_state:
     st.session_state.admin_mode = False
@@ -211,9 +281,11 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "auto_question" not in st.session_state:
     st.session_state.auto_question = None
+if "voice_input" not in st.session_state:
+    st.session_state.voice_input = None
 
 # ==========================================
-# 4. عرض الواجهة
+# 5. عرض الواجهة
 # ==========================================
 st.markdown('<div class="basmala">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>', unsafe_allow_html=True)
 st.markdown('<div class="uni-title">جامعة القرآن الكريم<br>والعلوم الإسلامية</div>', unsafe_allow_html=True)
@@ -250,7 +322,66 @@ if not st.session_state.admin_mode:
         with st.chat_message(msg["role"], avatar=avatar):
             st.markdown(msg["content"])
 
-# --- وضع الإدارة ---
+    # --- 🎤 ميزة الصوت: صف واحد يحتوي على الميكروفون وحقل الكتابة ---
+    c1, c2 = st.columns([0.1, 0.9])
+    with c1:
+        audio_value = st.audio_input("🎤", label_visibility="collapsed")
+    with c2:
+        user_input = st.chat_input("تفضل بطرح استفسارك هنا...", key="voice_chat_input")
+
+    # معالجة الإدخال الصوتي
+    if audio_value:
+        with st.spinner("🎙️ جاري تحويل الصوت إلى نص..."):
+            text = audio_to_text(audio_value)
+            if text and not text.startswith("❌"):
+                st.success(f"✅ {text}")
+                st.session_state.voice_input = text
+            else:
+                st.error(text)
+
+    # استخدام النص الصوتي إذا وجد
+    if st.session_state.voice_input:
+        user_input = st.session_state.voice_input
+        st.session_state.voice_input = None
+
+    # التعامل مع الأسئلة التلقائية من الأزرار
+    if st.session_state.auto_question:
+        user_input = st.session_state.auto_question
+        st.session_state.auto_question = None
+
+    # معالجة السؤال (نصي أو صوتي)
+    if user_input:
+        if user_input.strip() == ADMIN_SECRET_CODE:
+            st.session_state.admin_mode = True
+            st.rerun()
+        else:
+            st.session_state.messages.append({"role": "user", "content": user_input})
+            with st.chat_message("user", avatar=":material/person:"):
+                st.markdown(user_input)
+            
+            with st.chat_message("assistant", avatar=":material/school:"):
+                with st.spinner("جارٍ معالجة استفسارك..."):
+                    if ask_ai and smart_classify:
+                        category = smart_classify(user_input)
+                        ai_response = ask_ai(user_input, category)
+                    else:
+                        ai_response = "⚠️ نظام المساعدة غير متصل حالياً."
+                    st.markdown(ai_response)
+                    
+                # --- تحويل الرد إلى صوت وتشغيله ---
+                audio_file = text_to_speech(ai_response)
+                if audio_file:
+                    autoplay_audio(audio_file)
+                    # حذف الملف بعد قليل (اختياري)
+                    try:
+                        os.remove(audio_file)
+                    except:
+                        pass
+
+            st.session_state.messages.append({"role": "assistant", "content": ai_response})
+            st.rerun()
+
+# --- وضع الإدارة (كما هو بدون تغيير) ---
 else:
     st.markdown('<hr>', unsafe_allow_html=True)
     st.markdown("""
@@ -378,39 +509,5 @@ else:
     if st.button("🔙 خروج من لوحة الإدارة والعودة للمساعد الذكي", use_container_width=True):
         st.session_state.admin_mode = False
         st.rerun()
-
-# ==========================================
-# 6. حقل الدردشة الدائم
-# ==========================================
-user_input = st.chat_input("تفضل بطرح استفسارك هنا...")
-
-if st.session_state.auto_question:
-    user_input = st.session_state.auto_question
-    st.session_state.auto_question = None
-
-if user_input:
-    if user_input.strip() == ADMIN_SECRET_CODE:
-        st.session_state.admin_mode = True
-        st.rerun()
-
-    elif not st.session_state.admin_mode:
-        st.session_state.messages.append({"role": "user", "content": user_input})
-        with st.chat_message("user", avatar=":material/person:"):
-            st.markdown(user_input)
-            
-        with st.chat_message("assistant", avatar=":material/school:"):
-            with st.spinner("جارٍ معالجة استفسارك..."):
-                if ask_ai and smart_classify:
-                    category = smart_classify(user_input)
-                    ai_response = ask_ai(user_input, category)
-                else:
-                    ai_response = "⚠️ نظام المساعدة غير متصل حالياً."
-                st.markdown(ai_response)
-                
-        st.session_state.messages.append({"role": "assistant", "content": ai_response})
-        st.rerun()
-
-    else:
-        st.warning("أنت في لوحة الإدارة. استخدم الخيارات أعلاه أو اضغط خروج.")
 
 st.markdown('<div class="official-footer">المطور: سالم التريمي</div>', unsafe_allow_html=True)
